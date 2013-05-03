@@ -1,0 +1,137 @@
+
+#include "control.h"
+#include "hidapi.h"
+
+
+
+int control::scan()
+{
+	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
+	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
+
+	//Scansione della nostra device
+	int i, esito_funzione=ERROR;		
+	bool trovata=false;
+	cout<<"Scansione device in corso..."<<endl;
+	while (!trovata)
+	{
+		//Scansiona tutte periferiche e le alloca in devices
+		devices = hid_enumerate(0x0, 0x0);
+		curr_dev=devices;
+		i=0;
+		while(curr_dev) 		//finchè non raggiungo la fine della lista (cioè curr_dev==NULL)
+		{
+			if(curr_dev->vendor_id == MY_VID && curr_dev->product_id == MY_PID)
+			{
+				
+				/*
+				cout<<"Device "<<++i<<" trovata!"<<endl;
+				cout<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
+				*/
+				cout<<"Device "<<++i<<" riconosciuta!"<<endl;
+				cout<<"|  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
+				cout<<"|  Path: "<<curr_dev->path<<"\n|  serial_number: "<<curr_dev->serial_number<<endl;
+				cout<<"|  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
+				cout<<"|  Product:      "<<curr_dev->product_string<<endl;
+				cout<<"|  Release:      "<<curr_dev->release_number<<endl;
+				cout<<"|  Interface:    "<<curr_dev->interface_number<<endl;
+				trovata=true;
+				esito_funzione=NICE;
+			}
+			else 
+			{
+				cout<<"Device "<<++i<<"-> VID: "<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<"  --  NO MATCH"<<endl;
+			}
+			curr_dev=curr_dev->next;
+		}
+		
+		//Dealloca la lista di devices
+		hid_free_enumeration(devices);
+		
+		
+		//FLAG DI CONTROLLO
+		//*x* Forza il thread a terminare la ricerca se STOP è alto
+		if(get_stop())
+		{
+			trovata=true;		//*x* Forza trovata=true per uscire dal ciclo
+			cout<<".....scan aborted by user....."<<endl;
+			esito_funzione=ABORTED;
+			set_stop(false);	//Resetta il flag
+		}
+						
+		//Se STOP è falso e trovata è falso aspetta 3 secondi prima di effettuare una nuova scansione
+		if(!trovata)
+		{
+			cout<<".....not found....."<<endl;
+			p_sleep(5000);
+		}
+		
+		
+		
+	}
+	
+	return esito_funzione;	
+		
+		
+}
+
+int control :: read_show()		//uses recv_measure() and displays/uses its result
+{
+	int status,result=0;
+	measure_struct misura;
+	
+	cout<<"Inizio apertura device..."<<endl;
+	hid_device* handle = hid_open(MY_VID, MY_PID, NULL);		//Device in uso (puntatore alla handle del kernel)
+	if (handle == NULL)
+	{
+		cout<<"Errore nell'apertura della device!"<<endl;
+		status=ERROR;
+	}
+	else
+	{
+		cout<<"Periferica aperta!"<<endl;
+		cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
+		result=recv_measure(handle,misura);
+		if(result==ERROR || result==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<result<<endl;
+
+		cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
+		status=result;
+	}
+	
+	hid_close(handle);
+	cout<<"Device chiusa."<<endl;
+
+	return status;	
+
+}
+
+
+int control::recv_measure(hid_device* d, measure_struct& m)	//copies device format data into measure_struct data type
+{	
+	int byte_read,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
+	unsigned char buf[bytes_to_read];
+	
+	if(d==NULL) return ERROR;		//Ritorna ERROR subito se la handle non è valida!
+	while(!get_stop() && byte_read<= bytes_to_read-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte
+	{
+		cout<<"  | Tentativo "<<++i<<endl;
+		byte_read = hid_read_timeout(d,buf,bytes_to_read,5000);
+		if (byte_read == -1) cout<<"  | Lettura fallita!"<<endl;
+		cout<<"  | "<<byte_read<<" letti: ";
+		cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+	}
+	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
+	{
+		result=ABORTED;
+		set_stop(false);		//Resetta il flag
+	}
+	else if (byte_read==bytes_to_read)
+	{
+		memcpy( (void*) &m, (void*) buf, bytes_to_read);
+		result=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
+	}
+	
+	return result;				//Qui ERROR è ritornato solo se avviene un comportamento inaspettato.
+
+}
+	
