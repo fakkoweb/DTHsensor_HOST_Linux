@@ -77,7 +77,7 @@ int control::scan()
 
 int control :: read_show()		//uses recv_measure() and displays/uses its result
 {
-	int status,result=0;
+	int status=ERROR;
 	measure_struct misura;
 	
 	cout<<"Inizio apertura device..."<<endl;
@@ -91,11 +91,9 @@ int control :: read_show()		//uses recv_measure() and displays/uses its result
 	{
 		cout<<"Periferica aperta!"<<endl;
 		cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
-		result=recv_measure(handle,misura);
-		if(result==ERROR || result==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<result<<endl;
-
-		cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
-		status=result;
+		status=recv_measure(handle,misura);
+		if(status==ERROR || status==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<status<<endl;
+		else cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
 	}
 	
 	hid_close(handle);
@@ -108,24 +106,28 @@ int control :: read_show()		//uses recv_measure() and displays/uses its result
 
 int control::recv_measure(hid_device* d, measure_struct& m)	//copies device format data into measure_struct data type
 {	
-	int byte_read,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
+	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
 	unsigned char buf[bytes_to_read];
 	
 	if(d==NULL) return ERROR;		//Ritorna ERROR subito se la handle non è valida!
-	while(!get_stop() && byte_read<= bytes_to_read-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte
+	while(!get_stop() && bytes_read<= bytes_to_read-1 && bytes_read!=-1)	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte
 	{
 		cout<<"  | Tentativo "<<++i<<endl;
-		byte_read = hid_read_timeout(d,buf,bytes_to_read,5000);
-		if (byte_read == -1) cout<<"  | Lettura fallita!"<<endl;
-		cout<<"  | "<<byte_read<<" letti: ";
-		cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
+		if (bytes_read < bytes_to_read) cout<<"  | Lettura fallita."<<endl;
+		else
+		{
+			cout<<"  | "<<bytes_read<<" letti: ";
+			cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+		}
+		if (bytes_read == -1) cout<<"  | ERRORE: Periferica non pronta!"<<endl;
 	}
 	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
 	{
 		result=ABORTED;
 		set_stop(false);		//Resetta il flag
 	}
-	else if (byte_read==bytes_to_read)
+	else if (bytes_read==bytes_to_read)
 	{
 		memcpy( (void*) &m, (void*) buf, bytes_to_read);
 		result=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE

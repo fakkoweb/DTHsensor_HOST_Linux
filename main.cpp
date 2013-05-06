@@ -20,7 +20,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-
+	int status;
 	control usb;		//////////////////////////CLASSE CONTROL////////////////////////////
 				// La classe Control contiene:
 				//	- TUTTE le funzioni() USB del programma (per il momento è l'unica)
@@ -41,28 +41,35 @@ int main(int argc, char* argv[])
 				// NOTA: la classe funziona solo su sistemi UNIX (per via della vfork() e della kill())
 				
 
-	cout<<"Procedura scansione usb iniziata."<<endl;			
-	usb.scan();		// Scansiona le periferiche usb fino a che:
-				//	- individua una periferica con VID e PID noti (manca il valore di ritorno)
-				//	- la procedura è interrotta dall'utente
-				// Ritorna l'esito funzione nel codice espresso in control.h
+	do{
+
+		cout<<"Procedura scansione usb iniziata."<<endl;			
+		status=usb.scan();	// Scansiona le periferiche usb fino a che:
+					//	- individua una periferica con VID e PID noti (manca il valore di ritorno)
+					//	- la procedura è interrotta dall'utente
+					// Ritorna l'esito funzione nel codice espresso in control.h
+	
+		if(status==NICE)
+		{	
+			cout<<"Procedura di lettura iniziata."<<endl;
+			do
+			{
+				status=usb.read_show();
+				p_sleep(3000);
+				cout<<status<<endl;
+			}while(status!=ABORTED && status!=ERROR);	// Ferma il loop di lettura da console
+		}
+	
+		//Altre procedure;
+	
+		//usb.manual(); lascia all'utente la liberta di scegliere cosa attivare (magari con un flag)
 	
 	
-	cout<<"Procedura di lettura iniziata."<<endl;
-	while(!usb.get_stop())	// Ferma il loop di lettura da console
-	{
-		usb.read_show();
-		p_sleep(2000);
-	}
-	usb.set_stop(false);	// Resetta il flag di stop per segnalare alla console il messaggio ricevuto
 	
-	
-	//Altre procedure;
-	
-	//usb.manual(); lascia all'utente la liberta di scegliere cosa attivare (magari con un flag)
-	
+	} while(status!=ABORTED);
 			
-return 0;
+	return 0;
+	//viene chiamato il distruttore di usb
 
 }
 

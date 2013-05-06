@@ -101,6 +101,7 @@ void control::open_console()
 	int i=0;
 	
 	console<<"\nCONSOLE DI DEBUG\n-------------"<<endl;
+	console<<"Comandi:\nquit - esci dal programma (termina tutte le procedure!)\nstop - termina operazione / esci dal loop corrente"<<endl;
 	console<<"> ";
 	cin.getline(command,20);
 	while( strcmp(command,quit_command) != 0 )
