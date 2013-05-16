@@ -63,10 +63,6 @@ int main(int argc, char* argv[])
 				
 			}while(status!=ABORTED && status!=ERROR);	// Ferma il loop di lettura da console
 		}
-		
-		
-		cout<<"Il programma rieffettuerà la scansione fra 3 secondi"<<endl;
-		sleep(3000);
 	
 		//Altre procedure;
 	
