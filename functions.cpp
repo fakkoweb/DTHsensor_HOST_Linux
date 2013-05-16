@@ -75,9 +75,9 @@ int control::scan()
 		
 }
 
-int control :: read_show()		//uses recv_measure() and displays/uses its result
+int control :: read_show(int times, int delay)		//uses recv_measure() and displays/uses its result
 {
-	int status=ERROR;
+	int status=ERROR, i=0;
 	measure_struct misura;
 	
 	cout<<"Inizio apertura device..."<<endl;
@@ -89,11 +89,16 @@ int control :: read_show()		//uses recv_measure() and displays/uses its result
 	}
 	else
 	{
-		cout<<"Periferica aperta!"<<endl;
-		cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
-		status=recv_measure(handle,misura);
-		if(status==ERROR || status==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<status<<endl;
-		else cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
+		while(i<times && status!=ERROR && status!=ABORTED)
+		{
+			cout<<"Periferica aperta!"<<endl;
+			cout<<"| Lettura "<<i<<" da "<<handle<<" in corso..."<<endl;
+			status=recv_measure(handle,misura);
+			if(status==ERROR || status==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<status<<endl;
+			else cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
+			p_sleep(delay);
+			i++;
+		}
 	}
 	
 	hid_close(handle);

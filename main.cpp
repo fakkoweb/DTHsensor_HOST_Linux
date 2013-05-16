@@ -54,9 +54,13 @@ int main(int argc, char* argv[])
 			cout<<"Procedura di lettura iniziata."<<endl;
 			do
 			{
-				status=usb.read_show();
-				p_sleep(3000);
-				cout<<status<<endl;
+				status=usb.read_show(50,800);
+				if(status!=ABORTED && status!=ERROR)
+				{
+					cout<<"Un altra lettura tra 10 secondi."<<endl;
+					p_sleep(10000);
+				}
+				
 			}while(status!=ABORTED && status!=ERROR);	// Ferma il loop di lettura da console
 		}
 	
