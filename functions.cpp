@@ -99,11 +99,11 @@ int control :: read_show(int times, int delay)		//uses recv_measure() and displa
 			p_sleep(delay);
 			i++;
 		}
+		
+		hid_close(handle);
+		cout<<"Device chiusa."<<endl;
 	}
 	
-	hid_close(handle);
-	cout<<"Device chiusa."<<endl;
-
 	return status;	
 
 }
