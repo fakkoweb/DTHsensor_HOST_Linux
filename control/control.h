@@ -83,7 +83,7 @@ class control
 
 		//Funzioni del programma
 		int scan();
-		int read_show(int times, int delay);
+		int read_show();
 			
 	
 };

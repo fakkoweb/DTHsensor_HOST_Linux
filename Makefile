@@ -17,7 +17,7 @@ all: usb_host
 ###########  CONFIGURATION  #############
 ####    All values must be separated by space!!     ####
 #####################################
-LIBS      = `pkg-config libusb-1.0 libudev --libs` -lpthread					# Put HERE Lib flags for the Linker (-l)
+LIBS      = `pkg-config libusb-1.0 libudev --libs`						# Put HERE Lib flags for the Linker (-l)
 INCLUDES ?= -Icontrol -Ihidapi -Iconfig `pkg-config libusb-1.0 --cflags`	# Put HERE Include flags for the compilers (-I)
 
 CFLAGS   ?= -Wall -g													# Put HERE other flags for the gcc compiler
