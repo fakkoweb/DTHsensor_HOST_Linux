@@ -54,9 +54,8 @@ int main(int argc, char* argv[])
 			cout<<"Procedura di lettura iniziata."<<endl;
 			do
 			{
-				status=usb.read_show();
-				p_sleep(3000);
-				cout<<status<<endl;
+				status=usb.read_show(10,1000);
+				cout<<"Status ricevuto dalla read= "<<status<<endl;
 			}while(status!=ABORTED && status!=ERROR);	// Ferma il loop di lettura da console
 		}
 	
@@ -67,6 +66,11 @@ int main(int argc, char* argv[])
 	
 	
 	} while(status!=ABORTED);
+	
+	
+	cout<<"La ricerca periferica si riavvierà fra 5 secondi..."<<endl;
+	p_sleep(5000);
+	
 			
 	return 0;
 	//viene chiamato il distruttore di usb

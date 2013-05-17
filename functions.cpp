@@ -75,13 +75,15 @@ int control::scan()
 		
 }
 
-int control :: read_show()		//uses recv_measure() and displays/uses its result
+int control::read_show(const unsigned int times, const unsigned int delay)		//uses recv_measure() and displays/uses its result
 {
+	unsigned int i=0;
 	int status=ERROR;
 	measure_struct misura;
 	
 	cout<<"Inizio apertura device..."<<endl;
 	hid_device* handle = hid_open(MY_VID, MY_PID, NULL);		//Device in uso (puntatore alla handle del kernel)
+	
 	if (handle == NULL)
 	{
 		cout<<"Errore nell'apertura della device!"<<endl;
@@ -90,14 +92,23 @@ int control :: read_show()		//uses recv_measure() and displays/uses its result
 	else
 	{
 		cout<<"Periferica aperta!"<<endl;
-		cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
-		status=recv_measure(handle,misura);
-		if(status==ERROR || status==ABORTED) cout<<"| Errore o lettura abortita dal'utente. Codice: "<<status<<endl;
-		else cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;
+		
+		for(i=0;i<times && status!=ERROR && status!=ABORTED;i++)
+		{
+			cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
+			status=recv_measure(handle,misura);
+			if(status==ERROR) cout<<"| Errore: lettura abortita. Codice: "<<status<<endl;
+			else if(status==ABORTED) cout<<"| Lettura abortita dall'utente. Codice: "<<status<<endl;
+			else
+			{
+				cout<<"| Lettura effettuata.\n|   Polvere: "<<misura.dust<<"\n|   Temperatura: "<<misura.temp<<"\n|   Umidità: "<<misura.humid<<endl;	
+				p_sleep(delay);
+			}
+		}
+
+		hid_close(handle);
+		cout<<"Device chiusa."<<endl;
 	}
-	
-	hid_close(handle);
-	cout<<"Device chiusa."<<endl;
 
 	return status;	
 
