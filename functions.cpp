@@ -1,8 +1,8 @@
 
 #include "control.h"
 #include "hidapi.h"
-
-
+#include "curl/curl.h"
+#include "json.h"
 
 int control::scan()
 {

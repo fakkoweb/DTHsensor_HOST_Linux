@@ -32,6 +32,7 @@
 
 #include "hidapi.h"
 
+
 using namespace std;
 
 
@@ -50,6 +51,7 @@ void p_sleep(unsigned milliseconds);
 class control
 {
 	private:
+		//CONTROLLO CONSOLE
 		//Attributi della classe specifici per il controllo
 		char new_terminal_path[13];
 		ofstream* new_terminal_out;
@@ -65,8 +67,14 @@ class control
 		//Funzione per il controllo (thread di debug)
 		void open_console();
 		
-		//Funzioni nascoste per usb
-		int recv_measure(hid_device* d, measure_struct &m);
+		
+		//PROGRAMMA
+		//Variabili interne
+		
+		
+		//Funzioni interne
+		int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+		
 		
 	public:
 		

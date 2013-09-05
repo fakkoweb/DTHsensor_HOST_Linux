@@ -36,7 +36,7 @@ control::control()
 		cout<<"Apertura console "<<fav_terminal<<endl;
 		
 		
-		//CALL OF THE TERMINAL - stub process
+		//CALL OF THE TERMINAL - Apre una finestra "terminale" su cui mandare l'output del cout
 		execvp(fav_terminal,arg);  			// eseguo il comando: nuova finestra terminal aperta.
 								// Su questa verrà redirezionato l'output standard (cout<<)
 		
@@ -48,11 +48,13 @@ control::control()
 		p_sleep(2000);        
 		        
 		
-		//CALL OF THE CONSOLE - 2nd thread
+		
+		//CALL OF THE CONSOLE - Avvia il thread console
 		c= new thread (&control::open_console,this);	// Per eseguire open_console() è richiesto this quando è un
 								// metodo della classe stessa
 
 
+		//REDIREZIONE STANDARD OUTPUT (cout) PER IL THREAD PRINCIPALE verso la nuova finestra!!
 		//Queste righe ottengono il percorso del terminale principale (può cambiare da sistema a sistema)
 		char main_terminal_path[30];
 		sprintf(main_terminal_path, "%s", ttyname(0));
@@ -69,13 +71,16 @@ control::control()
 		sprintf(new_terminal_path, "/dev/pts/%d", num_main_terminal+2);
 		//cout<<"Nuovo terminale: "<<new_terminal_path<<endl;
 		
-    	
-		//REDIREZIONE STANDARD OUTPUT (cout) PER IL THREAD PRINCIPALE verso la nuova finestra!!
 		new_terminal_out= new ofstream (new_terminal_path,ios::out);		//Nuovo oggetto stream in uscita (associato alla nuovo terminale)
 		//streambuf* main_window_stream_backup = cout.rdbuf();			//Backup dello stream corrente di cout (per ora non necessario)	
 		cout.rdbuf(new_terminal_out->rdbuf());					//Redirect cout a new_terminal_out
 		cout<<"\n\n LOG \n-----"<<endl;
-		//cout.rdbuf(main_window); 						//Decommenta questa istruzione (e quella sopra) per ripristinare il backup
+		//cout.rdbuf(main_window);						//Decommenta questa istruzione (e quella sopra) per ripristinare il backup
+		
+		
+		
+		
+
 	}
 	
 }
@@ -146,6 +151,8 @@ void control::open_console()
 
 control::~control()
 {
+
+	
 	
 	if( console_is_open() ) cout<<"Confermare la chiusura programma da console con 'quit'."<<endl;
 	c->join();

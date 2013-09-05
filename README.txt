@@ -1,6 +1,15 @@
+PROGETTO
+------------------
+Il progetto usa le librerie (da installare nel sistema):
+1- libusb-1.0
+2- libcurl-7.32
+e contiene le librerie (incluse nella distro)
+3- hidapi (wrapper delle libusb per HID)
+4- jsoncpp
+
+
 STRUTTURA DEI FILE
 ------------------
-
 
 makefile è il file che contiene le direttive per la compilazione (flag, librerie ecc.)
 main.cpp è il file che implementa il progetto
