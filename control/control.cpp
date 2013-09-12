@@ -1,5 +1,6 @@
 
 #include "control.h"
+#include "curl/curl.h"
 #include <map>
 
 
@@ -18,6 +19,11 @@ control::control()
 {
 	stop = false;
 	keep_console = true;
+
+
+	//Init CURL library
+	curl_global_init(CURL_GLOBAL_ALL);
+
 
 	//Creazione del processo "finestra"
 	window=vfork();
@@ -164,6 +170,10 @@ control::~control()
 	int s;
 	wait(&s);
 	//Manca il controllo sulla chiusura della finestra...
+	
+	
+	//Deallocate CURL library
+	curl_global_cleanup();
 	
 
 }
