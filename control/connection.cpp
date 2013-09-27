@@ -90,8 +90,9 @@ int http_post(const string url, const string json)
 	CURL* easyhandle;
 	//FILE* json;
 	CURLcode res;
-
-	void* dataptr=NULL;
+    //void* dataptr=NULL;
+    
+    /* Set a list of custom headers */
 	struct curl_slist *headers=NULL;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 
@@ -109,13 +110,13 @@ int http_post(const string url, const string json)
 		 }
 		 */
 
-		  /* set URL to post */ 
-		  curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
+		 /* set URL to post */ 
+		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 
-		 /* post binary data */  
+		 /* set binary data to post*/  
 		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json.c_str() );
 
-		 /* set the size of the postfields data */  
+		 /* set the size of the postfields data (-1 means "use strlen() to calculate it) */  
 		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, -1);
 
 		 /* pass our list of custom made headers */  
@@ -140,28 +141,36 @@ int send_report()
 {
 
 	string url;
-	Json::Value root;   // will contain the root value after parsing.
-	Json::Writer writer;
+	Json::Value payload;   // Json works like a tree: an attribute may contain a value or
+	                       // a subset of attributes with its values and so on.
+	                       // A Json::Value will contain the root value after parsing.
 	
 	// Since Json::Value has implicit constructor for all value types, it is not
 	// necessary to explicitly construct the Json::Value object:
-	root["encoding"] = getCurrentEncoding();
-	root["indent"]["length"] = getCurrentIndentLength();
-	root["indent"]["use_space"] = getCurrentIndentUseSpace();
+	payload["encoding"] = getCurrentEncoding();
+	payload["indent"]["length"] = getCurrentIndentLength();
+	payload["indent"]["use_space"] = getCurrentIndentUseSpace();
+  
+	  
+	
+	Json::FastWriter writer;   // Json::Writer contains functions to "write" a Json::Value
+	                           // structure to a string (not human readable)
+	string json = writer.write( payload );
 
-	Json::StyledWriter writer;
-	// Make a new JSON document for the configuration. Preserve original comments.
-	string json = writer.write( root );
 
+    //Send json via POST method
 	http_post(url,json);
 
+
+
+    /* MORE...
 	// You can also use streams.  This will put the contents of any JSON
 	// stream at a particular sub-value, if you'd like.
-	std::cin >> root["subtree"];
+	std::cin >> payload["subtree"];
 
 	// And you can write to a stream, using the StyledWriter automatically.
-	std::cout << root;
-
+	std::cout << payload;
+    */
 
 
 

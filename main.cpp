@@ -21,7 +21,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	int status;
-	control usb;		//////////////////////////CLASSE CONTROL////////////////////////////
+	control program;		//////////////////////////CLASSE CONTROL////////////////////////////
 				// La classe Control contiene:
 				//	- TUTTE le funzioni() USB del programma (per il momento è l'unica)
 				//	- una console utente per controllare e interagire con le funzioni attraverso flag
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 	do{
 
 		cout<<"Procedura scansione usb iniziata."<<endl;			
-		status=usb.scan();	// Scansiona le periferiche usb fino a che:
+		status=usb::scan();	// Scansiona le periferiche usb fino a che:
 					//	- individua una periferica con VID e PID noti (manca il valore di ritorno)
 					//	- la procedura è interrotta dall'utente
 					// Ritorna l'esito funzione nel codice espresso in control.h
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 			cout<<"Procedura di lettura iniziata."<<endl;
 			do
 			{
-				status=usb.read_show(10,1000);
+				status=usb::read_show(10,1000);
 				cout<<"Status ricevuto dalla read= "<<status<<endl;
 			}while(status!=ABORTED && status!=ERROR);	// Ferma il loop di lettura da console
 		}

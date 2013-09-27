@@ -4,7 +4,7 @@
 #include "curl/curl.h"
 #include "json.h"
 
-int control::scan()
+int usb::scan()
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
 	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
@@ -75,7 +75,7 @@ int control::scan()
 		
 }
 
-int control::read_show(const unsigned int times, const unsigned int delay)		//uses recv_measure() and displays/uses its result
+int usb::read_show(const unsigned int times, const unsigned int delay)		//uses recv_measure() and displays/uses its result
 {
 	unsigned int i=0;
 	int status=ERROR;
@@ -96,7 +96,7 @@ int control::read_show(const unsigned int times, const unsigned int delay)		//us
 		for(i=0;i<times && status!=ERROR && status!=ABORTED;i++)
 		{
 			cout<<"| Lettura da "<<handle<<" in corso..."<<endl;
-			status=recv_measure(handle,misura);
+			status=usb::recv_measure(handle,misura);
 			if(status==ERROR) cout<<"| Errore: lettura abortita. Codice: "<<status<<endl;
 			else if(status==ABORTED) cout<<"| Lettura abortita dall'utente. Codice: "<<status<<endl;
 			else
@@ -115,7 +115,7 @@ int control::read_show(const unsigned int times, const unsigned int delay)		//us
 }
 
 
-int control::recv_measure(hid_device* d, measure_struct& m)	//copies device format data into measure_struct data type
+int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format data into measure_struct data type
 {	
 	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
 	unsigned char buf[bytes_to_read];

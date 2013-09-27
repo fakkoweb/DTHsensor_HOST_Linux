@@ -40,14 +40,45 @@ using namespace std;
 
 typedef struct _MEASURE_STRUCT
 {
-	unsigned short int dust;
+	short int dust;
 	short int temp;			//unsigned??
-	unsigned short int humid;
+	short int humid;
 } measure_struct;
 
 void p_sleep(unsigned milliseconds);
 
 
+//CLASSE NON ISTANZIABILE
+//Contiene tutte le funzioni relative a USB
+class usb
+{
+    private:
+        usb();
+        
+    public:
+    	//Funzioni usb
+		int scan();
+		int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+		
+		//Debug
+		int read_show(const unsigned int times, const unsigned int delay);
+
+    
+}
+
+
+class sensor
+{
+    private:
+        m_buffer[5];
+        m_last;
+    
+    
+}
+
+
+//DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
+//Inizializza e dealloca tutte le variabili dell'ambiente e il debug
 class control
 {
 	private:
@@ -68,20 +99,12 @@ class control
 		void open_console();
 		
 		
-		//PROGRAMMA
-		//Variabili interne
-		
-		
-		//Funzioni interne
-		int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
-		
-		
 	public:
 		
-		//Membri della classe specifici per il controllo
 		control();
 		~control();
 		
+		//Membri della classe specifici per il controllo
 		void set_stop(bool value){ lock_guard<mutex> access(rw); stop=value; };
 		bool get_stop(){ lock_guard<mutex> access(rw); return stop; };
 		void close_console(){ lock_guard<mutex> access(rw); keep_console=false; };
@@ -89,11 +112,7 @@ class control
 		void set_state(int value){ lock_guard<mutex> access(rw); state=value; };
 		int get_state(){ lock_guard<mutex> access(rw); return state; };
 
-		//Funzioni del programma
-		int scan();
-		int read_show(const unsigned int times, const unsigned int delay);
-			
-	
+
 };
 
 
