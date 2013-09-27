@@ -64,9 +64,10 @@ class usb
 		int read_show(const unsigned int times, const unsigned int delay);
 
     
-}
+};
 
 
+/*
 class sensor
 {
     private:
@@ -74,8 +75,8 @@ class sensor
         m_last;
     
     
-}
-
+};
+*/
 
 //DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
 //Inizializza e dealloca tutte le variabili dell'ambiente e il debug
