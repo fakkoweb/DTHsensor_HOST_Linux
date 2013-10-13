@@ -37,7 +37,6 @@ using namespace std;
 
 
 
-
 typedef struct _MEASURE_STRUCT
 {
 	short int dust;
@@ -48,37 +47,130 @@ typedef struct _MEASURE_STRUCT
 void p_sleep(unsigned milliseconds);
 
 
-//CLASSE NON ISTANZIABILE
-//Contiene tutte le funzioni relative a USB
-class usb
+class Driver
 {
+            
     private:
-        usb();
+        int request_delay;
+       
+        
+    protected:
+        Driver() {};                   // Constructor? (the {} brackets) are needed here.
+        // Dont forget to declare these two. You want to make sure they
+        // are unaccessable otherwise you may accidently get copies of
+        // your singleton appearing.
+        Driver(Driver const&);              // Don't Implement
+        void operator=(Driver const&); // Don't implement
+
         
     public:
-    	//Funzioni usb
-		int scan();
-		int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
-		
-		//Debug
-		int read_show(const unsigned int times, const unsigned int delay);
+        static Driver& init()           //E' static solo perché restituisce una variabile statica
+        {
+            static Driver only_instance; // Si usa static così si garantisce la distruzione a fine esecuzione.
+                                         // Instantiated on first use.
+            return only_instance;
+        }
+        virtual short int request() = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
 
-    
+
 };
 
 
-/*
-class sensor
+
+//CLASSE NON ISTANZIABILE
+//Contiene tutte le funzioni relative a USB
+class Usb : public Driver
 {
     private:
-        m_buffer[5];
-        m_last;
+        measure_struct external;    //last raw data extracted
+        
+    public:
+        virtual short int request();
     
+    	//Funzioni generiche usb
+		int scan();
+		
+		
+		//VECCHIE FUNZ.
+		static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+		
+		//Debug
+		static int read_show(const unsigned int times, const unsigned int delay);
+
     
 };
-*/
 
-//DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
+
+//CLASSE NON INSTANZIABILE
+//Contiene tutte le funzioni relative a RASP
+class Raspberry : public Driver
+{
+    private:
+        measure_struct internal;    //last raw data extracted
+        
+    public:
+        virtual short int request();
+        //Funzioni generiche raspberry
+        
+        
+        //VECCHIE FUNZ.
+    	static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+
+};
+
+
+
+class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiated!
+{
+    private:
+        const int type;                         //Distingue il tipo di sensore (serve alla recv_measure)
+        short int raw_buffer[SENSOR_BUFFER];
+        float format_buffer[SENSOR_BUFFER];
+        const int refresh_rate;                 //Ogni quanto viene effettivamente richiesta una nuova misura
+                                                //Se il pooling è attivo, è automatico, altrimenti è il tempo minimo
+                                                //tra una richiesta manuale e un'altra.
+        int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
+                                                //se è effettivamente nuova oppure no.
+        Driver* board;
+        
+        virtual float convert(short int) = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
+        virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
+
+    public:
+        Sensor():refresh_rate(SENSOR_REFRESH_RATE);
+        float get_measure();                    //If c
+        float get_measure(int index);
+        //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
+                            //can be called manually or periodically by a thread!
+        int plug_to(Driver * new_board);
+    
+};
+
+class TempSensor : public Sensor
+{
+    private:
+        virtual float convert(short int);
+    public:
+        TempSensor() : type(TEMP){};
+}
+class HumidSensor : public Sensor
+{
+    private:
+        virtual float convert(short int);
+    public:
+        TempSensor() : type(HUMID){};
+}
+
+class DustSensor : public Sensor
+{
+    protected:
+        virtual float convert(short int);
+    public:
+        TempSensor() : type(DUST){};
+}
+
+
+// DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
 //Inizializza e dealloca tutte le variabili dell'ambiente e il debug
 class control
 {
@@ -111,7 +203,7 @@ class control
 		void close_console(){ lock_guard<mutex> access(rw); keep_console=false; };
 		bool console_is_open(){ lock_guard<mutex> access(rw); return keep_console; };
 		void set_state(int value){ lock_guard<mutex> access(rw); state=value; };
-		int get_state(){ lock_guard<mutex> access(rw); return state; };
+		int get_state(){ lock_guard<mutex> access(rw); int old_state=state; state=false; return old_state; };
 
 
 };

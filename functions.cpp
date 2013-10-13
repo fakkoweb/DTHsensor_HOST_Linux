@@ -56,7 +56,7 @@ int usb::scan()
 			trovata=true;		//*x* Forza trovata=true per uscire dal ciclo
 			cout<<".....scan aborted by user....."<<endl;
 			esito_funzione=ABORTED;
-			set_stop(false);	//Resetta il flag
+			//set_stop(false);	//Resetta il flag
 		}
 						
 		//Se STOP è falso e trovata è falso aspetta 3 secondi prima di effettuare una nuova scansione
@@ -136,7 +136,7 @@ int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format d
 	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
 	{
 		result=ABORTED;
-		set_stop(false);		//Resetta il flag
+		//set_stop(false);		//Resetta il flag
 	}
 	else if (bytes_read==bytes_to_read)
 	{

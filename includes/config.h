@@ -14,9 +14,21 @@
 #define ERROR	-1
 #define NICE	0
 #define ABORTED	1
+/*
 #define DUST_UNDEF	21	//Ok with warnings
 #define TEMP_UNDEF	22
 #define HUMID_UNDEF	23
+*/
+
+//Costanti per distinguere i tipi di sensori
+#define TEMP    1
+#define HUMID   2
+#define DUST    3
+
+//Costanti per il prelievo misure
+#define SENSOR_BUFFER   30  //in numero di misure
+#define NEW_JSON_SEND   5   //in minuti
+#define SENSOR_REFRESH_RATE 5   //in secondi
 
 #define HOST_THREADS		//Commenta per disabilitare il supporto thread (c++11)
 

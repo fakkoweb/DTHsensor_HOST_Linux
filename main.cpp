@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
 				// NOTA: la classe funziona solo su sistemi UNIX (per via della vfork() e della kill())
 				
 
+
+    //LOOP DI PROVA
 	do{
 
 		cout<<"Procedura scansione usb iniziata."<<endl;			
@@ -66,6 +68,37 @@ int main(int argc, char* argv[])
 	
 	
 	} while(status!=ABORTED);
+	
+	
+	
+	//IDLE LOOP
+	measure_struct outer, inner;
+	
+	cout<<"Procedura scansione usb iniziata."<<endl;			
+	status=usb::scan();	// Scansiona le periferiche usb fino a che:
+    					//	- individua una periferica con VID e PID noti (manca il valore di ritorno)
+    					//	- la procedura è interrotta dall'utente
+    					// Ritorna l'esito funzione nel codice espresso in control.h
+    	
+	if(status==NICE)
+	{
+	    hid_device* handle = hid_open(MY_VID, MY_PID, NULL);
+	    do{
+
+		    cout<<"Procedura di lettura usb"<<endl;
+		    if ( usb::recv_measure(handle, outer) == NICE && rasp::recv_measure(inner) == NICE )
+		    {
+				convert(outer);
+				convert(inner);
+				send_report();
+				if( program.get_stop() ) status=ABORTED;
+			}
+			else status=ERROR;
+			
+		} while(status!=ABORTED);
+	
+	}
+
 	
 	
 	cout<<"La ricerca periferica si riavvierà fra 5 secondi..."<<endl;
