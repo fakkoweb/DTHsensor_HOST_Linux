@@ -37,6 +37,9 @@ using namespace std;
 
 
 
+typedef short int (*driver_call)();
+
+
 typedef struct _MEASURE_STRUCT
 {
 	short int dust;
@@ -56,7 +59,7 @@ class Driver
     public:
 
         static virtual short int request()=0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
-
+        static virtual driver_call isr()=0;
 
 };
 
@@ -66,11 +69,15 @@ class Driver
 //Contiene tutte le funzioni relative a USB
 class Usb : public Driver
 {
+    private:
+        Usb();
+    
     protected:
         static measure_struct external;    //last raw data extracted
         
     public:
         static virtual short int request();
+        static virtual driver_call isr(){return request;};
     
     	//Funzioni generiche usb
 		static int scan();
@@ -90,11 +97,15 @@ class Usb : public Driver
 //Contiene tutte le funzioni relative a RASP
 class Raspberry : public Driver
 {
+    private:
+        Raspberry();
+    
     protected:
         static measure_struct internal;    //last raw data extracted
         
     public:
         static virtual short int request();
+        static virtual driver_call isr(){return request;};        
         //Funzioni generiche raspberry
         
         
@@ -116,7 +127,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
                                                 //tra una richiesta manuale e un'altra.
         int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
                                                 //se è effettivamente nuova oppure no.
-        Driver* board;
+        driver_call board;
         
         virtual float convert(short int) = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
         virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
@@ -127,7 +138,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         float get_measure(int index);
         //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
                             //can be called manually or periodically by a thread!
-        int plug_to(Driver * new_board);
+        void plug_to(const driver_call new_board){board=new_board;};
     
 };
 

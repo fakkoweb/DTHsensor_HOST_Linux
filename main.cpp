@@ -20,6 +20,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    
+    TempSensor exttemp;
+    exttemp.plug_to(Raspberry::isr());
+    
+    
+    
 	int status;
 	control program;		//////////////////////////CLASSE CONTROL////////////////////////////
 				// La classe Control contiene:
