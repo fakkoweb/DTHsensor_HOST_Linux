@@ -50,27 +50,12 @@ void p_sleep(unsigned milliseconds);
 class Driver
 {
             
-    private:
-        int request_delay;
-       
-        
     protected:
-        Driver() {};                   // Constructor? (the {} brackets) are needed here.
-        // Dont forget to declare these two. You want to make sure they
-        // are unaccessable otherwise you may accidently get copies of
-        // your singleton appearing.
-        Driver(Driver const&);              // Don't Implement
-        void operator=(Driver const&); // Don't implement
+        int request_delay;
 
-        
     public:
-        static Driver& init()           //E' static solo perché restituisce una variabile statica
-        {
-            static Driver only_instance; // Si usa static così si garantisce la distruzione a fine esecuzione.
-                                         // Instantiated on first use.
-            return only_instance;
-        }
-        virtual short int request() = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
+
+        static virtual short int request()=0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
 
 
 };
@@ -81,14 +66,14 @@ class Driver
 //Contiene tutte le funzioni relative a USB
 class Usb : public Driver
 {
-    private:
-        measure_struct external;    //last raw data extracted
+    protected:
+        static measure_struct external;    //last raw data extracted
         
     public:
-        virtual short int request();
+        static virtual short int request();
     
     	//Funzioni generiche usb
-		int scan();
+		static int scan();
 		
 		
 		//VECCHIE FUNZ.
@@ -105,11 +90,11 @@ class Usb : public Driver
 //Contiene tutte le funzioni relative a RASP
 class Raspberry : public Driver
 {
-    private:
-        measure_struct internal;    //last raw data extracted
+    protected:
+        static measure_struct internal;    //last raw data extracted
         
     public:
-        virtual short int request();
+        static virtual short int request();
         //Funzioni generiche raspberry
         
         
@@ -122,7 +107,7 @@ class Raspberry : public Driver
 
 class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiated!
 {
-    private:
+    protected:
         const int type;                         //Distingue il tipo di sensore (serve alla recv_measure)
         short int raw_buffer[SENSOR_BUFFER];
         float format_buffer[SENSOR_BUFFER];
@@ -148,18 +133,19 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
 
 class TempSensor : public Sensor
 {
-    private:
+    protected:
         virtual float convert(short int);
     public:
         TempSensor() : type(TEMP){};
-}
+};
+
 class HumidSensor : public Sensor
 {
-    private:
+    protected:
         virtual float convert(short int);
     public:
         TempSensor() : type(HUMID){};
-}
+};
 
 class DustSensor : public Sensor
 {
@@ -167,7 +153,7 @@ class DustSensor : public Sensor
         virtual float convert(short int);
     public:
         TempSensor() : type(DUST){};
-}
+};
 
 
 // DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
