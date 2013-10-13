@@ -13,7 +13,7 @@ void p_sleep(unsigned milliseconds)			// p_sleep è compatibile per windows e li
 			#endif
 		}
 		
-
+/*
 
 control::control()
 {
@@ -179,3 +179,4 @@ control::~control()
 }
 
 
+*/
