@@ -50,7 +50,7 @@ typedef struct _MEASURE_STRUCT
 void p_sleep(unsigned milliseconds);
 
 
-
+/* COME REALIZZO UNA INTERFACCIA PER USB, RASPBERRY ed altri driver?? (la classe è statica non si può usare virtual!)
 class Driver
 {
 
@@ -67,18 +67,18 @@ class Driver
 
 };
 //NON SI PUO' USARE PERCHE: non si può fare una interfaccia per le classi static, non si può fare static un singleton
-
+*/
 
 
 //CLASSE NON ISTANZIABILE
 //Contiene tutte le funzioni relative a USB
-class Usb : public Driver
+class Usb
 {
     private:
         Usb();
     
     protected:
-        //static int request_delay;
+        static int request_delay;
         static measure_struct external;    //last raw data extracted
         
     public:
@@ -102,13 +102,13 @@ class Usb : public Driver
 
 //CLASSE NON INSTANZIABILE
 //Contiene tutte le funzioni relative a RASP
-class Raspberry : public Driver
+class Raspberry
 {
     private:
         Raspberry();
     
     protected:
-        //static int request_delay;
+        static int request_delay;
         static measure_struct internal;    //last raw data extracted
         
     public:
