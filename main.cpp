@@ -22,8 +22,11 @@ int main(int argc, char* argv[])
 {
     
     TempSensor exttemp;
-    exttemp.plug_to(Raspberry::isr());
+    exttemp.plug_to(Usb::isr());
     exttemp.convert(1);
+    exttemp.plug_to(Driver::isr());
+    exttemp.convert(1);
+    
     
     
     /*

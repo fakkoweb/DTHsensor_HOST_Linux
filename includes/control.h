@@ -78,7 +78,7 @@ class Usb : public Driver
         Usb();
     
     protected:
-        static int request_delay;
+        //static int request_delay;
         static measure_struct external;    //last raw data extracted
         
     public:
@@ -102,13 +102,13 @@ class Usb : public Driver
 
 //CLASSE NON INSTANZIABILE
 //Contiene tutte le funzioni relative a RASP
-class Raspberry
+class Raspberry : public Driver
 {
     private:
         Raspberry();
     
     protected:
-        static int request_delay;
+        //static int request_delay;
         static measure_struct internal;    //last raw data extracted
         
     public:
