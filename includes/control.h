@@ -63,10 +63,10 @@ class Driver
     public:
 
         static short int request(){cout<<"Sono driver generico";};   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
-        static driver_call isr(){return null;};
+        static driver_call isr(){return NULL;};
 
 };
-NON SI PUO' USARE PERCHE: non si può fare una interfaccia per le classi static, non si può fare static un singleton
+//NON SI PUO' USARE PERCHE: non si può fare una interfaccia per le classi static, non si può fare static un singleton
 
 
 
@@ -127,10 +127,10 @@ class Raspberry
 class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiated!
 {
     protected:
-        const int type;                         //Distingue il tipo di sensore (serve alla recv_measure)
+        int type;                         //Distingue il tipo di sensore (serve alla recv_measure)
         short int raw_buffer[SENSOR_BUFFER];
         float format_buffer[SENSOR_BUFFER];
-        const int refresh_rate;                 //Ogni quanto viene effettivamente richiesta una nuova misura
+        int refresh_rate;                 //Ogni quanto viene effettivamente richiesta una nuova misura
                                                 //Se il pooling è attivo, è automatico, altrimenti è il tempo minimo
                                                 //tra una richiesta manuale e un'altra.
         int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
@@ -141,7 +141,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
 
     public:
-        Sensor():refresh_rate(SENSOR_REFRESH_RATE){};
+        Sensor(){refresh_rate=SENSOR_REFRESH_RATE;type=UNDEF;};
         float get_measure();                    //If c
         float get_measure(int index);
         //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
@@ -155,7 +155,7 @@ class TempSensor : public Sensor
     protected:
         virtual float convert(short int);
     public:
-        TempSensor() : type(TEMP){};
+        TempSensor(){type=TEMP;};
 };
 
 class HumidSensor : public Sensor
@@ -163,7 +163,7 @@ class HumidSensor : public Sensor
     protected:
         virtual float convert(short int);
     public:
-        TempSensor() : type(HUMID){};
+        HumidSensor(){type=HUMID;};
 };
 
 class DustSensor : public Sensor
@@ -171,7 +171,7 @@ class DustSensor : public Sensor
     protected:
         virtual float convert(short int);
     public:
-        TempSensor() : type(DUST){};
+        DustSensor(){type=DUST;};
 };
 
 

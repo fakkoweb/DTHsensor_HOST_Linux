@@ -21,6 +21,7 @@
 */
 
 //Costanti per distinguere i tipi di sensori
+#define UNDEF   0
 #define TEMP    1
 #define HUMID   2
 #define DUST    3
@@ -28,7 +29,7 @@
 //Costanti per il prelievo misure
 #define SENSOR_BUFFER   30  //in numero di misure
 #define NEW_JSON_SEND   5   //in minuti
-#define SENSOR_REFRESH_RATE 5   //in secondi
+#define SENSOR_REFRESH_RATE     5   //in secondi
 
 #define HOST_THREADS		//Commenta per disabilitare il supporto thread (c++11)
 
