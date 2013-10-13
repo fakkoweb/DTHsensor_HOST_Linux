@@ -1,5 +1,6 @@
 #include "control.h"
 #include "curl/curl.h"
+#include "json.h"
 
 
 //Curl chiama questa routine (personalizzabile) per ogni "receive" che fa
@@ -147,9 +148,9 @@ int send_report()
 	
 	// Since Json::Value has implicit constructor for all value types, it is not
 	// necessary to explicitly construct the Json::Value object:
-	payload["encoding"] = getCurrentEncoding();
-	payload["indent"]["length"] = getCurrentIndentLength();
-	payload["indent"]["use_space"] = getCurrentIndentUseSpace();
+	//payload["encoding"] = getCurrentEncoding();
+	//payload["indent"]["length"] = getCurrentIndentLength();
+	//payload["indent"]["use_space"] = getCurrentIndentUseSpace();
   
 	  
 	
