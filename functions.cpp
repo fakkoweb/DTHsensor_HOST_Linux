@@ -4,7 +4,9 @@
 #include "curl/curl.h"
 #include "json.h"
 
-int usb::scan()
+/*
+
+int Usb::scan()
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
 	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
@@ -24,10 +26,10 @@ int usb::scan()
 			if(curr_dev->vendor_id == MY_VID && curr_dev->product_id == MY_PID)
 			{
 				
-				/*
-				cout<<"Device "<<++i<<" trovata!"<<endl;
-				cout<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
-				*/
+				
+				//cout<<"Device "<<++i<<" trovata!"<<endl;
+				//cout<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
+				
 				cout<<"Device "<<++i<<" riconosciuta!"<<endl;
 				cout<<"|  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
 				cout<<"|  Path: "<<curr_dev->path<<"\n|  serial_number: "<<curr_dev->serial_number<<endl;
@@ -147,4 +149,4 @@ int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format d
 	return result;				//Qui ERROR è ritornato solo se avviene un comportamento inaspettato.
 
 }
-	
+*/	

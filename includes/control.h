@@ -86,14 +86,14 @@ class Usb : public Driver
         static driver_call isr(){return static_cast<driver_call>(request);};
     
     	//Funzioni generiche usb
-		static int scan();
+		//static int scan();
 		
 		
 		//VECCHIE FUNZ.
-		static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+		//static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
 		
 		//Debug
-		static int read_show(const unsigned int times, const unsigned int delay);
+		//static int read_show(const unsigned int times, const unsigned int delay);
 
     
 };
@@ -118,7 +118,7 @@ class Raspberry
         
         
         //VECCHIE FUNZ.
-    	static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
+    	//static int recv_measure(hid_device* d, measure_struct &m);	//riceve una singola misura da device usb
 
 };
 
@@ -136,14 +136,14 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
                                                 //se è effettivamente nuova oppure no.
         driver_call board;
-        
+    public:        
         virtual float convert(short int) = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
-        virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
+        //virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
 
-    public:
+
         Sensor(){refresh_rate=SENSOR_REFRESH_RATE;type=UNDEF;};
-        float get_measure();                    //If c
-        float get_measure(int index);
+        //float get_measure();                    
+        //float get_measure(int index);
         //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
                             //can be called manually or periodically by a thread!
         void plug_to(const driver_call new_board){board=new_board;};
@@ -152,16 +152,17 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
 
 class TempSensor : public Sensor
 {
-    protected:
-        virtual float convert(short int);
+
     public:
         TempSensor(){type=TEMP;};
+    //protected:
+        virtual float convert(short int){(*board)();};        
 };
 
 class HumidSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);
+        virtual float convert(short int){cout<<"convertita";};
     public:
         HumidSensor(){type=HUMID;};
 };
@@ -169,11 +170,11 @@ class HumidSensor : public Sensor
 class DustSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);
+        virtual float convert(short int){cout<<"convertita";};
     public:
         DustSensor(){type=DUST;};
 };
-
+/*
 
 // DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
 //Inizializza e dealloca tutte le variabili dell'ambiente e il debug
@@ -213,7 +214,7 @@ class control
 
 };
 
-
+*/
 
 /////////////////
 #endif

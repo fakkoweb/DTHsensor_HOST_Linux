@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
     
     TempSensor exttemp;
     exttemp.plug_to(Raspberry::isr());
+    exttemp.convert(1);
     
     
     /*
@@ -110,10 +111,11 @@ int main(int argc, char* argv[])
 	cout<<"La ricerca periferica si riavvierà fra 5 secondi..."<<endl;
 	p_sleep(5000);
 	
-			
+
+    */
+    
 	return 0;
 	//viene chiamato il distruttore di usb
 
-    */
 }
 
