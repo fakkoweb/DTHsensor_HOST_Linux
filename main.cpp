@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     exttemp.plug_to(Raspberry::isr());
     
     
-    
+    /*
 	int status;
 	control program;		//////////////////////////CLASSE CONTROL////////////////////////////
 				// La classe Control contiene:
@@ -114,5 +114,6 @@ int main(int argc, char* argv[])
 	return 0;
 	//viene chiamato il distruttore di usb
 
+    */
 }
 

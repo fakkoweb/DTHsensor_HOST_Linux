@@ -50,26 +50,29 @@ typedef struct _MEASURE_STRUCT
 void p_sleep(unsigned milliseconds);
 
 
-/*
+
 class Driver
 {
+
+    private:
+        Driver();
             
     protected:
-        int request_delay;
+        static int request_delay;
 
     public:
 
-        static virtual short int request()=0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
-        static virtual driver_call isr()=0;
+        static short int request(){cout<<"Sono driver generico";};   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
+        static driver_call isr(){return null;};
 
 };
 NON SI PUO' USARE PERCHE: non si può fare una interfaccia per le classi static, non si può fare static un singleton
-*/
+
 
 
 //CLASSE NON ISTANZIABILE
 //Contiene tutte le funzioni relative a USB
-class Usb
+class Usb : public Driver
 {
     private:
         Usb();
@@ -79,8 +82,8 @@ class Usb
         static measure_struct external;    //last raw data extracted
         
     public:
-        static virtual short int request();
-        static virtual driver_call isr(){return request;};
+        static short int request(){cout<<"Sono usb";};
+        static driver_call isr(){return static_cast<driver_call>(request);};
     
     	//Funzioni generiche usb
 		static int scan();
@@ -105,12 +108,12 @@ class Raspberry
         Raspberry();
     
     protected:
-        int request_delay;
+        static int request_delay;
         static measure_struct internal;    //last raw data extracted
         
     public:
-        static virtual short int request();
-        static virtual driver_call isr(){return request;};        
+        static short int request(){cout<<"Sono raspberry";};
+        static driver_call isr(){return static_cast<driver_call>(request);};      
         //Funzioni generiche raspberry
         
         
@@ -138,7 +141,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
 
     public:
-        Sensor():refresh_rate(SENSOR_REFRESH_RATE);
+        Sensor():refresh_rate(SENSOR_REFRESH_RATE){};
         float get_measure();                    //If c
         float get_measure(int index);
         //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
