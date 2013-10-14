@@ -76,17 +76,25 @@ class Usb
 {
     private:
         Usb();
-    
-    protected:
-        static int request_delay;
-        static measure_struct external;    //last raw data extracted
+        static hid_device* d;                       //Selected hardware device via HID protocol
+        static int request_delay = HARDWARE_DELAY;  
+        static measure_struct m;                    //Contains last raw data extracted
+        
+        static int recv_measure();                  //Takes a new measure_struct from d via HID protocol from physical device
         
     public:
-        static short int request(){cout<<"Sono usb";};
-        static driver_call isr(){return static_cast<driver_call>(request);};
+        static void init(){
+            d=NULL;
+            request_delay=HARDWARE_DELAY;
+            m.temp=0;
+            m.humid=0;
+            m.dust=0;
+        };
+        static short int request(int type);         //TO IMPLEMENT!!! Calls recv_measure if request_delay has passed since last call
+        static driver_call isr(){ return static_cast<driver_call>(request); };
     
     	//Funzioni generiche usb
-		//static int scan();
+		static int scan();
 		
 		
 		//VECCHIE FUNZ.
@@ -106,14 +114,21 @@ class Raspberry
 {
     private:
         Raspberry();
-    
-    protected:
-        static int request_delay;
-        static measure_struct internal;    //last raw data extracted
+        static int request_delay;  
+        static measure_struct m;                    //Contains last raw data extracted
+        
+        static int recv_measure();                  //TO IMPLEMENT!! Takes a new measure_struct from physical device
         
     public:
-        static short int request(){cout<<"Sono raspberry";};
-        static driver_call isr(){return static_cast<driver_call>(request);};      
+        static void init(){
+            request_delay=HARDWARE_DELAY;
+            m.temp=0;
+            m.humid=0;
+            m.dust=0;
+        };
+        static short int request(int type);         //TO IMPLEMENT TIMER!! Calls recv_measure if request_delay has passed since last call
+        static driver_call isr(){ return static_cast<driver_call>(request); };      
+        
         //Funzioni generiche raspberry
         
         
@@ -127,26 +142,41 @@ class Raspberry
 class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiated!
 {
     protected:
-        int type;                         //Distingue il tipo di sensore (serve alla recv_measure)
+    
+        //BUFFERING STRUCTURES
         short int raw_buffer[SENSOR_BUFFER];
+        int last_raw_index;
         float format_buffer[SENSOR_BUFFER];
-        int refresh_rate;                 //Ogni quanto viene effettivamente richiesta una nuova misura
-                                                //Se il pooling è attivo, è automatico, altrimenti è il tempo minimo
-                                                //tra una richiesta manuale e un'altra.
+        int last_format_intex;
         int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
                                                 //se è effettivamente nuova oppure no.
-        driver_call board;
-    public:        
+        void raw_push(short int elem){ last_raw_index=(last_raw_index+1)%SENSOR_BUFFER; raw_buffer[last_raw_index]=elem; };
+        void format_push(float elem){ last_format_index=(last_format_index+1)%SENSOR_BUFFER; format_buffer[last_format_index]=elem; };
+        short int raw_top(){ return raw_buffer[last_raw_index]; };
+        float format_top(){ return format_buffer[last_format_index]; };
+        
+        //SAMPLING & CONVERSION
+        virtual void sample() = 0;              //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
         virtual float convert(short int) = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
-        //virtual float sample();                 //Chiamata da get_measure, semplicemente chiama request() di board.
-
-
-        Sensor(){refresh_rate=SENSOR_REFRESH_RATE;type=UNDEF;};
-        //float get_measure();                    
-        //float get_measure(int index);
-        //void refresh();     //pushes a new sample in raw_buffer and converts it in format_buffer
-                            //can be called manually or periodically by a thread!
-        void plug_to(const driver_call new_board){board=new_board;};
+        
+        //SENSOR CONTROL
+        driver_call board;                      //Puntatore restituito da isr() alla giusta funzione request() per chiedere il campione
+        bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
+        int min_sample_rate;                    //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
+                                                //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
+        void refresh();                         //IMPLEMENTARE!! Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
+                                                //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
+                                                //Se autorefresh è FALSE solo get_measure può chiamarla
+                                                //IMPLEMENTARE IL CONTROLLO TIMER
+        
+    public:  
+        Sensor():raw_buffer{0},format_buffer{0}{refresh_rate=SENSOR_REFRESH_RATE;last_measure_code=0;board=NULL;last_raw_index=0;last_format_index=0;autorefresh=false;};
+        Sensor(bool enable_autorefresh):raw_buffer{0},format_buffer{0}{refresh_rate=SENSOR_REFRESH_RATE;last_measure_code=0;board=NULL;last_raw_index=0;last_format_index=0;autorefresh=enable_autorefresh;};
+        float get_measure(int index=0);                                 //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
+                                                                        //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
+                                                                        //IMPLEMENTARE una versione che dia il measure_code della misura restituita!!
+        void display_measure(){cout<<get_measure()<<endl;};
+        void plug_to(const driver_call new_board){ if(board!=NULL) board=new_board; };  //Associa un driver (request()) al sensore virtuale da chiamare a ogni sample()
     
 };
 
@@ -154,27 +184,32 @@ class TempSensor : public Sensor
 {
 
     public:
-        TempSensor(){type=TEMP;};
-    //protected:
-        virtual float convert(short int){(*board)();};        
+        //TempSensor(){};
+    protected:
+        virtual short int sample(){ return (*board)(TEMPERATURE); };    //Chiamata da get_measure, semplicemente chiama request() di board.    
+        virtual float convert(short int);                               //TO IMPLEMENT!!
 };
 
 class HumidSensor : public Sensor
 {
     protected:
-        virtual float convert(short int){cout<<"convertita";};
+        virtual float convert(short int);                               //TO IMPLEMENT!!
+        virtual short int sample(){ return (*board)(HUMIDITY); };       //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        HumidSensor(){type=HUMID;};
+        HumidSensor(){};
 };
 
 class DustSensor : public Sensor
 {
     protected:
-        virtual float convert(short int){cout<<"convertita";};
+        virtual float convert(short int);                               //TO IMPLEMENT!!
+        virtual short int sample(){ return (*board)(DUST); };           //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        DustSensor(){type=DUST;};
+        DustSensor(){};
 };
 /*
+
+
 
 // DA ISTANZIARE UNA VOLTA ALL'INIZIO DEL MAIN
 //Inizializza e dealloca tutte le variabili dell'ambiente e il debug

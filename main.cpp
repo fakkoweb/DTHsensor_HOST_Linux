@@ -20,14 +20,26 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    Raspberry::init();
+    Usb::init();
     
-    TempSensor exttemp;
+    TempSensor exttemp,inttemp(false);
+    HumidSensor exthumid,inthumid;
+    DustSensor extdust;
     exttemp.plug_to(Usb::isr());
-    exttemp.convert(1);
-    exttemp.plug_to(Raspberry::isr());
-    exttemp.convert(1);
+    exthumid.plug_to(Usb::isr());
+    extdust.plug_to(Usb::isr());
+    inttemp.plug_to(Raspberry::isr());
+    inthumid.plug_to(Raspberry::isr());
     
+    Sensor* a[5];
+    a[0]=&exttemp;
+    a[1]=&exthumid;
+    a[2]=&extdust;
+    a[3]=&inttemp;
+    a[4]=&inthumid;
     
+    for(i=0;i<5;i++) a[i].display_measure();
     
     /*
 	int status;

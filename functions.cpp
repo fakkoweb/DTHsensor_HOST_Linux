@@ -4,9 +4,12 @@
 #include "curl/curl.h"
 #include "json.h"
 
-/*
 
-int Usb::scan()
+
+///////////////////////
+//USB DRIVER FUNCTIONS
+
+static int Usb::scan()
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
 	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
@@ -77,6 +80,8 @@ int Usb::scan()
 		
 }
 
+
+/*
 int usb::read_show(const unsigned int times, const unsigned int delay)		//uses recv_measure() and displays/uses its result
 {
 	unsigned int i=0;
@@ -115,9 +120,9 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 	return status;	
 
 }
+*/
 
-
-int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format data into measure_struct data type
+static int Usb::recv_measure()	//copies device format data into measure_struct data type
 {	
 	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
 	unsigned char buf[bytes_to_read];
@@ -133,8 +138,13 @@ int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format d
 			cout<<"  | "<<bytes_read<<" letti: ";
 			cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
 		}
-		if (bytes_read == -1) cout<<"  | ERRORE: Periferica non pronta!"<<endl;
+		if (bytes_read == -1)
+		{
+		    cout<<"  | ERRORE: Periferica non pronta!"<<endl;
+		    d=NULL;             //Resets handle
+		}
 	}
+	
 	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
 	{
 		result=ABORTED;
@@ -149,4 +159,128 @@ int usb::recv_measure(hid_device* d, measure_struct& m)	//copies device format d
 	return result;				//Qui ERROR è ritornato solo se avviene un comportamento inaspettato.
 
 }
-*/	
+	
+	
+
+static short int Usb::request(int type)
+{
+    short int measure=0;
+    
+    switch ( type ) {
+    case TEMPERATURE:
+      measure=m.temp;
+      break;
+    case HUMIDITY:
+      measure=m.humid;
+      break;
+    case DUST;
+      measure=m.dust;
+      break;
+    default:
+      break;
+    }
+        
+    return measure;
+    
+}
+
+
+
+/////////////////////////////
+//RASPBERRY DRIVER FUNCTIONS
+
+static int Raspberry::recv_measure()
+{
+    //???
+    //m.temp? m.humid?
+}
+
+
+
+static short int Raspberry::request(int type)
+{
+    short int measure=0;
+    
+    switch ( type ) {
+    case TEMPERATURE:
+      measure=m.temp;
+      break;
+    case HUMIDITY:
+      measure=m.humid;
+      break;
+    case DUST;
+      measure=m.dust;
+      break;
+    default:
+      break;
+    }
+        
+    return measure;
+    
+}
+
+
+
+
+
+////////////////////////////
+//VIRTUAL SENSORS FUNCTIONS
+void Sensor::refresh()
+{
+    do
+    {
+        
+        raw_push(sample());
+        format_push(convert(raw_top()));
+        
+    }while(autorefresh);
+    
+    // if(autorefresh) p_sleep(1000);
+    
+}
+
+
+float Sensor::get_measure(int index=0)  //index=n of samples ago ---> 0 is last sample
+{
+    int location;
+    if(!autorefresh) refresh();         //on demand refresh if autorefresh is FALSE
+    if(index<SENSOR_BUFFER && index>=0)
+    {
+        if(index>last_format_index) location=SENSOR_BUFFER-(index-last_format_index);
+        else location=(last_format_index-index)%SENSOR_BUFFER;
+        return format_buffer[location];
+    }
+    else return 0;
+}
+
+float TempSensor::convert(short int raw)
+{
+    //short int raw_top() --> CONVERT --> format_push(float)
+    
+    
+    
+    
+}
+
+float HumidSensor::convert(short int raw)
+{
+    //short int raw_top() --> CONVERT --> format_push(float)
+    
+    
+    
+    
+}
+
+
+float DustSensor::convert(short int raw)
+{
+    //short int raw_top() --> CONVERT --> format_push(float)
+    
+    
+    
+    
+}
+
+
+
+
