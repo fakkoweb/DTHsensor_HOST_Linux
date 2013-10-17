@@ -17,7 +17,7 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 int http_get(const string url, string& res_filename)
 {
 	  
-	  /* for each connection (and curl state variables) a handle must be defined */
+	  // for each connection (and curl state variables) a handle must be defined  
 	  CURL *curl_handle;
 	  
 	  static const char *headerfilename = "head.out";
@@ -29,22 +29,22 @@ int http_get(const string url, string& res_filename)
 	 
 	  res_filename = bodyfilename;
 	 
-	  /* init the curl session */ 
+	  // init the curl session   
 	  curl_handle = curl_easy_init();
 	  
 	  
 	  if(curl_handle)
 	  {
-		  /* set URL to get */ 
+		  // set URL to get   
 		  curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
 		 
-		  /* no progress meter please */ 
+		  // no progress meter please   
 		  curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 		 
-		  /* What operation curl has to do as soon as receives data? Put them in write_data function! */ 
+		  // What operation curl has to do as soon as receives data? Put them in write_data function!   
 		  curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_callback);
 		 
-		  /* open the files */ 
+		  // open the files   
 		  headerfile = fopen(headerfilename,"wb");
 		  if (headerfile == NULL) {
 		    curl_easy_cleanup(curl_handle);
@@ -56,26 +56,26 @@ int http_get(const string url, string& res_filename)
 		    return -1;
 		  }
 		 
-		  /* we want the headers be written to this file handle */ 
+		  // we want the headers be written to this file handle   
 		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEHEADER, headerfile);
 		 
-		  /* we want the body be written to this file handle instead of stdout */ 
+		  // we want the body be written to this file handle instead of stdout   
 		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEDATA, bodyfile);
 		 
-		  /* get it! */ 
+		  // get it!   
 		  res=curl_easy_perform(curl_handle);
 		  
-		  /* Check for errors */ 
+		  // Check for errors   
 		  if(res != CURLE_OK)
 		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		  
-		  /* close the header file */ 
+		  // close the header file   
 		  fclose(headerfile);
 		 
-		  /* close the body file */ 
+		  // close the body file   
 		  fclose(bodyfile);
 	 
-		  /* cleanup curl stuff */ 
+		  // cleanup curl stuff   
 		  curl_easy_cleanup(curl_handle);
 		  
 	  }
@@ -93,11 +93,11 @@ int http_post(const string url, const string json)
 	CURLcode res;
     //void* dataptr=NULL;
     
-    /* Set a list of custom headers */
-	struct curl_slist *headers=NULL;
+    // Set a list of custom headers  
+	struct curl_slist* headers=NULL;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 
-	 /* init the curl session */ 
+	 // init the curl session   
 	 easyhandle = curl_easy_init();
 
 	 if(easyhandle)
@@ -110,26 +110,27 @@ int http_post(const string url, const string json)
 		    return -1;
 		 }
 		 */
-
-		 /* set URL to post */ 
+    
+        //c_str() converts a string type to a const char*    
+		 // set URL to post   
 		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 
-		 /* set binary data to post*/  
+		 // set binary data to post   
 		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json.c_str() );
 
-		 /* set the size of the postfields data (-1 means "use strlen() to calculate it) */  
+		 // set the size of the postfields data (-1 means "use strlen() to calculate it)    
 		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, -1);
 
-		 /* pass our list of custom made headers */  
+		 // pass our list of custom made headers    
 		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
 
-		 res=curl_easy_perform(easyhandle); /* post away! */
+		 res=curl_easy_perform(easyhandle); // post away!  
 		    
-		    /* Check for errors */ 
+		    // Check for errors   
 		    if(res != CURLE_OK)
 		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 			      
-		 curl_slist_free_all(headers); /* free the header list */
+		 curl_slist_free_all(headers); // free the header list  
 
 	 }
 
@@ -144,20 +145,21 @@ int send_report()
 	string url;
 	Json::Value payload;   // Json works like a tree: an attribute may contain a value or
 	                       // a subset of attributes with its values and so on.
-	                       // A Json::Value will contain the root value after parsing.
+	                       // A Json::Value will contain the root of the value tree.
 	
+	// ATTRIBUTE BUILDING
 	// Since Json::Value has implicit constructor for all value types, it is not
 	// necessary to explicitly construct the Json::Value object:
 	//payload["encoding"] = getCurrentEncoding();
 	//payload["indent"]["length"] = getCurrentIndentLength();
 	//payload["indent"]["use_space"] = getCurrentIndentUseSpace();
   
-	  
+	cout<<payload;  
 	
 	Json::FastWriter writer;   // Json::Writer contains functions to "write" a Json::Value
 	                           // structure to a string (not human readable)
-	string json = writer.write( payload );
-
+	string json = writer.write( payload );  //TRASFORM the tree into a valid json string
+    
 
     //Send json via POST method
 	http_post(url,json);

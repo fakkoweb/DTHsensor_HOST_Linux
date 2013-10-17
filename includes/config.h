@@ -20,7 +20,7 @@
 #define HUMID_UNDEF	23
 */
 
-//Costanti per distinguere i tipi di sensori
+//Costanti per distinguere i tipi di misure
 #define UNDEFINED   0
 #define TEMPERATURE    1
 #define HUMIDITY   2

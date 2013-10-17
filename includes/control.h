@@ -126,7 +126,7 @@ class Raspberry
             m.humid=0;
             m.dust=0;
         };
-        static short int request(int type);         //TO IMPLEMENT TIMER!! Calls recv_measure if request_delay has passed since last call
+        static short int request(int type);         //TO IMPLEMENT!! Calls recv_measure if request_delay has passed since last call
         static driver_call isr(){ return static_cast<driver_call>(request); };      
         
         //Funzioni generiche raspberry
@@ -148,36 +148,65 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         int last_raw_index;
         float format_buffer[SENSOR_BUFFER];
         int last_format_intex;
-        int last_measure_code;                  //Restituito assieme alla misura, serve a chi la richiede per capire
                                                 //se è effettivamente nuova oppure no.
-        void raw_push(short int elem){ last_raw_index=(last_raw_index+1)%SENSOR_BUFFER; raw_buffer[last_raw_index]=elem; };
-        void format_push(float elem){ last_format_index=(last_format_index+1)%SENSOR_BUFFER; format_buffer[last_format_index]=elem; };
-        short int raw_top(){ return raw_buffer[last_raw_index]; };
-        float format_top(){ return format_buffer[last_format_index]; };
+        void raw_push(short int elem){  raw_buffer[last_raw_index]=elem; last_raw_index=(last_raw_index+1)%SENSOR_BUFFER;};
+        void format_push(float elem){ format_buffer[last_format_index]=elem; last_format_index=(last_format_index+1)%SENSOR_BUFFER; };
+        short int raw_top(){ elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[SENSOR_BUFFER-1]; };
+        float format_top(){ return convert(raw_top()); };
+        
+        float raw_average;
+        float average;
+        float raw_variance;
+        float variance;
         
         //SAMPLING & CONVERSION
         virtual void sample() = 0;              //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
         virtual float convert(short int) = 0;   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
+        float average(float* array, int dim);
+        float variance(float* array, int dim);
         
         //SENSOR CONTROL
         driver_call board;                      //Puntatore restituito da isr() alla giusta funzione request() per chiedere il campione
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
-        int min_sample_rate;                    //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
+        int refresh_rate;                       //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
         void refresh();                         //IMPLEMENTARE!! Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
                                                 //Se autorefresh è FALSE solo get_measure può chiamarla
                                                 //IMPLEMENTARE IL CONTROLLO TIMER
+                                                
+        //THREADING STRUCTURES
+        mutex rw;
+        condition_variable new_sample;
+        condition_variable new_statistic;
+        thread* r;
+        bool close_thread;
         
-    public:  
-        Sensor():raw_buffer{0},format_buffer{0}{refresh_rate=SENSOR_REFRESH_RATE;last_measure_code=0;board=NULL;last_raw_index=0;last_format_index=0;autorefresh=false;};
-        Sensor(bool enable_autorefresh):raw_buffer{0},format_buffer{0}{refresh_rate=SENSOR_REFRESH_RATE;last_measure_code=0;board=NULL;last_raw_index=0;last_format_index=0;autorefresh=enable_autorefresh;};
-        float get_measure(int index=0);                                 //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
+        
+    public:
+        //"safe" si intende nel contesto in cui UN SOLO thread usi la classe e sia attivo il thread per l'autosampling
+        Sensor(bool enable_autorefresh = true):raw_buffer{0},format_buffer{0};
+        ~Sensor();
+        
+        short int get_raw(int index=0); //safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
                                                                         //IMPLEMENTARE una versione che dia il measure_code della misura restituita!!
-        void display_measure(){cout<<get_measure()<<endl;};
-        void plug_to(const driver_call new_board){ if(board!=NULL) board=new_board; };  //Associa un driver (request()) al sensore virtuale da chiamare a ogni sample()
-    
+        short int get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };
+        short int get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };
+        
+        
+        float get_measure(int index=0){ return convert(get_raw(index)); }; //safe
+                                                                        //Stessa cosa di get_raw() ma la converte prima di restituirla                        
+        float get_average(){ lock_guard<mutex> access(rw); return average; };
+        float get_variance(){ lock_guard<mutex> access(rw); return variance; };
+        
+        
+        void display_measure(){ cout<<get_measure()<<endl; }; //safe
+        void plug_to(const driver_call new_board); //safe               //Associa un driver (request()) al sensore virtuale da chiamare a ogni sample()
+        void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
+                                                                        //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
+                                                                        //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure
+        void wait_new_statistic(); //safe
 };
 
 class TempSensor : public Sensor

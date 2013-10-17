@@ -18,12 +18,13 @@ using namespace std;
 
 
 
+
 int main(int argc, char* argv[])
 {
     Raspberry::init();
     Usb::init();
     
-    TempSensor exttemp,inttemp(false);
+    TempSensor exttemp,inttemp;
     HumidSensor exthumid,inthumid;
     DustSensor extdust;
     exttemp.plug_to(Usb::isr());
@@ -39,7 +40,18 @@ int main(int argc, char* argv[])
     a[3]=&inttemp;
     a[4]=&inthumid;
     
-    for(i=0;i<5;i++) a[i].display_measure();
+    
+    
+    
+    for(i=0;i<5;i++)
+    {
+        a[i].wait_new_statistic();
+    }
+    for(i=0;i<5;i++)
+    {
+        a[i].get_raw_statistic();
+    }
+    
     
     /*
 	int status;
