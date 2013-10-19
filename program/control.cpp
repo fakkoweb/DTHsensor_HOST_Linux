@@ -3,26 +3,13 @@
 #include "curl/curl.h"
 #include <map>
 
+	
 
-void p_sleep(unsigned milliseconds)			// p_sleep è compatibile per windows e linux
-		{
-			#ifdef _WIN32
-			Sleep(milliseconds);
-			#else
-			usleep(milliseconds * 1000); 	// because function takes microseconds
-			#endif
-		}
-		
-/*
 
 control::control()
 {
 	stop = false;
 	keep_console = true;
-
-
-	//Init CURL library
-	curl_global_init(CURL_GLOBAL_ALL);
 
 
 	//Creazione del processo "finestra"
@@ -179,4 +166,3 @@ control::~control()
 }
 
 
-*/

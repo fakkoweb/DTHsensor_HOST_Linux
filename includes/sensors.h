@@ -42,20 +42,19 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
     protected:
     
         //BUFFERING STRUCTURES
-        short int raw_buffer[SENSOR_BUFFER];
+        short int raw_buffer*;
         int last_raw_index;
-        float format_buffer[SENSOR_BUFFER];
+        float format_buffer*;
         int last_format_intex;
-                                                //se è effettivamente nuova oppure no.
-        void raw_push(short int elem){  raw_buffer[last_raw_index]=elem; last_raw_index=(last_raw_index+1)%SENSOR_BUFFER;};
-        void format_push(float elem){ format_buffer[last_format_index]=elem; last_format_index=(last_format_index+1)%SENSOR_BUFFER; };
-        short int raw_top(){ elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[SENSOR_BUFFER-1]; };
-        float format_top(){ return convert(raw_top()); };
-        
+        int buffer_lenght;                      //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
         float raw_average;
         float average;
         float raw_variance;
         float variance;
+        void raw_push(short int elem){ raw_buffer[last_raw_index]=elem; last_raw_index=(last_raw_index+1)%buffer_lenght;};
+        void format_push(float elem){ format_buffer[last_format_index]=elem; last_format_index=(last_format_index+1)%buffer_lenght; };
+        short int raw_top(){ elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[buffer_lenght-1]; };
+        float format_top(){ return convert(raw_top()); };
         
         //SAMPLING & CONVERSION
         virtual void sample() = 0;              //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
@@ -66,8 +65,9 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         //SENSOR CONTROL
         driver_call board;                      //Puntatore restituito da isr() alla giusta funzione request() per chiedere il campione
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
-        int refresh_rate;                       //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
+                                                //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
+        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- qui in secondi, preso da parameters.json in minuti
         void refresh();                         //IMPLEMENTARE!! Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
                                                 //Se autorefresh è FALSE solo get_measure può chiamarla
@@ -83,7 +83,8 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         
     public:
         //"safe" si intende nel contesto in cui UN SOLO thread usi la classe e sia attivo il thread per l'autosampling
-        Sensor(bool enable_autorefresh = true):raw_buffer{0},format_buffer{0};
+        Sensor() = delete;                          //disabling zero-argument constructor completely
+        explicit Sensor(int sample_rate, int avg_interval, bool enable_autorefresh = true);
         ~Sensor();
         
         short int get_raw(int index=0); //safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
@@ -109,12 +110,11 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
 
 class TempSensor : public Sensor
 {
-
-    public:
-        //TempSensor(){};
     protected:
         virtual short int sample(){ return (*board)(TEMPERATURE); };    //Chiamata da get_measure, semplicemente chiama request() di board.    
         virtual float convert(short int);                               //TO IMPLEMENT!!
+    public:
+        TempSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 class HumidSensor : public Sensor
@@ -123,7 +123,7 @@ class HumidSensor : public Sensor
         virtual float convert(short int);                               //TO IMPLEMENT!!
         virtual short int sample(){ return (*board)(HUMIDITY); };       //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        HumidSensor(){};
+        HumidSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 class DustSensor : public Sensor
@@ -132,7 +132,7 @@ class DustSensor : public Sensor
         virtual float convert(short int);                               //TO IMPLEMENT!!
         virtual short int sample(){ return (*board)(DUST); };           //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        DustSensor(){};
+        DustSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 

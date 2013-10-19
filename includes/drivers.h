@@ -37,7 +37,6 @@ using namespace std;
 
 typedef short int (*driver_call)();
 
-
 typedef struct _MEASURE_STRUCT
 {
 	short int dust;

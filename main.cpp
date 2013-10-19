@@ -1,47 +1,135 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "hidapi.h"
+
+//Load user configuration and define variables
 #include "control.h"
 
-
+//Include standard functions
 #ifdef _WIN32
     #include <windows.h>
 #else
     #include <unistd.h>
     #include <string.h>
 #endif
+#include <map>
 
+//Include components
+#include "sensors.h"    
+#include "drivers.h"
+#include "control.h"    //CLASS for debug
+                        //-- Just define it at beginning of main and all will under control!
+#include "functions.h"  //FUNCTIONS (including for Curl and Json)
+                        //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 
 using namespace std;
 
 
 
 
+typedef struct _PARAM_STRUCT
+{
+    int MY_VID ;
+    int MY_PID ;
+    int EXT_TEMP_lfid ;
+    int EXT_HUMID_lfid ;
+    int EXT_DUST_lfid ;
+    int INT_TEMP_lfid ;
+    int INT_HUMID_lfid ;
+    int TEMP_REFRESH_RATE ;
+    int HUMID_REFRESH_RATE ;
+    int DUST_REFRESH_RATE ;
+    int REPORT_INTERVAL ;
+} param_struct;
+
+
+
 
 int main(int argc, char* argv[])
 {
+    
+    /////////////////////////////////////////////////////////
+    //INIZIALIZZAZIONE LIBRERIE DI UTILITA'
+    /////////////////////////////////////////////////////////
+    //ATTIVARE DEBUG??
+    //Control program;
+    
+    //Inizializzazione CURL library -- necessario
+	curl_global_init(CURL_GLOBAL_ALL);
+    
+
+
+
+
+
+
+    /////////////////////////////////////////////////////////
+    //LETTURA DEI PARAMETRI UTENTE E ANNUNCIO AL SERVER
+    /////////////////////////////////////////////////////////
+
+    //Registrazione device
+    int device_id = register_device(MY_VID,MY_PID);
+    
+    //Registrazione sensori (da parameters.json)
+    param_struct user_config;
+    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+    
+
+
+
+    
+    
+    
+    ///////////////////////////////////////////////////////
+    //DESCRIZIONE DELLA CONFIGURAZIONE FISICA DEL SISTEMA
+    ///////////////////////////////////////////////////////
+    
+    //Inizializzazione driver virtuali
     Raspberry::init();
     Usb::init();
     
-    TempSensor exttemp,inttemp;
-    HumidSensor exthumid,inthumid;
-    DustSensor extdust;
+    //Creazione dei sensori virtuali
+    param_struct* p = &user_config;
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo l'intervallo in cui il sensore calcola la media come
+    TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //l'intervallo in cui mandare i report al server. In questo modo,
+    HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //circa ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );
+    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL );
+    
+    //Allacciamento dei sensori
     exttemp.plug_to(Usb::isr());
     exthumid.plug_to(Usb::isr());
     extdust.plug_to(Usb::isr());
     inttemp.plug_to(Raspberry::isr());
     inthumid.plug_to(Raspberry::isr());
     
-    Sensor* a[5];
-    a[0]=&exttemp;
-    a[1]=&exthumid;
-    a[2]=&extdust;
-    a[3]=&inttemp;
-    a[4]=&inthumid;
+    //Associazione dei local_feed_id scelti ai giusti sensori
+   	map <int, Sensor*> SensorArray; 
+	typedef pair <int, Sensor*> new_row;
+	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
+	SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
+	SensorArray.insert ( new_row ( p->EXT_DUST_lfid, &extdust ) );
+	SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
+	SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
+    //In questo modo non è importante come sono posizionati i sensori nell'array
+    //Ogni sensore è indicizzato tramite il proprio local_feed_id
+    //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
     
+
+
+
     
-    
+    /////////////////////////////////////////////////////////////
+    //AVVIO ROUTINE E LOOP DI PROGRAMMA
+    /////////////////////////////////////////////////////////////
+    int state;
+    bool exit=false;
+    while ( state == NICE && exit == false )
+    {
+        state=report_routine(device_id,SensorArray);
+        //TO IMPLEMENT: exit control on variable!
+    }
+    return state;
     
     for(i=0;i<5;i++)
     {
@@ -51,6 +139,8 @@ int main(int argc, char* argv[])
     {
         a[i].get_raw_statistic();
     }
+    
+    
     
     
     /*

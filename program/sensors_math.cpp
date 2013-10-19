@@ -1,23 +1,23 @@
 
 #include "sensors.h"
 
+
+
+//specified in...
+#include "functions.h"
 /////////////////////////////
-// GENERIC FUNCTIONS
+// GENERIC MATH FUNCTIONS
 
 float average(float* array, int dim)
 {
     
-    
-    
 }
-
 float variance(float* array, int dim)
 {
     
-    
-    
-    
 }
+
+
 
 
 /////////////////////////////
