@@ -268,6 +268,33 @@ int param_load(param_struct& user_config, const string filename)
 
 
 
+int register_device( int VID, int PID )
+{
+    
+    
+    
+}
+
+
+
+void register_sensors( int device_id, map<int, Sensor*> sa )
+{
+    
+    
+    
+}
+
+
+
+int report_routine( int device_id, map<int, Sensor*> sa )
+{
+    
+    
+
+}
+
+
+
 //Prepare json for report
 int send_report( map<string,int> &sa )
 {

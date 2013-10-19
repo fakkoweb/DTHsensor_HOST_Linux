@@ -64,16 +64,12 @@ int main(int argc, char* argv[])
 
 
     /////////////////////////////////////////////////////////
-    //LETTURA DEI PARAMETRI UTENTE E ANNUNCIO AL SERVER
+    //LETTURA DEI PARAMETRI UTENTE
     /////////////////////////////////////////////////////////
 
-    //Registrazione device
-    int device_id = register_device(MY_VID,MY_PID);
-    
-    //Registrazione sensori (da parameters.json)
+    //Caricamento parametri utente (da parameters.json)
     param_struct user_config;
     if ( param_load(user_config,"parameters.json") != NICE ) return 1;
-    
 
 
 
@@ -103,7 +99,7 @@ int main(int argc, char* argv[])
     inttemp.plug_to(Raspberry::isr());
     inthumid.plug_to(Raspberry::isr());
     
-    //Associazione dei local_feed_id scelti ai giusti sensori
+    //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
 	typedef pair <int, Sensor*> new_row;
 	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
@@ -114,7 +110,26 @@ int main(int argc, char* argv[])
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
+
+
+
+
+
+
+    ///////////////////////////////////////////////////////
+    //ANNUNCIO DEL SISTEMA AL SERVER
+    ///////////////////////////////////////////////////////
     
+    //Registrazione device - ritorna la device_id registrata sul server
+    int device_id = register_device(MY_VID,MY_PID);     //DA IMPLEMENTARE!!
+    
+    //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
+    //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
+    //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
+    //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
+    register_sensors(device_id,SensorArray);            //DA IMPLEMENTARE!!
+
+
 
 
 
@@ -126,11 +141,15 @@ int main(int argc, char* argv[])
     bool exit=false;
     while ( state == NICE && exit == false )
     {
-        state=report_routine(device_id,SensorArray);
+        state=report_routine(device_id,SensorArray);    //DA IMPLEMENTARE
         //TO IMPLEMENT: exit control on variable!
     }
     return state;
     
+    
+    
+    
+    /*
     for(i=0;i<5;i++)
     {
         a[i].wait_new_statistic();
@@ -139,6 +158,7 @@ int main(int argc, char* argv[])
     {
         a[i].get_raw_statistic();
     }
+    */
     
     
     
