@@ -277,7 +277,7 @@ int register_device( int VID, int PID )
 
 
 
-void register_sensors( int device_id, map<int, Sensor*> sa )
+void register_sensors( int device_id, map<int, Sensor*>& sa )
 {
     
     
@@ -286,7 +286,7 @@ void register_sensors( int device_id, map<int, Sensor*> sa )
 
 
 
-int report_routine( int device_id, map<int, Sensor*> sa )
+int report_routine( int device_id, map<int, Sensor*>& sa )
 {
     
     
@@ -295,6 +295,7 @@ int report_routine( int device_id, map<int, Sensor*> sa )
 
 
 
+/* OLD FUNCTION
 //Prepare json for report
 int send_report( map<string,int> &sa )
 {
@@ -306,7 +307,7 @@ int send_report( map<string,int> &sa )
     string now_string;
     now_string << time_fmt(local) << system_clock::now() ;
     
-    /*
+    
     time_t     now;
     struct tm  now_format;
     char       now_string[35];
@@ -316,7 +317,7 @@ int send_report( map<string,int> &sa )
     now_format = *localtime(&now);
     strftime(now_string, sizeof(now_string), "%Y-%m-%dT%H:%M:%S.650%Z", &now_format);
     printf("%s\n", buf);
-    */
+    
 
 
 	string url;
@@ -340,7 +341,7 @@ int send_report( map<string,int> &sa )
     payload["position"]["accuracy"] = 5000;
     payload["position"]["height_meters"] = 0;
     //foreach sensor in sa
-    /*
+    
         payload["sensor_values"][]["value_timestamp"] = now_string;
         payload["sensor_values"][]["average_value"] = sensor.get_raw_average();
         payload["sensor_values"][]["local_feed_id"] = sensor.get_feed_id(); oppure sa lato int
@@ -348,7 +349,7 @@ int send_report( map<string,int> &sa )
         payload["sensor_values"][]["units_of_measurement"] = "Watts";
         
         
-    */
+    
     
 
   
@@ -364,16 +365,15 @@ int send_report( map<string,int> &sa )
 
 
 
-    /* MORE...
+    // MORE...
 	// You can also use streams.  This will put the contents of any JSON
 	// stream at a particular sub-value, if you'd like.
 	std::cin >> payload["subtree"];
 
 	// And you can write to a stream, using the StyledWriter automatically.
 	std::cout << payload;
-    */
-
-
+    
 
 }
 
+*/
