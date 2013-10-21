@@ -3,11 +3,27 @@
 #include "hidapi.h"
 
 
+///////////////////////////
+//GENERIC DRIVER PROCEDURES
+bool Driver::ready()
+{
+    bool delay_elapsed;
+    if (std::chrono::steady_clock::now() <= (last_request+request_delay) ) delay_elapsed = false;
+    else
+    {
+        delay_elapsed = true;
+        last_request = std::chrono::steady_clock::now();
+    }
+    return delay_elapsed;
+}
+
+
+
 
 ///////////////////////
 //USB DRIVER PROCEDURES
 
-static int Usb::scan()
+int Usb::scan()
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
 	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
@@ -120,7 +136,7 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 }
 */
 
-static int Usb::recv_measure()	//copies device format data into measure_struct data type
+int Usb::recv_measure()	//copies device format data into measure_struct data type
 {	
 	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
 	unsigned char buf[bytes_to_read];
@@ -160,10 +176,11 @@ static int Usb::recv_measure()	//copies device format data into measure_struct d
 	
 	
 
-static short int Usb::request(int type)
+short int Usb::request(int type)
 {
     
-    //IF request_delay HAS PASSED: recv_measure();
+
+    if(ready()) recv_measure();     //IF request_delay HAS PASSED call recv_measure();
     
     short int measure=0;
     
@@ -178,6 +195,7 @@ static short int Usb::request(int type)
       measure=m.dust;
       break;
     default:
+      measure=ERROR;
       break;
     }
         
@@ -190,16 +208,20 @@ static short int Usb::request(int type)
 /////////////////////////////
 //RASPBERRY DRIVER PROCEDURES
 
-static int Raspberry::recv_measure()
+int Raspberry::recv_measure()
 {
+    
     //???
     //m.temp? m.humid?
 }
 
 
 
-static short int Raspberry::request(int type)
+short int Raspberry::request(int type)
 {
+    //IF request_delay HAS PASSED: recv_measure();
+    if(ready()) recv_measure();
+    
     short int measure=0;
     
     switch ( type ) {
@@ -209,10 +231,8 @@ static short int Raspberry::request(int type)
     case HUMIDITY:
       measure=m.humid;
       break;
-    case DUST;
-      measure=m.dust;
-      break;
     default:
+      measure=ERROR;
       break;
     }
         

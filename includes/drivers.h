@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #ifdef _WIN32
     #include <windows.h>
 #else
@@ -45,53 +46,54 @@ typedef struct _MEASURE_STRUCT
 } measure_struct;
 
 
-
-/* COME REALIZZO UNA INTERFACCIA PER USB, RASPBERRY ed altri driver?? (la classe è statica non si può usare virtual!)
+template <class data_type>
 class Driver
 {
-
-    private:
-        Driver();
-            
+ 
     protected:
-        static int request_delay;
+        std::chrono::duration request_delay;
+        std::chrono::steady_clock::time_point last_request;
+        bool ready();                       //Tests if device is ready to do a new request!
+        
+        data_type m;                        //Contains last raw data extracted by recv_measure
+        int recv_measure()=0;               //Takes a new data_type from d via HID protocol from physical device
+                                            //RETURNS error code.
 
     public:
-
-        static short int request(){cout<<"Sono driver generico";};   //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES (error!!)
-        static driver_call isr(){return NULL;};
+        Driver(int min_delay){
+            if(min_delay<=0) request_delay = std::chrono::duration::zero;
+            else request_delay = std::chrono::milliseconds(min_delay);
+            last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
+        };
+        data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
+                                                                            //NOTICE: testing "ready()" assures you respect device timing!
 
 };
-//NON SI PUO' USARE PERCHE: non si può fare una interfaccia per le classi static, non si può fare static un singleton
-*/
 
 
 
 //CLASSE NON ISTANZIABILE
 //Contiene tutte le funzioni relative a USB
-class Usb
+class Usb : public Driver<measure_struct>
 {
-    private:
-        Usb();
-        static hid_device* d;                       //Selected hardware device via HID protocol
-        static int request_delay = HARDWARE_DELAY;  
-        static measure_struct m;                    //Contains last raw data extracted
-        
-        static int recv_measure();                  //Takes a new measure_struct from d via HID protocol from physical device
+    protected:
+        hid_device* d;                       //Selected hardware device via HID protocol
+        int recv_measure();                  //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
+                                             //RETURNS error code.
         
     public:
-        static void init(){
+        Usb(int min_delay) : Driver(min_delay){
             d=NULL;
-            request_delay=HARDWARE_DELAY;
             m.temp=0;
             m.humid=0;
             m.dust=0;
         };
-        static short int request(int type);         //TO IMPLEMENT!!! Calls recv_measure if request_delay has passed since last call
-        static driver_call isr(){ return static_cast<driver_call>(request); };
+        short int request(int type);         //Calls recv_measure if request_delay has passed since last call
+                                             //RETURNS measure of type selected from m
+
     
     	//Funzioni generiche usb
-		static int scan();
+		int scan();
 		
 		
 		//VECCHIE FUNZ.
@@ -107,24 +109,19 @@ class Usb
 
 //CLASSE NON INSTANZIABILE
 //Contiene tutte le funzioni relative a RASP
-class Raspberry
+class Raspberry : public Driver<measure_struct>
 {
     private:
-        Raspberry();
-        static int request_delay;  
-        static measure_struct m;                    //Contains last raw data extracted
-        
-        static int recv_measure();                  //TO IMPLEMENT!! Takes a new measure_struct from physical device
+        int recv_measure();                 //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
         
     public:
-        static void init(){
-            request_delay=HARDWARE_DELAY;
+        Raspberry(int min_delay) : Driver(min_delay){
             m.temp=0;
             m.humid=0;
             m.dust=0;
         };
-        static short int request(int type);         //TO IMPLEMENT!! Calls recv_measure if request_delay has passed since last call
-        static driver_call isr(){ return static_cast<driver_call>(request); };      
+        short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+                                            //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry
         

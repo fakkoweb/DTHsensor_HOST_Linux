@@ -81,23 +81,24 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Inizializzazione driver virtuali
-    Raspberry::init();
-    Usb::init();
+    Raspberry int_device;
+    Usb ext_device;
     
     //Creazione dei sensori virtuali
     param_struct* p = &user_config;
-    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo l'intervallo in cui il sensore calcola la media come
-    TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //l'intervallo in cui mandare i report al server. In questo modo,
-    HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //circa ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );
     DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL );
     
-    //Allacciamento dei sensori
-    exttemp.plug_to(Usb::isr());
-    exthumid.plug_to(Usb::isr());
-    extdust.plug_to(Usb::isr());
-    inttemp.plug_to(Raspberry::isr());
-    inthumid.plug_to(Raspberry::isr());
+    //Allacciamento dei sensori alle board
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
+    extdust.plug_to(ext_device);
+    inttemp.plug_to(int_device);
+    inthumid.plug_to(int_device);
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 

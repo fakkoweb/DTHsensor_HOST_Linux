@@ -20,8 +20,8 @@ float variance(float* array, int dim)
 
 
 
-/////////////////////////////
-// SPECIFIC SENSOR FUNCTIONS
+//////////////////////////////////
+// SPECIFIC SENSOR MATH FUNCTIONS
 
 float TempSensor::convert(short int raw)
 {
