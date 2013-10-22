@@ -61,7 +61,7 @@ class Driver
 
     public:
         Driver(int min_delay = HARDWARE_DELAY){
-            if(min_delay<=0) request_delay = std::chrono::duration::zero;
+            if(min_delay<=0) request_delay = std::chrono::duration::zero();
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
         };
