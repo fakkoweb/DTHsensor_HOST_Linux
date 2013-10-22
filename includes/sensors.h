@@ -89,7 +89,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         virtual float convert(short int) = 0;       //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
         
         //SENSOR CONTROL
-        Driver<measure_struct>* board;          //Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
+        Driver<measure_struct,short int>* board;//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
                                                 //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
@@ -127,7 +127,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         
         
         void display_measure(){ cout<<get_measure()<<endl; }; //safe
-        void plug_to(const Driver<measure_struct>& new_board); //safe   //Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample()
+        void plug_to(const Driver<measure_struct,short int>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
                                                                         //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure

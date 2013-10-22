@@ -46,12 +46,12 @@ typedef struct _MEASURE_STRUCT
 } measure_struct;
 
 
-template <class data_type>
+template <class data_type, class elem_type>
 class Driver
 {
  
     protected:
-        std::chrono::duration<int> request_delay;
+        std::chrono::duration< int, std::milli > request_delay;
         std::chrono::steady_clock::time_point last_request;
         bool ready();                       //Tests if device is ready to do a new request!
         
@@ -67,6 +67,7 @@ class Driver
         };
         data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
                                                                             //NOTICE: testing "ready()" assures you respect device timing!
+        virtual elem_type request(int type)=0;
 
 };
 
@@ -74,7 +75,7 @@ class Driver
 
 //CLASSE NON ISTANZIABILE
 //Contiene tutte le funzioni relative a USB
-class Usb : public Driver<measure_struct>
+class Usb : public Driver<measure_struct,short int>
 {
     protected:
         hid_device* d;                      //Selected hardware device via HID protocol
@@ -88,7 +89,7 @@ class Usb : public Driver<measure_struct>
             m.humid=0;
             m.dust=0;
         };
-        short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m
 
     
@@ -109,7 +110,7 @@ class Usb : public Driver<measure_struct>
 
 //CLASSE NON INSTANZIABILE
 //Contiene tutte le funzioni relative a RASP
-class Raspberry : public Driver<measure_struct>
+class Raspberry : public Driver<measure_struct,short int>
 {
     private:
         virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
@@ -120,7 +121,7 @@ class Raspberry : public Driver<measure_struct>
             m.humid=0;
             m.dust=0;
         };
-        short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry

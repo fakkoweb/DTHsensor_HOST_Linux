@@ -75,7 +75,7 @@ int param_load(param_struct& user_config,const string filename);
 
 //////////////////////
 // PROJECT ROUTINES
-int register_device();                                                  //Checks if MAC_ADDRESS is registered. If not, registers. RETURNS the deviceID.
+int register_device(const int vid, const int pid);                      //Checks if MAC_ADDRESS is registered. If not, registers. RETURNS the deviceID.
 int register_sensors(const int device_id, map<int, Sensor*>& sa);       //Checks if Sensor is registered. If not, registers. RETURNS ERROR,ABORT,NICE
 int report_routine(const int device_id, const map<int, Sensor*>& sa);   //Waits for new measures/statistics from Sensors in sa and posts it to server
                                                                         //RETURNS ERROR,ABORT,NICE
