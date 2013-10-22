@@ -35,11 +35,10 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	  //Per ogni receive gli chiedo di scrivere sul buffer aperto puntato da stream
       char* c_stream = (char*)stream;                   //create a char version of stream
-	  c_stream = new char[size*nmemb+1];      
-	  int written = memcpy( stream, ptr, size*nmemb );  //to copy bytes I use the void version of stream
+	  c_stream = new char[(size*nmemb)+1];      
+	  strncpy( c_stream, (char*)ptr, size*nmemb ); //to copy bytes I use the void version of stream
 	  c_stream[size*nmemb]='\0';                        //to put the \0 I use the char version of stream
-	  written++;
-	  return written;
+	  return (size*nmemb)+1;
 }
 
 
@@ -246,20 +245,20 @@ int param_load(param_struct& user_config, const string filename)
     else
     {
         param_struct* p = &user_config;
-        p->MY_VID = check_not_zero(params["device"]["MY_VID"]);
-        p->MY_PID = check_not_zero(params["device"]["MY_PID"]);
-        p->EXT_TEMP_lfid = check_not_zero(params["sensors"]["temp"]["EXT_lfid"]);
-        p->EXT_HUMID_lfid = check_not_zero(params["sensors"]["humid"]["EXT_lfid"]);
-        p->EXT_DUST_lfid = check_not_zero(params["sensors"]["dust"]["EXT_lfid"]);
-        p->INT_TEMP_lfid = check_not_zero(params["sensors"]["temp"]["INT_lfid"]);
-        p->INT_HUMID_lfid = check_not_zero(params["sensors"]["humid"]["INT_lfid"]);
-        //TEMP_BUFFER = check_not_zero(params["sensors"]["temp"]["BUFFER"]);
-        p->TEMP_REFRESH_RATE = check_not_zero(params["sensors"]["temp"]["REFRESH_RATE"]);
-        //HUMID_BUFFER = check_not_zero(params["sensors"]["humid"]["BUFFER"]);
-        p->HUMID_REFRESH_RATE = check_not_zero(params["sensors"]["humid"]["REFRESH_RATE"]);
-        //DUST_BUFFER = check_not_zero(params["sensors"]["dust"]["BUFFER"]);
-        p->DUST_REFRESH_RATE = check_not_zero(params["sensors"]["dust"]["REFRESH_RATE"]);
-        p->REPORT_INTERVAL = check_not_zero(params["report"]["INTERVAL"]);
+        p->MY_VID = check_not_zero( params["device"].get("MY_VID",0).asInt() );
+        p->MY_PID = check_not_zero( params["device"].get("MY_PID",0).asInt() );
+        p->EXT_TEMP_lfid = check_not_zero( params["sensors"]["temp"].get("EXT_lfid",0).asInt() );
+        p->EXT_HUMID_lfid = check_not_zero( params["sensors"]["humid"].get("EXT_lfid",0).asInt() );
+        p->EXT_DUST_lfid = check_not_zero( params["sensors"]["dust"].get("EXT_lfid",0).asInt() );
+        p->INT_TEMP_lfid = check_not_zero( params["sensors"]["temp"].get("INT_lfid",0).asInt() );
+        p->INT_HUMID_lfid = check_not_zero( params["sensors"]["humid"].get("INT_lfid",0).asInt() );
+        //TEMP_BUFFER = 
+        p->TEMP_REFRESH_RATE = check_not_zero( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt() );
+        //HUMID_BUFFER = 
+        p->HUMID_REFRESH_RATE = check_not_zero( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() );
+        //DUST_BUFFER = 
+        p->DUST_REFRESH_RATE = check_not_zero( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt() );
+        p->REPORT_INTERVAL = check_not_zero( params["report"].get("INTERVAL",0).asInt() );
         if(zero_found) esito=ERROR;
         else esito=NICE;
         zero_found=false;

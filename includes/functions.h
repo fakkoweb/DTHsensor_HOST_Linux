@@ -30,6 +30,9 @@
 //External libs
 #include "p_sleep.h"
 
+//Internal libs
+#include "sensors.h"
+
 
 using namespace std;
 
