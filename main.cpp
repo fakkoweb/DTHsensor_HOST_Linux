@@ -21,26 +21,10 @@
                         //-- Just define it at beginning of main and all will under control!
 #include "functions.h"  //FUNCTIONS (including for Curl and Json)
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
+#include "curl/curl.h"  //For Curl initialization
 
 using namespace std;
 
-
-
-
-typedef struct _PARAM_STRUCT
-{
-    int MY_VID ;
-    int MY_PID ;
-    int EXT_TEMP_lfid ;
-    int EXT_HUMID_lfid ;
-    int EXT_DUST_lfid ;
-    int INT_TEMP_lfid ;
-    int INT_HUMID_lfid ;
-    int TEMP_REFRESH_RATE ;
-    int HUMID_REFRESH_RATE ;
-    int DUST_REFRESH_RATE ;
-    int REPORT_INTERVAL ;
-} param_struct;
 
 
 
@@ -122,7 +106,7 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Registrazione device - ritorna la device_id registrata sul server
-    int device_id = register_device(MY_VID,MY_PID);     //DA IMPLEMENTARE!!
+    int device_id = register_device(p->MY_VID,p->MY_PID);     //DA IMPLEMENTARE!!
     
     //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
     //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!

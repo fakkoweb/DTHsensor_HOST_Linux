@@ -1,4 +1,5 @@
 #include "sensors.h"
+#include "functions.h"  //for average and variance generic functions
 
 
 
@@ -103,7 +104,7 @@ void Sensor::wait_new_sample()
     new_statistic.wait(access);
 }
 
-void Sensor::plug_to(const Driver& new_board)
+void Sensor::plug_to(const Driver<measure_struct>& new_board)
 {
     unique_lock<mutex> access(rw,std::defer_lock);
     if(new_board!=NULL)

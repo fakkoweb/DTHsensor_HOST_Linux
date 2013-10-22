@@ -51,16 +51,16 @@ class Driver
 {
  
     protected:
-        std::chrono::duration request_delay;
+        std::chrono::duration<int> request_delay;
         std::chrono::steady_clock::time_point last_request;
         bool ready();                       //Tests if device is ready to do a new request!
         
         data_type m;                        //Contains last raw data extracted by recv_measure
-        int recv_measure()=0;               //Takes a new data_type from d via HID protocol from physical device
+        virtual int recv_measure()=0;       //Takes a new data_type from d via HID protocol from physical device
                                             //RETURNS error code.
 
     public:
-        Driver(int min_delay){
+        Driver(int min_delay = HARDWARE_DELAY){
             if(min_delay<=0) request_delay = std::chrono::duration::zero;
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
@@ -77,19 +77,19 @@ class Driver
 class Usb : public Driver<measure_struct>
 {
     protected:
-        hid_device* d;                       //Selected hardware device via HID protocol
-        int recv_measure();                  //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
-                                             //RETURNS error code.
+        hid_device* d;                      //Selected hardware device via HID protocol
+        virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
+                                            //RETURNS error code.
         
     public:
-        Usb(int min_delay) : Driver(min_delay){
+        Usb(int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             d=NULL;
             m.temp=0;
             m.humid=0;
             m.dust=0;
         };
-        short int request(int type);         //Calls recv_measure if request_delay has passed since last call
-                                             //RETURNS measure of type selected from m
+        short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+                                            //RETURNS measure of type selected from m
 
     
     	//Funzioni generiche usb
@@ -112,10 +112,10 @@ class Usb : public Driver<measure_struct>
 class Raspberry : public Driver<measure_struct>
 {
     private:
-        int recv_measure();                 //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
+        virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
         
     public:
-        Raspberry(int min_delay) : Driver(min_delay){
+        Raspberry(int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             m.temp=0;
             m.humid=0;
             m.dust=0;

@@ -27,6 +27,7 @@
 #ifdef HOST_THREADS
 	#include <mutex>
 	#include <thread>
+	#include <condition_variable>
 #endif
 
 //External libs
@@ -37,7 +38,7 @@ using namespace std;
 
 
 
-class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiated!
+class Sensor                                        //ABSTRACT CLASS: only sub-classes can be instantiated!
 {
     protected:
     
@@ -66,7 +67,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
             if(last_format_index==0) buffer_filled=true;
             else buffer_filled=false;
         };
-        short int raw_top(){ elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[buffer_lenght-1]; };
+        short int raw_top(){ int elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[buffer_lenght-1]; };
         float format_top(){ return convert(raw_top()); };
         short int raw_pick(int index)
         {
@@ -77,7 +78,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
                 else location=(last_raw_index-index)%buffer_lenght;
                 
                 if (location > 0) return raw_buffer[location-1];
-                else raw_buffer[buffer_lenght-1];
+                else return raw_buffer[buffer_lenght-1];
             }
             else return 0;
         };
@@ -86,11 +87,9 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         //SAMPLING & CONVERSION
         virtual short int sample() = 0;             //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
         virtual float convert(short int) = 0;       //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
-        float average(float* array, int dim);
-        float variance(float* array, int dim);
         
         //SENSOR CONTROL
-        Driver* board;                          //Puntatore restituito da isr() alla giusta funzione request() per chiedere il campione
+        Driver<measure_struct>* board;          //Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
                                                 //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
@@ -117,8 +116,8 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         short int get_raw(int index=0); //safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
                                                                         //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
-        short int get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };
-        short int get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };
+        float get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };
+        float get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };
         
         
         float get_measure(int index=0){ return convert(get_raw(index)); }; //safe
@@ -128,7 +127,7 @@ class Sensor                //ABSTRACT CLASS: only sub-classes can be instantiat
         
         
         void display_measure(){ cout<<get_measure()<<endl; }; //safe
-        void plug_to(const Driver& new_board); //safe                   //Associa un driver (request()) al sensore virtuale da chiamare a ogni sample()
+        void plug_to(const Driver<measure_struct>& new_board); //safe   //Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample()
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
                                                                         //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure

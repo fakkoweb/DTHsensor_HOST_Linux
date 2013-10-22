@@ -277,7 +277,7 @@ int register_device( int VID, int PID )
 
 
 
-void register_sensors( int device_id, map<int, Sensor*>& sa )
+int register_sensors( int device_id, map<int, Sensor*>& sa )
 {
     
     
