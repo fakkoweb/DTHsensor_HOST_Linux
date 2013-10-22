@@ -152,7 +152,7 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
         reset();
         
         //Set new board
-        board = static_cast< Driver<measure_struct,short int>* > &new_board;
+        board = const_cast< (Driver<measure_struct,short int>)* > &new_board;
         
         //Start a new autosampling thread
         if(autorefresh==true)
