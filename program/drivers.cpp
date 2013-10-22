@@ -5,7 +5,8 @@
 
 ///////////////////////////
 //GENERIC DRIVER PROCEDURES
-bool Driver::ready()
+template <class data_type, class elem_type>
+bool Driver<data_type,elem_type>::ready()
 {
     bool delay_elapsed;
     if (std::chrono::steady_clock::now() <= (last_request+request_delay) ) delay_elapsed = false;
@@ -23,7 +24,7 @@ bool Driver::ready()
 ///////////////////////
 //USB DRIVER PROCEDURES
 
-int Usb::scan()
+int Usb::scan(const int vid, const int pid)
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
 	struct hid_device_info* curr_dev;	//Descrittore di device selezionato (puntatore per scorrere la lista sopra)
@@ -40,7 +41,7 @@ int Usb::scan()
 		i=0;
 		while(curr_dev) 		//finchè non raggiungo la fine della lista (cioè curr_dev==NULL)
 		{
-			if(curr_dev->vendor_id == MY_VID && curr_dev->product_id == MY_PID)
+			if(curr_dev->vendor_id == vid && curr_dev->product_id == pid)
 			{
 				
 				
@@ -69,6 +70,7 @@ int Usb::scan()
 		
 		
 		//FLAG DI CONTROLLO
+		/*
 		//*x* Forza il thread a terminare la ricerca se STOP è alto
 		if(get_stop())
 		{
@@ -77,6 +79,7 @@ int Usb::scan()
 			esito_funzione=ABORTED;
 			//set_stop(false);	//Resetta il flag
 		}
+		*/
 						
 		//Se STOP è falso e trovata è falso aspetta 3 secondi prima di effettuare una nuova scansione
 		if(!trovata)
@@ -142,7 +145,7 @@ int Usb::recv_measure()	//copies device format data into measure_struct data typ
 	unsigned char buf[bytes_to_read];
 	
 	if(d==NULL) return ERROR;		//Ritorna ERROR subito se la handle non è valida!
-	while(!get_stop() && bytes_read<= bytes_to_read-1 && bytes_read!=-1)	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte
+	while(bytes_read<= bytes_to_read-1 && bytes_read!=-1)	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
 	{
 		cout<<"  | Tentativo "<<++i<<endl;
 		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
@@ -159,12 +162,14 @@ int Usb::recv_measure()	//copies device format data into measure_struct data typ
 		}
 	}
 	
+	/*
 	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
 	{
 		result=ABORTED;
 		//set_stop(false);		//Resetta il flag
 	}
-	else if (bytes_read==bytes_to_read)
+	else */ 
+	if (bytes_read==bytes_to_read)
 	{
 		memcpy( (void*) &m, (void*) buf, bytes_to_read);
 		result=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
@@ -191,7 +196,7 @@ short int Usb::request(int type)
     case HUMIDITY:
       measure=m.humid;
       break;
-    case DUST;
+    case DUST:
       measure=m.dust;
       break;
     default:

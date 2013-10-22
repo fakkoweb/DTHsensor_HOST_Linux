@@ -94,7 +94,7 @@ class Usb : public Driver<measure_struct,short int>
 
     
     	//Funzioni generiche usb
-		int scan();
+		int scan(const int vid, const int pid);
 		
 		
 		//VECCHIE FUNZ.
