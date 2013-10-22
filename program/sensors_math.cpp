@@ -8,11 +8,11 @@
 /////////////////////////////
 // GENERIC MATH FUNCTIONS
 
-float average(float* array, int dim)
+float faverage(float* array, int dim)
 {
     
 }
-float variance(float* array, int dim)
+float fvariance(float* array, int dim)
 {
     
 }

@@ -28,7 +28,7 @@ Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh)
 }
 
 
-~Sensor::~Sensor()
+Sensor::~Sensor()
 {
     if(r!=NULL)
     {
@@ -59,10 +59,10 @@ void Sensor::refresh()
         //New statistic
         if(buffer_filled)           //if buffer has filled buffer_lenght samples
         {
-            raw_average=std::average((float*)raw_buffer,buffer_lenght);
-            average=std::average(format_buffer,buffer_lenght);
-            raw_variance=std::variance((float*)raw_buffer,buffer_lenght);
-            variance=std::variance(format_buffer,buffer_lenght);
+            raw_average=faverage((float*)raw_buffer,buffer_lenght);
+            average=faverage(format_buffer,buffer_lenght);
+            raw_variance=fvariance((float*)raw_buffer,buffer_lenght);
+            variance=fvariance(format_buffer,buffer_lenght);
             new_statistic.notify_all();
         }
 
@@ -82,7 +82,7 @@ void Sensor::refresh()
 }
 
 
-short int Sensor::get_raw(int index=0)  //index=n of samples ago ---> 0 is last sample
+short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sample
 {
     lock_guard<mutex> access(rw);    
 
@@ -99,7 +99,7 @@ void Sensor::wait_new_sample()
     new_sample.wait(access);
 }
 
-void Sensor::wait_new_sample()
+void Sensor::wait_new_statistic()
 {
     unique_lock<mutex> access(rw);
     new_statistic.wait(access);
@@ -108,8 +108,8 @@ void Sensor::wait_new_sample()
 void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
 {
     unique_lock<mutex> access(rw,std::defer_lock);
-    if(new_board!=NULL)
-    {
+    //if(new_board!=NULL)
+    //{
         
         //closes current autosampling thread, if any
         if(r!=NULL)
@@ -126,7 +126,7 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
         Sensor(autorefresh);
         
         //Set new board
-        board=new_board;
+        board=&new_board;
         
         //Start a new autosampling thread
         if(autorefresh==true)
@@ -134,7 +134,7 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
             //CALL OF REFRESH THREAD - Avvia il thread per l'autosampling
         	r= new thread (&Sensor::refresh,this);	// Per eseguire refresh() è richiesto this quando è un metodo della classe stessa
         }
-    }
+    //}
     
 }
 
