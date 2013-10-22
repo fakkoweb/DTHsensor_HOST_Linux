@@ -30,6 +30,9 @@ Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh)
 
 Sensor::~Sensor()
 {
+    unique_lock<mutex> access(rw,std::defer_lock);
+    
+    //closes current autosampling thread, if any
     if(r!=NULL)
     {
         access.lock();
@@ -41,6 +44,41 @@ Sensor::~Sensor()
     
     delete raw_buffer;
     delete format_buffer;
+}
+
+
+//Like calling destructor + constructor without creating a new object
+void Sensor::reset()
+{
+    unique_lock<mutex> access(rw,std::defer_lock);
+    
+    //closes current autosampling thread, if any
+    if(r!=NULL)
+    {
+        access.lock();
+        close_thread=true;
+        access.unlock();
+        
+        r->join();
+    }
+    
+    delete raw_buffer;
+    delete format_buffer;
+    
+    board=NULL;
+    last_raw_index=0;
+    last_format_index=0;
+    buffer_filled=false;
+    raw_average=0;
+    average=0;
+    raw_variance=0;
+    variance=0;
+    close_thread=false;
+    r=NULL;
+    
+    raw_buffer = new short int[buffer_lenght];
+    format_buffer = new float[buffer_lenght];
+    
 }
 
 void Sensor::refresh()
@@ -111,19 +149,7 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
     //if(new_board!=NULL)
     //{
         
-        //closes current autosampling thread, if any
-        if(r!=NULL)
-        {
-            access.lock();
-            close_thread=true;
-            access.unlock();
-            
-            r->join();
-        }
-        
-        //FORCE reset of all sensor variables with same autorefresh setting
-        ~Sensor();
-        Sensor(autorefresh);
+        reset();
         
         //Set new board
         board=&new_board;

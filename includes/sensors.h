@@ -97,6 +97,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         void refresh();                         //Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
                                                 //Se autorefresh è FALSE solo get_measure può chiamarla
+        void reset();
                                                 
         //THREADING STRUCTURES
         mutex rw;
