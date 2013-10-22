@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
     HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );
     DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL );
     
-    //Allacciamento dei sensori alle board
+    //Allacciamento dei sensori ai driver (alias board)
     exttemp.plug_to(ext_device);
     exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
@@ -107,13 +107,13 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Registrazione device - ritorna la device_id registrata sul server
-    int device_id = register_device(p->MY_VID,p->MY_PID);     //DA IMPLEMENTARE!!
+    int device_id = register_device(p->MY_VID,p->MY_PID);   //DA IMPLEMENTARE!!
     
     //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
     //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
     //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
     //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
-    register_sensors(device_id,SensorArray);            //DA IMPLEMENTARE!!
+    register_sensors(device_id,SensorArray);                //DA IMPLEMENTARE!!
 
 
 
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
     bool exit=false;
     while ( state == NICE && exit == false )
     {
-        state=report_routine(device_id,SensorArray);    //DA IMPLEMENTARE
+        state=report_routine(device_id,SensorArray);        //DA IMPLEMENTARE
         //TO IMPLEMENT: exit control on variable!
     }
     return state;

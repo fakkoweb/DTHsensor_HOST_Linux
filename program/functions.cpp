@@ -270,7 +270,7 @@ int param_load(param_struct& user_config, const string filename)
 
 
 
-int register_device( int VID, int PID )
+int register_device( const int VID, const int PID )
 {
     
     
@@ -279,7 +279,7 @@ int register_device( int VID, int PID )
 
 
 
-int register_sensors( int device_id, map<int, Sensor*>& sa )
+int register_sensors( const int device_id, map<int, Sensor*>& sa )
 {
     
     
@@ -288,7 +288,7 @@ int register_sensors( int device_id, map<int, Sensor*>& sa )
 
 
 
-int report_routine( int device_id, map<int, Sensor*>& sa )
+int report_routine( const int device_id, const map<int, Sensor*>& sa )
 {
     
     
