@@ -46,7 +46,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         short int *raw_buffer;
         int last_raw_index;
         float *format_buffer;
-        int last_format_intex;
+        int last_format_index;
         int buffer_lenght;                          //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
         bool buffer_filled;
         float raw_average;
