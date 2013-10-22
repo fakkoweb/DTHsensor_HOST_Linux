@@ -16,6 +16,7 @@ bool Driver<data_type,elem_type>::ready()
         last_request = std::chrono::steady_clock::now();
     }
     return delay_elapsed;
+
 }
 
 
