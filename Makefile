@@ -24,7 +24,7 @@ CFLAGS   ?= -Wall -g													# Put HERE other flags for the gcc compiler
 CXXFLAGS ?= -Wall -g -std=c++11 									# Put HERE other flags for the g++ compiler
 
 COBJS     = libs/hidapi/hid-libusb.o												# Where are C files?
-CPPOBJS   = libs/p_sleep.o main.o program/control.o program/connection.o program/sensors.o program/sensors_math.o program/drivers.o libs/jsoncpp/jsoncpp.o	# Where are C++ files?
+CPPOBJS   = libs/jsoncpp/jsoncpp.o libs/p_sleep.o main.o program/control.o program/sensors.o program/sensors_math.o program/drivers.o program/functions.o	# Where are C++ files?
 #####################################
 
 OBJS      = $(COBJS) $(CPPOBJS)
