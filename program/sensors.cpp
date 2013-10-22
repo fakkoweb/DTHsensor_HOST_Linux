@@ -27,8 +27,9 @@ Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh)
     refresh_rate = sample_rate;
 }
 
-{
+
 ~Sensor::~Sensor()
+{
     if(r!=NULL)
     {
         access.lock();
