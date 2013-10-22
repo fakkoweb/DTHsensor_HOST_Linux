@@ -22,7 +22,7 @@ Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh)
     
     buffer_lenght = (avg_interval*60)/sample_rate;
     raw_buffer = new short int[buffer_lenght];
-    format_buffer = new floafloat[buffer_lenght];
+    format_buffer = new float[buffer_lenght];
 
     refresh_rate = sample_rate;
 }
