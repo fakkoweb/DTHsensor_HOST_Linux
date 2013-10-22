@@ -17,10 +17,10 @@ all: usb_host
 ###########  CONFIGURATION  #############
 ####    All values must be separated by space!!     ####
 #####################################
-LIBS      = `pkg-config libusb-1.0 libudev libcurl --libs` -lpthread 			# Put HERE Lib flags for the Linker (-l)
+LIBS      = `pkg-config libusb-1.0 libudev libcurl --libs` -lpthread -lboost_system		# Put HERE Lib flags for the Linker (-l)
 INCLUDES ?= -Iincludes -Ilibs/includes `pkg-config libusb-1.0 libcurl --cflags`			# Put HERE Include flags for the compilers (-I)
 
-CFLAGS   ?= -Wall -g													# Put HERE other flags for the gcc compiler
+CFLAGS   ?= -Wall -g												# Put HERE other flags for the gcc compiler
 CXXFLAGS ?= -Wall -g -std=c++11 									# Put HERE other flags for the g++ compiler
 
 COBJS     = libs/hidapi/hid-libusb.o												# Where are C files?
