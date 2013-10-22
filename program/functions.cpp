@@ -1,9 +1,13 @@
 #include "curl/curl.h"
 #include "json.h"
+#include "functions.h"
 #include <boost/chrono/chrono.hpp>
+#include <cstring>
+#include <string>
 
 
 
+static bool zero_found=false;
 //Utility function: checks if at least one of a few values is 0 or less
 //Returns the same value.
 int check_not_zero(int value)
@@ -12,7 +16,6 @@ int check_not_zero(int value)
     return value;
 }
 //When a 0 is found, makes true the static variable:
-static bool zero_found=false;
 
 
 
