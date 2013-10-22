@@ -6,7 +6,7 @@
 ////////////////////////////
 //GENERIC SENSOR PROCEDURES
 
-Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh = true) 
+Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh) 
 {
     board=NULL;
     last_raw_index=0;
@@ -18,17 +18,17 @@ Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh = true
     variance=0;
     autorefresh=enable_autorefresh;
     close_thread=false;
-    r==NULL;
+    r=NULL;
     
     buffer_lenght = (avg_interval*60)/sample_rate;
     raw_buffer = new short int[buffer_lenght];
-    format_buffer = new short int[buffer_lenght];
+    format_buffer = new floafloat[buffer_lenght];
 
     refresh_rate = sample_rate;
 }
 
-~Sensor::Sensor()
 {
+~Sensor::~Sensor()
     if(r!=NULL)
     {
         access.lock();
@@ -58,10 +58,10 @@ void Sensor::refresh()
         //New statistic
         if(buffer_filled)           //if buffer has filled buffer_lenght samples
         {
-            raw_average=average((float*)raw_buffer,buffer_lenght);
-            average=average(format_buffer,buffer_lenght);
-            raw_variance=variance((float*)raw_buffer,buffer_lenght);
-            variance=variance(format_buffer,buffer_lenght);
+            raw_average=std::average((float*)raw_buffer,buffer_lenght);
+            average=std::average(format_buffer,buffer_lenght);
+            raw_variance=std::variance((float*)raw_buffer,buffer_lenght);
+            variance=std::variance(format_buffer,buffer_lenght);
             new_statistic.notify_all();
         }
 
@@ -73,7 +73,7 @@ void Sensor::refresh()
         //If there is a thread looping, then wait "refresh_rate" seconds
         if(autorefresh) p_sleep(refresh_rate*1000);
     
-     while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop
+    }while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop
     
     return;
     

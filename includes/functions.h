@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <map>
 #ifdef _WIN32
     #include <windows.h>
 #else

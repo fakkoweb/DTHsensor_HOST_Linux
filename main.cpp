@@ -1,18 +1,19 @@
-#include <cstdlib>
-#include <cstdio>
-#include <iostream>
+
 
 //Load user configuration and define variables
 #include "control.h"
 
 //Include standard functions
+#include <cstdlib>
+#include <cstdio>
+#include <iostream>
+#include <map>
 #ifdef _WIN32
     #include <windows.h>
 #else
     #include <unistd.h>
     #include <string.h>
 #endif
-#include <map>
 
 //Include components
 #include "sensors.h"    
