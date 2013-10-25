@@ -79,23 +79,36 @@ class Driver
 class Usb : public Driver<measure_struct,short int>
 {
     protected:
-        hid_device* d;                      //Selected hardware device via HID protocol
+        hid_device* d;                      //Selected hardware device via HID protocol. IF IT IS NULL, NO DEVICE IS CONNECTED SO CHECK FIRST!!
+                                            //Device is "opened" at first call of recv_measure()
+        int vid;
+        int pid;
         virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
                                             //RETURNS error code.
+        bool is_connected;                  //When this is FALSE, a new scan() should be performed (done automatically by Usb::recv_measure)
         
     public:
-        Usb(int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+        Usb() = delete; 
+        Usb(const int vid_in, const int pid_in, int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+            is_connected=false;
             d=NULL;
             m.temp=0;
             m.humid=0;
             m.dust=0;
+            vid=vid_in;
+            pid=pid_in;
         };
+        ~Usb()
+        {
+            if(d!=NULL) hid_close(d);
+            cout<<"Device chiusa."<<endl;
+        }
         virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
-                                            //RETURNS measure of type selected from m
+                                                    //RETURNS measure of type selected from m
 
     
     	//Funzioni generiche usb
-		int scan(const int vid, const int pid);
+		static int scan(const int vid, const int pid);
 		
 		
 		//VECCHIE FUNZ.

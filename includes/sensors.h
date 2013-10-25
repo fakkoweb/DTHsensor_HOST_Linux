@@ -138,8 +138,8 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
 class TempSensor : public Sensor
 {
     protected:
-        virtual short int sample(){ return board->request(TEMPERATURE); };    //Chiamata da get_measure, semplicemente chiama request() di board.    
-        virtual float convert(short int);                               //TO IMPLEMENT!!
+        virtual short int sample(){ return board->request(TEMPERATURE); };      //Chiamata da get_measure, semplicemente chiama request() di board.    
+        virtual float convert(short int);                                       //TO IMPLEMENT!!
     public:
         TempSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
@@ -147,8 +147,8 @@ class TempSensor : public Sensor
 class HumidSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);                               //TO IMPLEMENT!!
-        virtual short int sample(){ return board->request(HUMIDITY); };       //Chiamata da get_measure, semplicemente chiama request() di board.           
+        virtual float convert(short int);                                       //TO IMPLEMENT!!
+        virtual short int sample(){ return board->request(HUMIDITY); };         //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         HumidSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
@@ -156,8 +156,8 @@ class HumidSensor : public Sensor
 class DustSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);                               //TO IMPLEMENT!!
-        virtual short int sample(){ return board->request(DUST); };           //Chiamata da get_measure, semplicemente chiama request() di board.           
+        virtual float convert(short int);                                       //TO IMPLEMENT!!
+        virtual short int sample(){ return board->request(DUST); };             //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         DustSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
