@@ -140,7 +140,7 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 }
 */
 
-int Usb::recv_measure()	//copies device format data into measure_struct data type
+int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
 	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,result=ERROR;
 	unsigned char buf[bytes_to_read];

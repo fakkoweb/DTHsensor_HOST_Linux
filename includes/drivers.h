@@ -35,8 +35,8 @@
 using namespace std;
 
 
-
-typedef short int (*driver_call)();
+//DEPRECATA: Driver call usata quando i driver erano statici -> puntatore a funzione
+//typedef short int (*driver_call)();
 
 typedef struct _MEASURE_STRUCT
 {
@@ -46,6 +46,7 @@ typedef struct _MEASURE_STRUCT
 } measure_struct;
 
 
+//CLASSE NON ISTANZIABILE -- Rappresenta una device generica che su richiesta restituisce una struct "data_type" contenente diversi "elem_type"
 template <class data_type, class elem_type>
 class Driver
 {
@@ -73,7 +74,7 @@ class Driver
 
 
 
-//CLASSE NON ISTANZIABILE
+//CLASSE ISTANZIABILE -- Rappresenta una device USB via HID
 //Contiene tutte le funzioni relative a USB
 class Usb : public Driver<measure_struct,short int>
 {
@@ -108,7 +109,7 @@ class Usb : public Driver<measure_struct,short int>
 
 
 
-//CLASSE NON INSTANZIABILE
+//CLASSE INSTANZIABILE -- Rappresenta l'interfaccia seriale del Raspberry
 //Contiene tutte le funzioni relative a RASP
 class Raspberry : public Driver<measure_struct,short int>
 {
