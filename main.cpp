@@ -99,8 +99,8 @@ int main(int argc, char* argv[])
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
 
 
-	std::map<int, Sensor*>::iterator s;
-	for (s=map.begin(); s!=map.end(); s++) cout<<s.get_raw()<<endl;
+	std::map<int, Sensor*>::iterator row;
+	for (row=SensorArray.begin(); row!=SensorArray.end(); row++) cout<< row->second->get_raw() <<endl;
 
 
 

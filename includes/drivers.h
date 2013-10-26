@@ -89,7 +89,6 @@ class Usb : public Driver<measure_struct,short int>
     public:
         Usb() = delete; 
         Usb(const int vid_in, const int pid_in, int min_delay = HARDWARE_DELAY) : Driver(min_delay){
-            is_connected=false;
             d=NULL;
             m.temp=0;
             m.humid=0;
