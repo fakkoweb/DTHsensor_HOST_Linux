@@ -56,10 +56,22 @@ int main(int argc, char* argv[])
     param_struct user_config;
     if ( param_load(user_config,"parameters.json") != NICE ) return 1;
 
+param_struct* p = &user_config;
+    cout<<p-> MY_VID <<endl;
+    cout<<p-> MY_PID <<endl;
+    cout<<p-> EXT_TEMP_lfid <<endl;
+    cout<<p-> EXT_HUMID_lfid <<endl;
+    cout<<p-> EXT_DUST_lfid <<endl;
+    cout<<p-> INT_TEMP_lfid <<endl;
+    cout<<p-> INT_HUMID_lfid <<endl;
+    cout<<p-> TEMP_REFRESH_RATE <<endl;
+    cout<<p-> HUMID_REFRESH_RATE <<endl;
+    cout<<p-> DUST_REFRESH_RATE <<endl;
+    cout<<p-> REPORT_INTERVAL <<endl;
 
 
     
-    
+/*    
     
     ///////////////////////////////////////////////////////
     //DESCRIZIONE DELLA CONFIGURAZIONE FISICA DEL SISTEMA
@@ -70,7 +82,7 @@ int main(int argc, char* argv[])
     Usb ext_device;
     
     //Creazione dei sensori virtuali
-    param_struct* p = &user_config;
+	param_struct* p = &user_config;    
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
     TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
     TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
@@ -132,7 +144,7 @@ int main(int argc, char* argv[])
     }
     return state;
     
-    
+ */   
     
     
     /*
