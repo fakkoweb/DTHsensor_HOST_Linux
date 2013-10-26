@@ -54,10 +54,11 @@ int main(int argc, char* argv[])
 
     //Caricamento parametri utente (da parameters.json)
     param_struct user_config;
-    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
-
-
-
+    //if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+	user_config.TEMP_REFRESH_RATE=5;
+	user_config.HUMID_REFRESH_RATE=5;
+	user_config.DUST_REFRESH_RATE=30;
+	user_config.REPORT_INTERVAL=5;
     
     
     
@@ -66,24 +67,24 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Inizializzazione driver virtuali
-    Raspberry int_device;
-    Usb ext_device;
+    //Raspberry int_device;
+    Usb ext_device(1240,19);
     
     //Creazione dei sensori virtuali
     param_struct* p = &user_config;
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
-    HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );
-    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL );
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, false );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, false );
+    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, false );
     
     //Allacciamento dei sensori ai driver (alias board)
     exttemp.plug_to(ext_device);
     exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
-    inttemp.plug_to(int_device);
-    inthumid.plug_to(int_device);
+    //inttemp.plug_to(int_device);
+    //inthumid.plug_to(int_device);
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
@@ -91,17 +92,19 @@ int main(int argc, char* argv[])
 	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
 	SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
 	SensorArray.insert ( new_row ( p->EXT_DUST_lfid, &extdust ) );
-	SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
-	SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
+	//SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
+	//SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
 
 
+	std::map<int, Sensor*>::iterator s;
+	for (s=map.begin(); s!=map.end(); s++) cout<<s.get_raw()<<endl;
 
 
 
-
+	/*
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
     ///////////////////////////////////////////////////////
@@ -132,7 +135,7 @@ int main(int argc, char* argv[])
     }
     return state;
     
-    
+	*/    
     
     
     /*

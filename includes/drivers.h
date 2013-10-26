@@ -85,7 +85,6 @@ class Usb : public Driver<measure_struct,short int>
         int pid;
         virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
                                             //RETURNS error code.
-        bool is_connected;                  //When this is FALSE, a new scan() should be performed (done automatically by Usb::recv_measure)
         
     public:
         Usb() = delete; 

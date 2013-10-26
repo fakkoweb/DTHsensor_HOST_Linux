@@ -150,7 +150,8 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
 	    {
 	        d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
-	        cout<<"Periferica aperta!"<<endl;
+	        if(d!=NULL) cout<<"Periferica aperta!"<<endl;
+	        else cout<<"  | ERROE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi.";
 	    }
 	    else
 	    {
@@ -208,8 +209,14 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 short int Usb::request(int type)
 {
     
+    int recv_status=ERROR;
 
-    if(ready()) recv_measure();     //IF request_delay HAS PASSED call recv_measure();
+    if(ready())
+    {
+    	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
+    	cout<<"  | WARNING: le misure non sono aggiornate."<<endl;
+    }
+    
     
     short int measure=0;
     
@@ -225,6 +232,7 @@ short int Usb::request(int type)
       break;
     default:
       measure=ERROR;
+      cout<<"  | ERRORE: tipo di misura richiesta non disponibile."<<endl;
       break;
     }
         

@@ -134,13 +134,13 @@ short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sa
 void Sensor::wait_new_sample()
 {
     unique_lock<mutex> access(rw);
-    new_sample.wait(access);
+    if(!autorefresh) new_sample.wait(access);
 }
 
 void Sensor::wait_new_statistic()
 {
     unique_lock<mutex> access(rw);
-    new_statistic.wait(access);
+    if(!autorefresh) new_statistic.wait(access);
 }
 
 void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
