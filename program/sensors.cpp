@@ -81,14 +81,14 @@ void Sensor::reset()
     
 }
 
-void Sensor::refresh()
+void Sensor::refresh()		//This function is called manually or automatically, in which case all sampling operation must be ATOMICAL 
 {
     unique_lock<mutex> access(rw,std::defer_lock);
-    bool thread_must_exit=false;    //JUST A COPY of close_thread (for evaluating it outside the lock)
+    bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
     do
     {
-        access.lock();        
-        
+        if(autorefresh) access.lock();	//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
+        				//and not put locks on elementary operations on buffers (it would cause ricursive locks!)
         //New sample
         raw_push(sample());
         format_push(convert(raw_top()));
@@ -104,13 +104,16 @@ void Sensor::refresh()
             new_statistic.notify_all();
         }
 
-        //Close thread if asked
-        thread_must_exit=close_thread;
-        
-        access.unlock();
-    
-        //If there is a thread looping, then wait "refresh_rate" seconds
-        if(autorefresh) p_sleep(refresh_rate*1000);
+	if(autorefresh)
+	{
+		//Thread should now be closed?
+		thread_must_exit=close_thread;
+		
+		access.unlock();
+	    
+		//Thread should wait "refresh_rate" seconds if not closing
+		if(!thread_must_exit) p_sleep(refresh_rate*1000);
+    	}
     
     }while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop
     
@@ -121,9 +124,8 @@ void Sensor::refresh()
 
 
 short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sample
-{
-    lock_guard<mutex> access(rw);    
-
+{   
+    lock_guard<mutex> access(rw);
     if(!autorefresh) refresh();         //on demand refresh if autorefresh is FALSE
     if(index==0) return raw_top();
     else return raw_pick(index);

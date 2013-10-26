@@ -52,8 +52,11 @@ class Driver
 {
  
     protected:
-        std::chrono::duration< int, std::milli > request_delay;
-        std::chrono::steady_clock::time_point last_request;
+        std::chrono::duration< int, std::milli > request_delay;		//GESTIONE DELAY HARDWARE: Se più sensori/processi/thread fanno richiesta al driver di seguito,
+        std::chrono::steady_clock::time_point last_request;		//limito le richieste effettive inoltrate all'hardware fisico (tengo conto dei ritardi intrinseci e
+        								//li nascondo al programmatore) SOPRATTUTTO le richieste INUTILI (ad esempio, in caso di errore,
+        								//mi basta che sia la prima richiesta a segnalarlo per le richieste subito successive).
+        
         bool ready();                       //Tests if device is ready to do a new request!
         
         data_type m;                        //Contains last raw data extracted by recv_measure
@@ -106,7 +109,7 @@ class Usb : public Driver<measure_struct,short int>
 
     
     	//Funzioni generiche usb
-		static int scan(const int vid, const int pid);
+	static int scan(const int vid, const int pid);
 		
 		
 		//VECCHIE FUNZ.

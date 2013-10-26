@@ -34,8 +34,8 @@ int Usb::scan(const int vid, const int pid)
 	int i, esito_funzione=ERROR;		
 	bool trovata=false;
 	cout<<"Scansione device in corso..."<<endl;
-	while (!trovata)
-	{
+	//while (!trovata)
+	//{
 		//Scansiona tutte periferiche e le alloca in devices
 		devices = hid_enumerate(0x0, 0x0);
 		curr_dev=devices;
@@ -86,12 +86,12 @@ int Usb::scan(const int vid, const int pid)
 		if(!trovata)
 		{
 			cout<<".....not found....."<<endl;
-			p_sleep(5000);
+			//p_sleep(5000);
 		}
 		
 		
 		
-	}
+	//}
 	
 	return esito_funzione;	
 		

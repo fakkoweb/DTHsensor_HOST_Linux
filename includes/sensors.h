@@ -70,7 +70,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         short int raw_top(){ int elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[buffer_lenght-1]; };
         float format_top(){ return convert(raw_top()); };
         short int raw_pick(int index)
-        {
+        { 
             int location;
             if(index<buffer_lenght && index>=0)
             {
@@ -112,22 +112,22 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         Sensor() = delete;                          //disabling zero-argument constructor completely
         explicit Sensor(int sample_rate, int avg_interval, bool enable_autorefresh = true); //sample_rate = secondi per l'autocampionamento (se attivato)
                                                                                             //avg_interval = minuti ogni quanto viene calcolata la media
-        ~Sensor();
+        ~Sensor();	//safe
         
-        short int get_raw(int index=0); //safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
+        short int get_raw(int index=0);	//safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
                                                                         //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
-        float get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };
-        float get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };
+        float get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };	//safe
+        float get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };	//safe
         
         
-        float get_measure(int index=0){ return convert(get_raw(index)); }; //safe
+        float get_measure(int index=0){ return convert(get_raw(index)); };
                                                                         //Stessa cosa di get_raw() ma la converte prima di restituirla                        
-        float get_average(){ lock_guard<mutex> access(rw); return average; };
-        float get_variance(){ lock_guard<mutex> access(rw); return variance; };
+        float get_average(){ lock_guard<mutex> access(rw); return average; };		//safe
+        float get_variance(){ lock_guard<mutex> access(rw); return variance; };		//safe
         
         
-        void display_measure(){ cout<<get_measure()<<endl; }; //safe
+        void display_measure(){ cout<<get_measure()<<endl; };
         void plug_to(const Driver<measure_struct,short int>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)

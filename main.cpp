@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
     
     //Inizializzazione CURL library -- necessario
 	curl_global_init(CURL_GLOBAL_ALL);
+	cout<<"Librerie inizializzate"<<endl;
     
 
 
@@ -59,6 +60,8 @@ int main(int argc, char* argv[])
 	user_config.HUMID_REFRESH_RATE=5;
 	user_config.DUST_REFRESH_RATE=30;
 	user_config.REPORT_INTERVAL=5;
+	
+	cout<<"Parametri caricati"<<endl;
     
     
     
@@ -69,6 +72,7 @@ int main(int argc, char* argv[])
     //Inizializzazione driver virtuali
     //Raspberry int_device;
     Usb ext_device(1240,19);
+    cout<<"Driver avviati"<<endl;
     
     //Creazione dei sensori virtuali
     param_struct* p = &user_config;
@@ -78,6 +82,7 @@ int main(int argc, char* argv[])
     //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, false );
     DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, false );
+    cout<<"Sensori virtuali avviati"<<endl;
     
     //Allacciamento dei sensori ai driver (alias board)
     exttemp.plug_to(ext_device);
@@ -85,6 +90,7 @@ int main(int argc, char* argv[])
     extdust.plug_to(ext_device);
     //inttemp.plug_to(int_device);
     //inthumid.plug_to(int_device);
+    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
@@ -100,7 +106,12 @@ int main(int argc, char* argv[])
 
 
 	std::map<int, Sensor*>::iterator row;
-	for (row=SensorArray.begin(); row!=SensorArray.end(); row++) cout<< row->second->get_raw() <<endl;
+	for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+	{
+		cout<<"Lettura: "<<endl;
+		cout<< row->second->get_raw() <<endl;
+		
+	}
 
 
 
