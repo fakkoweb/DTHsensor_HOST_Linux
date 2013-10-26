@@ -72,10 +72,10 @@ int Usb::scan(const int vid, const int pid)
 		
 		//FLAG DI CONTROLLO
 		/*
-		//*x* Forza il thread a terminare la ricerca se STOP è alto
+		*x* Forza il thread a terminare la ricerca se STOP è alto
 		if(get_stop())
 		{
-			trovata=true;		//*x* Forza trovata=true per uscire dal ciclo
+			trovata=true;		*x* Forza trovata=true per uscire dal ciclo
 			cout<<".....scan aborted by user....."<<endl;
 			esito_funzione=ABORTED;
 			//set_stop(false);	//Resetta il flag
@@ -147,9 +147,9 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	
 	if(d==NULL)                                                //Se la handle attuale non è valida...
 	{                       
-	    if ( Usb::scan(vid,pid) == NICE );		                //Chiama scan()
+	    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
 	    {
-	        d = hid_open(MY_VID, MY_PID, NULL);		            //Se device trovata, connettila.
+	        d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
 	        cout<<"Periferica aperta!"<<endl;
 	    }
 	    else
@@ -159,44 +159,43 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	    }
 	}
 	
-	
 	if(d!=NULL)
 	{
 
-    	while(bytes_read<= bytes_to_read-1 && bytes_read!=-1)	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
-        {
-    		cout<<"  | Tentativo "<<++i<<endl;
-    		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
-    		if (bytes_read < bytes_to_read) cout<<"  | Lettura fallita."<<endl;
-        	else
-        	{
-        		cout<<"  | "<<bytes_read<<" letti: ";
-        		cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+	    	while( bytes_read <= bytes_to_read-1 && bytes_read!=-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
+		{
+	    		cout<<"  | Tentativo "<<++i<<endl;
+	    		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
+	    		if (bytes_read < bytes_to_read) cout<<"  | Lettura fallita."<<endl;
+			else
+			{
+				cout<<"  | "<<bytes_read<<" letti: ";
+				cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+			}
+			if (bytes_read == -1)
+			{
+			    cout<<"  | ERRORE: Periferica non pronta!"<<endl;
+			    hid_close(d);
+	    	            cout<<"Device chiusa."<<endl;
+			    d=NULL;                                 //Resets handle pointer for safety
+			    status=ERROR;
+			}
         	}
-        	if (bytes_read == -1)
-        	{
-        	    cout<<"  | ERRORE: Periferica non pronta!"<<endl;
-        	    hid_close(d);
-    	        cout<<"Device chiusa."<<endl;
-        	    d=NULL;                                 //Resets handle pointer for safety
-        	    status=ERROR;
-            }
-        }
 
-    	/*
-    	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
-    	{
-    		result=ABORTED;
-    		//set_stop(false);		//Resetta il flag
-    	}
-    	else
-    	*/
+	    	/*
+	    	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
+	    	{
+	    		result=ABORTED;
+	    		//set_stop(false);		//Resetta il flag
+	    	}
+	    	else
+	    	*/
     	
-    	if (bytes_read==bytes_to_read)
-    	{
-    		memcpy( (void*) &m, (void*) buf, bytes_to_read);
-    		status=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
-    	}
+	    	if (bytes_read==bytes_to_read)
+	    	{
+	    		memcpy( (void*) &m, (void*) buf, bytes_to_read);
+	    		status=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
+	    	}
 	}
     
 	
