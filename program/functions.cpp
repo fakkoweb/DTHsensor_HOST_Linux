@@ -253,7 +253,7 @@ int param_load(param_struct& user_config, const string filename)
         p->INT_TEMP_lfid = check_not_zero( params["sensors"]["temp"].get("INT_lfid",0).asInt() );
         p->INT_HUMID_lfid = check_not_zero( params["sensors"]["humid"].get("INT_lfid",0).asInt() );
         //TEMP_BUFFER = 
-        p->TEMP_REFRESH_RATE = check_not_zero( pdhdhdgsjfdsdsdsldlskdkksjdjskdjfhfksjdfsdkjfhfkdlskfjsarams["sensors"]["temp"].get("REFRESH_RATE",0).asInt() );
+        p->TEMP_REFRESH_RATE = check_not_zero( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt() );
         //HUMID_BUFFER = 
         p->HUMID_REFRESH_RATE = check_not_zero( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() );
         //DUST_BUFFER = 
