@@ -231,14 +231,17 @@ int param_load(param_struct& user_config, const string filename)
 {
     
     int esito=ERROR;
-    //ifstream param_file(filename,ifstream::in);		//Nuovo oggetto stream in uscita (associato al terminale principale)
     Json::Value params;   // will contains the root value after parsing.
     Json::Reader reader;
-    bool parsingSuccessful = reader.parse( filename, params, true );
+    
+    //Nuovo oggetto stream in ingressp (associato al file "filename.json")
+    std::ifstream param_file(filename, std::ifstream::binary);
+    
+    bool parsingSuccessful = reader.parse( param_file, params, true );
     if ( !parsingSuccessful )
     {
         // report to the user the failure and their locations in the document.
-        std::cout  << "Errore di lettura file di configurazione "<<filename<<":\n"
+        std::cout  << "Errore di lettura dal file di configurazione "<<filename<<":\n"
                    << reader.getFormattedErrorMessages();
         esito=ERROR;
     }

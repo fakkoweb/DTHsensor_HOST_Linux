@@ -1,5 +1,3 @@
-
-hgjhgjh
 {
     "device": {
         "MY_VID": 1240,
@@ -16,7 +14,7 @@ hgjhgjh
             "INT_lfid": 22,
             "REFRESH_RATE": 5
         },
-        "dust": {
+        "dust": { 
             "EXT_lfid": 13,
             "REFRESH_RATE": 30
         }
