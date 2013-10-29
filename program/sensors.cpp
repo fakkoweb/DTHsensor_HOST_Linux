@@ -9,8 +9,7 @@
 Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh) 
 {
     board=NULL;
-    last_raw_index=0;
-    last_format_index=0;
+    next=0;
     buffer_filled=false;
     raw_average=0;
     average=0;
@@ -66,8 +65,7 @@ void Sensor::reset()
     delete format_buffer;
     
     board=NULL;
-    last_raw_index=0;
-    last_format_index=0;
+    next=0;
     buffer_filled=false;
     raw_average=0;
     average=0;
@@ -90,8 +88,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         if(autorefresh) access.lock();	//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
         				//and not put locks on elementary operations on buffers (it would cause ricursive locks!)
         //New sample
-        raw_push(sample());
-        format_push(convert(raw_top()));
+        push( sample() );
         new_sample.notify_all();
         
         //New statistic
@@ -147,7 +144,6 @@ void Sensor::wait_new_statistic()
 
 void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
 {
-    unique_lock<mutex> access(rw,std::defer_lock);
     //if(new_board!=NULL)
     //{
         

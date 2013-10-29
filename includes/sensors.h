@@ -44,49 +44,55 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     
         //BUFFERING STRUCTURES
         short int *raw_buffer;
-        int last_raw_index;
         float *format_buffer;
-        int last_format_index;
+        int next;
         int buffer_lenght;                          //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
-        bool buffer_filled;
+        bool buffer_filled;			//when do we reach the end of buffer?
         float raw_average;
         float average;
         float raw_variance;
         float variance;
-        void raw_push(short int elem)
+        
+        //BUFFERING LOW LEVEL OPERATIONS (NOT SAFE!! use locks before calling them!!)
+        void push(short int elem)
         {
-            raw_buffer[last_raw_index]=elem;
-            last_raw_index=(last_raw_index+1)%buffer_lenght;
-            if(last_raw_index==0) buffer_filled=true;
+            raw_buffer[next]=elem;
+            format_buffer[next]=convert(elem);
+            next=(next+1)%buffer_lenght;
+            if(next==0) buffer_filled=true;
             else buffer_filled=false;
         };
-        void format_push(float elem)
+        short int raw_top()
         {
-            format_buffer[last_format_index]=elem;
-            last_format_index=(last_format_index+1)%buffer_lenght;
-            if(last_format_index==0) buffer_filled=true;
-            else buffer_filled=false;
+        	int elem=next-1;
+        	if(elem>=0) return raw_buffer[elem];
+        	else return raw_buffer[buffer_lenght-1];
         };
-        short int raw_top(){ int elem=last_raw_index-1; if(elem>=0) return raw_buffer[elem]; else return raw_buffer[buffer_lenght-1]; };
-        float format_top(){ return convert(raw_top()); };
+        float format_top()
+        {
+        	return convert(raw_top());		//faster
+        };
         short int raw_pick(int index)
         { 
             int location;
             if(index<buffer_lenght && index>=0)
             {
-                if(index>last_raw_index) location=buffer_lenght-(index-last_raw_index);
-                else location=(last_raw_index-index)%buffer_lenght;
+                if(index>next) location=buffer_lenght-(index-next);
+                else location=(next-index)%buffer_lenght;
                 
                 if (location > 0) return raw_buffer[location-1];
                 else return raw_buffer[buffer_lenght-1];
             }
             else return 0;
         };
-        float format_pick(int index){ return convert(raw_pick(index)); };
+        float format_pick(int index)
+        {
+        	return convert(raw_pick(index));	//faster
+        };
         
         //SAMPLING & CONVERSION
         virtual short int sample() = 0;             //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
-        virtual float convert(short int) = 0;       //THIS FUNCTION MUST BE SPECIALIZED BY INHERITING CLASSES
+        virtual float convert(short int) = 0;       //THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
         
         //SENSOR CONTROL
         Driver<measure_struct,short int>* board;//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
