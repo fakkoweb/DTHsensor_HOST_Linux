@@ -6,7 +6,7 @@
 ////////////////////////////
 //GENERIC SENSOR PROCEDURES
 
-Sensor::Sensor(int sample_rate, int avg_interval, bool enable_autorefresh) 
+Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh) 
 {
     board=NULL;
     next=0;
@@ -51,14 +51,17 @@ void Sensor::reset()
 {
     unique_lock<mutex> access(rw,std::defer_lock);
     
+    cout<<" | Sto resettando il sensore..."<<endl;
+    
     //closes current autosampling thread, if any
     if(r!=NULL)
     {
         access.lock();
         close_thread=true;
         access.unlock();
-        
+        cout<<"  | Chiusura thread embedded richiesta..."<<endl;
         r->join();
+        cout<<"  | Chiusura thread embedded completata."<<endl;
     }
     
     delete raw_buffer;
@@ -74,9 +77,14 @@ void Sensor::reset()
     close_thread=false;
     r=NULL;
     
+    cout<<"  | Buffer e variabili resettate."<<endl;
+    
     raw_buffer = new short int[buffer_lenght];
     format_buffer = new float[buffer_lenght];
     
+    cout<<"  | Buffer rigenerati."<<endl;
+    
+    cout<<" | Reset del sensore completato."<<endl;
 }
 
 void Sensor::refresh()		//This function is called manually or automatically, in which case all sampling operation must be ATOMICAL 
@@ -133,7 +141,7 @@ void Sensor::wait_new_statistic()
 
 
 
-short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sample
+short int Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is last sample
 {   
 	short int measure=0;
     	lock_guard<mutex> access(rw);
@@ -154,8 +162,7 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
 {
     //if(new_board!=NULL)
     //{
-        
-        reset();
+        if(board!=NULL) reset();
         
         //Set new board
         board = const_cast< Driver<measure_struct,short int>* > (&new_board);

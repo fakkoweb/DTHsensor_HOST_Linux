@@ -54,7 +54,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         float variance;
         
         //BUFFERING LOW LEVEL OPERATIONS (NOT SAFE!! use locks before calling them!!)
-        void push(short int elem)
+        void push(const short int elem)
         {
             raw_buffer[next]=elem;
             format_buffer[next]=convert(elem);
@@ -72,7 +72,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         {
         	return convert(raw_top());		//faster
         };
-        short int raw_pick(int index)
+        short int raw_pick(const int index)
         { 
             int location;
             if(index<buffer_lenght && index>=0)
@@ -85,14 +85,14 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
             }
             else return 0;
         };
-        float format_pick(int index)
+        float format_pick(const int index)
         {
         	return convert(raw_pick(index));	//faster
         };
         
         //SAMPLING & CONVERSION
         virtual short int sample() = 0;             //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
-        virtual float convert(short int) = 0;       //THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
+        virtual float convert(const short int) = 0;       //THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
         
         //SENSOR CONTROL
         Driver<measure_struct,short int>* board;//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
@@ -118,12 +118,12 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     	
     	//COSTRUTTORE & DISTRUTTORE
         Sensor() = delete;                          //disabling zero-argument constructor completely
-        explicit Sensor(int sample_rate, int avg_interval, bool enable_autorefresh = true); //sample_rate = secondi per l'autocampionamento (se attivato)
+        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true); //sample_rate = secondi per l'autocampionamento (se attivato)
                                                                                             //avg_interval = minuti ogni quanto viene calcolata la media
         ~Sensor();	//safe
         
         //METODI DI ACCESSO PRIMARI (gestiscono i lock)
-        short int get_raw(int index=0);	//safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
+        short int get_raw(const int index=0);	//safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
                                                                         //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
         float get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };	//safe
@@ -134,7 +134,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         void wait_new_statistic(); //safe                               //Stessa cosa di wait_new_sample() ma per media e varianza        
         
         //METODI SECONDARI (sfruttano i metodi primari)
-        float get_measure(int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
+        float get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
         float get_average(){ return convert(get_raw_average()); };
         float get_variance(){ return convert(get_raw_variance()); };
         void display_measure(){ cout<<get_measure()<<endl; };
@@ -146,27 +146,27 @@ class TempSensor : public Sensor
 {
     protected:
         virtual short int sample(){ return board->request(TEMPERATURE); };      //Chiamata da get_measure, semplicemente chiama request() di board.    
-        virtual float convert(short int);                                       //TO IMPLEMENT!!
+        virtual float convert(const short int);                                       //TO IMPLEMENT!!
     public:
-        TempSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 class HumidSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);                                       //TO IMPLEMENT!!
+        virtual float convert(const short int);                                       //TO IMPLEMENT!!
         virtual short int sample(){ return board->request(HUMIDITY); };         //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        HumidSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 class DustSensor : public Sensor
 {
     protected:
-        virtual float convert(short int);                                       //TO IMPLEMENT!!
+        virtual float convert(const short int);                                       //TO IMPLEMENT!!
         virtual short int sample(){ return board->request(DUST); };             //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
-        DustSensor(int refresh_rate, int avg_interval, bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
 };
 
 
