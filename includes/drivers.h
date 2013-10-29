@@ -65,14 +65,14 @@ class Driver
                                             //RETURNS error code.
 
     public:
-        Driver(int min_delay = HARDWARE_DELAY){
+        Driver(const int min_delay = HARDWARE_DELAY){
             if(min_delay<=0) request_delay = std::chrono::duration< int, std::milli >::zero();
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
         };
         data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
                                                                             //NOTICE: testing "ready()" assures you respect device timing!
-        virtual elem_type request(int type)=0;	//RETURN an element from data_type. A new recv_measure() should be called testing
+        virtual elem_type request(const int type)=0;	//RETURN an element from data_type. A new recv_measure() should be called testing
         					//the ready() condition.
 
 };
@@ -93,7 +93,7 @@ class Usb : public Driver<measure_struct,short int>
         
     public:
         Usb() = delete; 
-        Usb(const int vid_in, const int pid_in, int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+        Usb(const int vid_in, const int pid_in, const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             d=NULL;
             m.temp=0;
             m.humid=0;
@@ -107,7 +107,7 @@ class Usb : public Driver<measure_struct,short int>
             cout<<"  | Device chiusa."<<endl;
         };
         
-        virtual short int request(int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
+        virtual short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
                                                     //RETURNS measure of type selected from m
 
     
@@ -134,13 +134,13 @@ class Raspberry : public Driver<measure_struct,short int>
         virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
         
     public:
-        Raspberry(int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+        Raspberry(const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             m.temp=0;
             m.humid=0;
             m.dust=0;
         };
         
-        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+        virtual short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry

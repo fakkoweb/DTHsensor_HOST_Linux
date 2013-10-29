@@ -208,7 +208,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	
 	
 
-short int Usb::request(int type)
+short int Usb::request(const int type)
 {
     
     int recv_status=ERROR;
@@ -256,7 +256,7 @@ int Raspberry::recv_measure()
 
 
 
-short int Raspberry::request(int type)
+short int Raspberry::request(const int type)
 {
     int recv_status=ERROR;
 
