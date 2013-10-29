@@ -211,8 +211,6 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 short int Usb::request(const int type)
 {
     
-    int recv_status=ERROR;
-
     if(ready())
     {
     	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
@@ -258,7 +256,6 @@ int Raspberry::recv_measure()
 
 short int Raspberry::request(const int type)
 {
-    int recv_status=ERROR;
 
     if(ready())
     {
