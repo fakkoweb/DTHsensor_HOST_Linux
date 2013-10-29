@@ -119,17 +119,6 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
     
 }
 
-
-short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sample
-{   
-    lock_guard<mutex> access(rw);
-    if(!autorefresh) refresh();         //on demand refresh if autorefresh is FALSE
-    if(index==0) return raw_top();
-    else return raw_pick(index);
-
-}
-
-
 void Sensor::wait_new_sample()
 {
     unique_lock<mutex> access(rw);
@@ -140,6 +129,25 @@ void Sensor::wait_new_statistic()
 {
     unique_lock<mutex> access(rw);
     if(!autorefresh) new_statistic.wait(access);
+}
+
+
+
+short int Sensor::get_raw(int index)  //index=n of samples ago ---> 0 is last sample
+{   
+	short int measure=0;
+    	lock_guard<mutex> access(rw);
+	if(board!=NULL)
+	{
+	    if(!autorefresh)
+	    {
+	    	refresh();         //on demand refresh if autorefresh is FALSE
+	    }
+	    if(index==0) measure=raw_top();
+	    else measure=raw_pick(index);
+	}
+	else cout<<" | Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
+	return measure;
 }
 
 void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
@@ -155,8 +163,9 @@ void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
         //Start a new autosampling thread
         if(autorefresh==true)
         {
-            //CALL OF REFRESH THREAD - Avvia il thread per l'autosampling
+            	//CALL OF REFRESH THREAD - Avvia il thread per l'autosampling
         	r= new thread (&Sensor::refresh,this);	// Per eseguire refresh() è richiesto this quando è un metodo della classe stessa
+		wait_new_sample();     			// Aspettiamo che il thread abbia almeno calcolato il primo sample() per considerare il sensore "collegato"   	
         }
     //}
     

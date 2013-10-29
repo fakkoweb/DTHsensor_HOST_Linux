@@ -29,10 +29,13 @@
 #define ABORTED	-1
 
 //Costanti per distinguere i tipi di misure
-#define UNDEFINED   0
 #define TEMPERATURE    1
 #define HUMIDITY   2
 #define DUST    3
+
+//Costante per esprimere una misura non valida o non disponibile
+#define NA	-1	//ATTENZIONE: deve essere negativo (perché le misure raw da sensore variano in 0-255)
+
 
 //Costanti per il prelievo misure  --> specificali in "parameters.json"
 //#define REPORT_INTERVAL 5         //in minuti - ogni quanto il programma manda un report al server
