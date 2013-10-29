@@ -58,6 +58,7 @@ class Driver
         								//mi basta che sia la prima richiesta a segnalarlo per le richieste subito successive).
         
         bool ready();                       //Tests if device is ready to do a new request!
+        				    //Assures that device is capable of handling requests despite its hardware limits.
         
         data_type m;                        //Contains last raw data extracted by recv_measure
         virtual int recv_measure()=0;       //Takes a new data_type from d via HID protocol from physical device
@@ -71,7 +72,8 @@ class Driver
         };
         data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
                                                                             //NOTICE: testing "ready()" assures you respect device timing!
-        virtual elem_type request(int type)=0;
+        virtual elem_type request(int type)=0;	//RETURN an element from data_type. A new recv_measure() should be called testing
+        					//the ready() condition.
 
 };
 
@@ -102,13 +104,14 @@ class Usb : public Driver<measure_struct,short int>
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
-            cout<<"Device chiusa."<<endl;
-        }
-        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+            cout<<"  | Device chiusa."<<endl;
+        };
+        
+        virtual short int request(int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
                                                     //RETURNS measure of type selected from m
 
     
-    	//Funzioni generiche usb
+    	//Funzioni generiche (static) usb
 	static int scan(const int vid, const int pid);
 		
 		
@@ -136,6 +139,7 @@ class Raspberry : public Driver<measure_struct,short int>
             m.humid=0;
             m.dust=0;
         };
+        
         virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m    
         
