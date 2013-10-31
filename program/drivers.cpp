@@ -186,10 +186,11 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	
 	if(d!=NULL)
 	{
+		hid_set_nonblocking(d,1);
 	    	while( bytes_read <= bytes_to_read-1 && bytes_read!=-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
 		{
 	    		cout<<"   | Tentativo "<<++i<<endl;
-	    		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
+	    		bytes_read = hid_read(d,buf,bytes_to_read);
 	    		if (bytes_read < bytes_to_read) cout<<"   | Lettura fallita."<<endl;
 			else
 			{

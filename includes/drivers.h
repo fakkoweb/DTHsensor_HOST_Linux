@@ -107,11 +107,13 @@ class Usb : public Driver<measure_struct,short int>
             m.dust=0;
             vid=vid_in;
             pid=pid_in;
+            hid_init();		//init hidapi for safety
         };
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
             cout<<"  | Device chiusa."<<endl;
+            hid_exit();		//free hidapi data
         };
         
         virtual short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
