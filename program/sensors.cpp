@@ -37,8 +37,9 @@ Sensor::~Sensor()
         access.lock();
         close_thread=true;
         access.unlock();
-        
+        cout<<"  | Chiusura thread embedded richiesta..."<<endl;     
         r->join();
+        cout<<"  | Chiusura thread embedded completata."<<endl;
     }
     
     delete raw_buffer;
@@ -93,31 +94,43 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
     bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
     do
     {
-        if(autorefresh) access.lock();	//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
+        if(autorefresh)
+        {	
+        	access.lock();		//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
         				//and not put locks on elementary operations on buffers (it would cause ricursive locks!)
-        //New sample
-        push( sample() );
-        new_sample.notify_all();
-        
-        //New statistic
-        if(buffer_filled)           //if buffer has filled buffer_lenght samples
-        {
-            raw_average=faverage((float*)raw_buffer,buffer_lenght);
-            average=faverage(format_buffer,buffer_lenght);
-            raw_variance=fvariance((float*)raw_buffer,buffer_lenght);
-            variance=fvariance(format_buffer,buffer_lenght);
-            new_statistic.notify_all();
+		cout<<"Thread is alive!"<<endl;
+		
+		//Thread should now be closed?
+		thread_must_exit=close_thread;		
         }
+        
+        if(!thread_must_exit)
+        {
+		//New sample
+		cout<<" | Nuova richiesta inoltrata al driver."<<endl;
+		push( sample() );
+		new_sample.notify_all();
+		//display_measure();
+		cout<<raw_top()<<endl;
+		
+		//New statistic
+		if(buffer_filled)           //if buffer has filled buffer_lenght samples
+		{
+		    raw_average=faverage((float*)raw_buffer,buffer_lenght);
+		    average=faverage(format_buffer,buffer_lenght);
+		    raw_variance=fvariance((float*)raw_buffer,buffer_lenght);
+		    variance=fvariance(format_buffer,buffer_lenght);
+		    new_statistic.notify_all();
+		}
+	}
 
 	if(autorefresh)
 	{
-		//Thread should now be closed?
-		thread_must_exit=close_thread;
-		
 		access.unlock();
-	    
+		
 		//Thread should wait "refresh_rate" seconds if not closing
-		if(!thread_must_exit) p_sleep(refresh_rate*1000);
+		if(!thread_must_exit) 
+			p_sleep(refresh_rate*1000);
     	}
     
     }while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop
@@ -130,13 +143,13 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 void Sensor::wait_new_sample()
 {
     unique_lock<mutex> access(rw);
-    if(!autorefresh) new_sample.wait(access);
+    if(autorefresh) new_sample.wait(access);
 }
 
 void Sensor::wait_new_statistic()
 {
     unique_lock<mutex> access(rw);
-    if(!autorefresh) new_statistic.wait(access);
+    if(autorefresh) new_statistic.wait(access);
 }
 
 

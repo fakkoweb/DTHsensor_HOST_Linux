@@ -25,6 +25,44 @@ bool Driver<data_type,elem_type>::ready()
 ///////////////////////
 //USB DRIVER PROCEDURES
 
+bool Usb::ready()
+{
+	bool device_ready=false;
+	
+	//(1) Check base class/driver constraint
+	bool base_ready = Driver<measure_struct,short int>::ready();	//Verifico le condizioni del driver di base.
+
+	if(base_ready)							//Se sono verificate, procedo con quelle specifiche
+	{
+	    	//(2) Check if device is physically plugged in
+		if(d==NULL)                                                //Se la handle attuale non è valida...
+		{
+		    cout<<"  | Nessuna periferica. Avvio scansione..."<<endl;                   
+		    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
+		    {
+		    	cout<<"  | Periferica individuata. Avvio connessione..."<<endl;
+			d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
+			if(d!=NULL)
+			{
+				cout<<"  | Periferica connessa!"<<endl;		//Se connessa, DEVICE READY
+				device_ready=true;
+			}
+			else cout<<"  | ERRORE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi."<<endl;
+		    }
+		    else cout<<"  | ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
+		    
+		    if(!device_ready) cout<<"  | WARNING: le misure non sono aggiornate."<<endl;
+		    last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
+		    							//anche tra una scansione e un'altra.
+		}
+		else device_ready=true;				//Se la handle è valida, DEVICE READY
+
+	}
+	
+	return device_ready;				//Solo se (1) e (2) vere allora ready() ritorna TRUE!
+}
+
+
 int Usb::scan(const int vid, const int pid)
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
@@ -145,26 +183,9 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
 	unsigned char buf[bytes_to_read];
 	
-	if(d==NULL)                                                //Se la handle attuale non è valida...
-	{
-	    cout<<"  | Nessuna periferica. Avvio scansione..."<<endl;                   
-	    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
-	    {
-	    	cout<<"  | Periferica individuata. Avvio connessione..."<<endl;
-	        d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
-	        if(d!=NULL) cout<<"  | Periferica connessa!"<<endl;
-	        else cout<<"  | ERRORE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi."<<endl;
-	    }
-	    else
-	    {
-            cout<<"  | ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
-            status=ERROR;
-	    }
-	}
 	
 	if(d!=NULL)
 	{
-		cout<<"  | Nuova richiesta al driver:"<<endl;
 	    	while( bytes_read <= bytes_to_read-1 && bytes_read!=-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
 		{
 	    		cout<<"   | Tentativo "<<++i<<endl;
@@ -202,7 +223,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	}
     
 	
-	return status;				//Qui ERROR è ritornato solo se avviene un comportamento inaspettato.
+	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.
 
 }
 	
@@ -210,11 +231,11 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 short int Usb::request(const int type)
 {
-    
+
     if(ready())
     {
     	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
-    	cout<<"  | WARNING: le misure non sono aggiornate."<<endl;
+    	cout<<"  | WARNING: riconnettere la periferica o le misure non saranno aggiornate!"<<endl;
     }
     
     

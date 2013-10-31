@@ -12,11 +12,11 @@
         "humid": {
             "EXT_lfid": 12,
             "INT_lfid": 22,
-            "REFRESH_RATE": 5
+            "REFRESH_RATE": 10
         },
         "dust": {
             "EXT_lfid": 13,
-            "REFRESH_RATE": 30
+            "REFRESH_RATE": 4
         }
     },
     "report": {

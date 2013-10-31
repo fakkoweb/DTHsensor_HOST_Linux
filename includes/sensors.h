@@ -44,10 +44,10 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     
         //BUFFERING STRUCTURES
         short int *raw_buffer;
-        float *format_buffer;
+        float *format_buffer;		//Contiene una versione convertita di raw_buffer - UTILE per calcoli che richiederebbero conversione di tutti gli elementi!!
         int next;
-        int buffer_lenght;                          //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
-        bool buffer_filled;			//when do we reach the end of buffer?
+        int buffer_lenght;		//IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
+        bool buffer_filled;		//when do we reach the end of buffer?
         float raw_average;
         float average;
         float raw_variance;
@@ -137,7 +137,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         float get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
         float get_average(){ return convert(get_raw_average()); };
         float get_variance(){ return convert(get_raw_variance()); };
-        void display_measure(){ cout<<get_measure()<<endl; };
+        virtual void display_measure()=0;
         void plug_to(const Driver<measure_struct,short int>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
 
 };
@@ -149,6 +149,7 @@ class TempSensor : public Sensor
         virtual float convert(const short int);                                       //TO IMPLEMENT!!
     public:
         TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        virtual void display_measure(){ cout<<"Temp: "<<get_raw()<<endl; };
 };
 
 class HumidSensor : public Sensor
@@ -158,6 +159,7 @@ class HumidSensor : public Sensor
         virtual short int sample(){ return board->request(HUMIDITY); };         //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        virtual void display_measure(){ cout<<"Humid: "<<get_raw()<<endl; };        
 };
 
 class DustSensor : public Sensor
@@ -167,6 +169,7 @@ class DustSensor : public Sensor
         virtual short int sample(){ return board->request(DUST); };             //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        virtual void display_measure(){ cout<<"Dust: "<<get_raw()<<endl; };        
 };
 
 
