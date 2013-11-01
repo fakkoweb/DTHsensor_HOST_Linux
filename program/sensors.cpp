@@ -109,7 +109,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		//New sample
 		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(int)board<<")"<<endl;
 		push( sample() );
-		cout<<" S| Richiesta soddisfatta."<<endl;
+		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
 		new_sample.notify_all();
 		
 		//New statistic
