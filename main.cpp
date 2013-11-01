@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     param_struct user_config;
     //if ( param_load(user_config,"parameters.json") != NICE ) return 1;
 	user_config.TEMP_REFRESH_RATE=5;
-	user_config.HUMID_REFRESH_RATE=5;
+	user_config.HUMID_REFRESH_RATE=15;
 	user_config.DUST_REFRESH_RATE=30;
 	user_config.REPORT_INTERVAL=5;
 	
@@ -77,11 +77,12 @@ int main(int argc, char* argv[])
     //Creazione dei sensori virtuali
     param_struct* p = &user_config;
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, false );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
     //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
     //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, false );
-    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, false );
+    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    cout<<p->DUST_REFRESH_RATE<<endl;
     cout<<"Sensori virtuali avviati"<<endl;
     
     //Allacciamento dei sensori ai driver (alias board)
@@ -106,12 +107,22 @@ int main(int argc, char* argv[])
 
 
 	std::map<int, Sensor*>::iterator row;
-	for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+	
+	while(1)
 	{
-		cout<<"Lettura: "<<endl;
-		cout<< row->second->get_raw() <<endl;
+		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		{
+			row->second->wait_new_sample();
 		
+		}
+		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		{
+			row->second->display_measure();
+		
+		}
+
 	}
+	
 
 
 

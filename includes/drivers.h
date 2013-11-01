@@ -57,8 +57,10 @@ class Driver
         								//li nascondo al programmatore) SOPRATTUTTO le richieste INUTILI (ad esempio, in caso di errore,
         								//mi basta che sia la prima richiesta a segnalarlo per le richieste subito successive).
         
-        bool ready();                       //Tests if device is ready to do a new request!
-        				    //Assures that device is capable of handling requests despite its hardware limits.
+        virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
+        				    //Implements generic driver algorithms to counter hardware limits:
+        				    //	- Minimum delay between requests
+        				    //CAN BE EXTENDED BY DERIVED CLASSES!!
         
         data_type m;                        //Contains last raw data extracted by recv_measure
         virtual int recv_measure()=0;       //Takes a new data_type from d via HID protocol from physical device
@@ -88,6 +90,11 @@ class Usb : public Driver<measure_struct,short int>
                                             //Device is "opened" at first call of recv_measure()
         int vid;
         int pid;
+        virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
+        				    //Implements usb driver algorithms to counter hardware limits:
+        				    //	(base) Minimum delay between requests
+        				    //	(extension) Device IS plugged in (issue a scan if not)
+        				    //CAN BE EXTENDED BY DERIVED CLASSES!!	
         virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
                                             //RETURNS error code.
         
@@ -100,11 +107,13 @@ class Usb : public Driver<measure_struct,short int>
             m.dust=0;
             vid=vid_in;
             pid=pid_in;
+            hid_init();		//init hidapi for safety
         };
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
-            cout<<"  | Device chiusa."<<endl;
+            cout<<"  D| Device chiusa."<<endl;
+            hid_exit();		//free hidapi data
         };
         
         virtual short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
