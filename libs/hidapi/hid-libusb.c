@@ -648,7 +648,7 @@ static void read_callback(struct libusb_transfer *transfer)
 			/* Pop one off if we've reached 30 in the queue. This
 			   way we don't grow forever if the user never reads
 			   anything from the device. */
-			if (num_queued > 0) {
+			if (num_queued > 30) {
 				return_data(dev, NULL, 0);
 			}			
 		}
