@@ -37,9 +37,9 @@ Sensor::~Sensor()
         access.lock();
         close_thread=true;
         access.unlock();
-        cout<<"  | Chiusura thread embedded richiesta..."<<endl;     
+        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;     
         r->join();
-        cout<<"  | Chiusura thread embedded completata."<<endl;
+        cout<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
     delete raw_buffer;
@@ -60,9 +60,9 @@ void Sensor::reset()
         access.lock();
         close_thread=true;
         access.unlock();
-        cout<<"  | Chiusura thread embedded richiesta..."<<endl;
+        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;
         r->join();
-        cout<<"  | Chiusura thread embedded completata."<<endl;
+        cout<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
     delete raw_buffer;
@@ -78,12 +78,12 @@ void Sensor::reset()
     close_thread=false;
     r=NULL;
     
-    cout<<"  | Buffer e variabili resettate."<<endl;
+    cout<<"  S| Buffer e variabili resettate."<<endl;
     
     raw_buffer = new short int[buffer_lenght];
     format_buffer = new float[buffer_lenght];
     
-    cout<<"  | Buffer rigenerati."<<endl;
+    cout<<"  S| Buffer rigenerati."<<endl;
     
     cout<<" | Reset del sensore completato."<<endl;
 }
@@ -98,7 +98,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         {	
         	access.lock();		//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
         				//and not put locks on elementary operations on buffers (it would cause ricursive locks!)
-		cout<<"Thread is alive!"<<endl;
+		//cout<<"Thread is alive!"<<endl;
 		
 		//Thread should now be closed?
 		thread_must_exit=close_thread;		
@@ -107,11 +107,10 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         if(!thread_must_exit)
         {
 		//New sample
-		cout<<" | Nuova richiesta inoltrata al driver."<<endl;
+		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(int)board<<")"<<endl;
 		push( sample() );
+		cout<<" S| Richiesta soddisfatta."<<endl;
 		new_sample.notify_all();
-		//display_measure();
-		cout<<raw_top()<<endl;
 		
 		//New statistic
 		if(buffer_filled)           //if buffer has filled buffer_lenght samples
@@ -167,7 +166,7 @@ short int Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is l
 	    if(index==0) measure=raw_top();
 	    else measure=raw_pick(index);
 	}
-	else cout<<" | Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
+	else cout<<" S| Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
 	return measure;
 }
 

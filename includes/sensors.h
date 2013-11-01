@@ -91,8 +91,8 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         };
         
         //SAMPLING & CONVERSION
-        virtual short int sample() = 0;             //Chiamata da get_measure, semplicemente chiama board (la request() del driver associato)
-        virtual float convert(const short int) = 0;       //THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
+        short int sample(){ return board->request(mtype()); };	//Chiamata da get_measure, semplicemente chiama board (la request() col tipo misura richiesto)
+        virtual float convert(const short int) = 0;       	//THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
         
         //SENSOR CONTROL
         Driver<measure_struct,short int>* board;//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
@@ -137,39 +137,44 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         float get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
         float get_average(){ return convert(get_raw_average()); };
         float get_variance(){ return convert(get_raw_variance()); };
-        virtual void display_measure()=0;
+        
+        virtual string stype()=0;	//returns a string explaining the type of sensor
+        virtual int mtype()=0;		//returns the type (its code) of measure sensor requests to driver
+        void display_measure(){ cout<<stype()<<": "<<get_raw()<<endl; };
         void plug_to(const Driver<measure_struct,short int>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
 
 };
 
 class TempSensor : public Sensor
 {
-    protected:
-        virtual short int sample(){ return board->request(TEMPERATURE); };      //Chiamata da get_measure, semplicemente chiama request() di board.    
+    protected:   
         virtual float convert(const short int);                                       //TO IMPLEMENT!!
     public:
         TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
-        virtual void display_measure(){ cout<<"Temp: "<<get_raw()<<endl; };
+        virtual string stype(){ string st="Temperatura"; return st; };
+        virtual int mtype(){ return TEMPERATURE; };
 };
 
 class HumidSensor : public Sensor
 {
     protected:
         virtual float convert(const short int);                                       //TO IMPLEMENT!!
-        virtual short int sample(){ return board->request(HUMIDITY); };         //Chiamata da get_measure, semplicemente chiama request() di board.           
+        virtual short int sample(){ return board->request(mtype()); };         //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
-        virtual void display_measure(){ cout<<"Humid: "<<get_raw()<<endl; };        
+        virtual string stype(){ string st="Umidita'"; return st; };
+        virtual int mtype(){ return HUMIDITY; };        
 };
 
 class DustSensor : public Sensor
 {
     protected:
         virtual float convert(const short int);                                       //TO IMPLEMENT!!
-        virtual short int sample(){ return board->request(DUST); };             //Chiamata da get_measure, semplicemente chiama request() di board.           
+        virtual short int sample(){ return board->request(mtype()); };             //Chiamata da get_measure, semplicemente chiama request() di board.           
     public:
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
-        virtual void display_measure(){ cout<<"Dust: "<<get_raw()<<endl; };        
+        virtual string stype(){ string st="Polveri"; return st; };
+        virtual int mtype(){ return DUST; };        
 };
 
 

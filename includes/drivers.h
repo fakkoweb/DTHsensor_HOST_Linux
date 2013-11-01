@@ -112,7 +112,7 @@ class Usb : public Driver<measure_struct,short int>
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
-            cout<<"  | Device chiusa."<<endl;
+            cout<<"  D| Device chiusa."<<endl;
             hid_exit();		//free hidapi data
         };
         
