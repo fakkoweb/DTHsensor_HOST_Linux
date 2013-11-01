@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
     param_struct user_config;
     //if ( param_load(user_config,"parameters.json") != NICE ) return 1;
 	user_config.TEMP_REFRESH_RATE=5;
-	user_config.HUMID_REFRESH_RATE=5;
-	user_config.DUST_REFRESH_RATE=3;
+	user_config.HUMID_REFRESH_RATE=15;
+	user_config.DUST_REFRESH_RATE=30;
 	user_config.REPORT_INTERVAL=5;
 	
 	cout<<"Parametri caricati"<<endl;
@@ -77,17 +77,17 @@ int main(int argc, char* argv[])
     //Creazione dei sensori virtuali
     param_struct* p = &user_config;
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    //TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
     //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
     //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    //HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
     DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, true );
     cout<<p->DUST_REFRESH_RATE<<endl;
     cout<<"Sensori virtuali avviati"<<endl;
     
     //Allacciamento dei sensori ai driver (alias board)
-    //exttemp.plug_to(ext_device);
-    //exthumid.plug_to(ext_device);
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
     //inttemp.plug_to(int_device);
     //inthumid.plug_to(int_device);
@@ -96,8 +96,8 @@ int main(int argc, char* argv[])
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
 	typedef pair <int, Sensor*> new_row;
-	//SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
-	//SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
+	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
+	SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
 	SensorArray.insert ( new_row ( p->EXT_DUST_lfid, &extdust ) );
 	//SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
 	//SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
