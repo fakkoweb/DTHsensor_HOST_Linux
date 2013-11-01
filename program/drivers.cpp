@@ -89,7 +89,7 @@ int Usb::scan(const int vid, const int pid)
 				
 				cout<<"   x Device "<<++i<<" trovata:"<<endl;
 				cout<<"     |  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
-				cout<<"     |  Path: "<<curr_dev->path<<"\n    |  serial_number: "<<curr_dev->serial_number<<endl;
+				cout<<"     |  Path: "<<curr_dev->path<<"\n     |  serial_number: "<<curr_dev->serial_number<<endl;
 				cout<<"     |  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
 				cout<<"     |  Product:      "<<curr_dev->product_string<<endl;
 				cout<<"     |  Release:      "<<curr_dev->release_number<<endl;
