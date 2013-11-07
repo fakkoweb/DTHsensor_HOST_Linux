@@ -25,6 +25,44 @@ bool Driver<data_type,elem_type>::ready()
 ///////////////////////
 //USB DRIVER PROCEDURES
 
+bool Usb::ready()
+{
+	bool device_ready=false;
+	
+	//(1) Check base class/driver constraint
+	bool base_ready = Driver<measure_struct,short int>::ready();	//Verifico le condizioni del driver di base.
+
+	if(base_ready)							//Se sono verificate, procedo con quelle specifiche
+	{
+	    	//(2) Check if device is physically plugged in
+		if(d==NULL)                                                //Se la handle attuale non è valida...
+		{
+		    cout<<"  D| Nessuna periferica. Avvio scansione..."<<endl;                   
+		    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
+		    {
+		    	cout<<"  D| Periferica individuata. Avvio connessione..."<<endl;
+			d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
+			if(d!=NULL)
+			{
+				cout<<"  D| Periferica connessa!"<<endl;		//Se connessa, DEVICE READY
+				device_ready=true;
+			}
+			else cout<<"  D| ERRORE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi."<<endl;
+		    }
+		    else cout<<"  D| ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
+		    
+		    if(!device_ready) cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
+		    last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
+		    							//anche tra una scansione e un'altra.
+		}
+		else device_ready=true;				//Se la handle è valida, DEVICE READY
+
+	}
+	
+	return device_ready;				//Solo se (1) e (2) vere allora ready() ritorna TRUE!
+}
+
+
 int Usb::scan(const int vid, const int pid)
 {
 	struct hid_device_info* devices;	//Lista linkata di descrittori di device (puntatore al primo elemento)
@@ -33,9 +71,9 @@ int Usb::scan(const int vid, const int pid)
 	//Scansione della nostra device
 	int i, esito_funzione=ERROR;		
 	bool trovata=false;
-	cout<<"Scansione device in corso..."<<endl;
-	while (!trovata)
-	{
+	cout<<"   D! Scansione devices in corso..."<<endl;
+	//while (!trovata)
+	//{
 		//Scansiona tutte periferiche e le alloca in devices
 		devices = hid_enumerate(0x0, 0x0);
 		curr_dev=devices;
@@ -49,19 +87,19 @@ int Usb::scan(const int vid, const int pid)
 				//cout<<"Device "<<++i<<" trovata!"<<endl;
 				//cout<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
 				
-				cout<<"Device "<<++i<<" riconosciuta!"<<endl;
-				cout<<"|  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
-				cout<<"|  Path: "<<curr_dev->path<<"\n|  serial_number: "<<curr_dev->serial_number<<endl;
-				cout<<"|  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
-				cout<<"|  Product:      "<<curr_dev->product_string<<endl;
-				cout<<"|  Release:      "<<curr_dev->release_number<<endl;
-				cout<<"|  Interface:    "<<curr_dev->interface_number<<endl;
+				cout<<"   x Device "<<++i<<" trovata:"<<endl;
+				cout<<"     |  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
+				cout<<"     |  Path: "<<curr_dev->path<<"\n     |  serial_number: "<<curr_dev->serial_number<<endl;
+				cout<<"     |  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
+				cout<<"     |  Product:      "<<curr_dev->product_string<<endl;
+				cout<<"     |  Release:      "<<curr_dev->release_number<<endl;
+				cout<<"     |  Interface:    "<<curr_dev->interface_number<<endl;
 				trovata=true;
 				esito_funzione=NICE;
 			}
 			else 
 			{
-				cout<<"Device "<<++i<<"-> VID: "<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<"  --  NO MATCH"<<endl;
+				cout<<"   o Device "<<++i<<"-> VID: "<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<"  --  NO MATCH"<<endl;
 			}
 			curr_dev=curr_dev->next;
 		}
@@ -85,13 +123,13 @@ int Usb::scan(const int vid, const int pid)
 		//Se STOP è falso e trovata è falso aspetta 3 secondi prima di effettuare una nuova scansione
 		if(!trovata)
 		{
-			cout<<".....not found....."<<endl;
-			p_sleep(5000);
+			cout<<"   D! Nessuna corrispondenza con VID e PID cercati."<<endl;
+			//p_sleep(5000);
 		}
 		
 		
 		
-	}
+	//}
 	
 	return esito_funzione;	
 		
@@ -142,74 +180,69 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 
 int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
-	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
+	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
 	unsigned char buf[bytes_to_read];
 	
-	if(d==NULL)                                                //Se la handle attuale non è valida...
-	{                       
-	    if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
-	    {
-	        d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
-	        cout<<"Periferica aperta!"<<endl;
-	    }
-	    else
-	    {
-            cout<<"  | ERRORE: Periferica non collegata!"<<endl;
-            status=ERROR;
-	    }
-	}
 	
 	if(d!=NULL)
 	{
-
-	    	while( bytes_read <= bytes_to_read-1 && bytes_read!=-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
+		cout<<"  D| Procedura di lettura iniziata."<<endl;
+		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
+	    	while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() && 
 		{
-	    		cout<<"  | Tentativo "<<++i<<endl;
-	    		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);
-	    		if (bytes_read < bytes_to_read) cout<<"  | Lettura fallita."<<endl;
-			else
+	    		cout<<"   D! Tentativo "<<++i<<endl;
+	    		do
+	    		{
+	    			last_bytes_read=bytes_read;						//Memorizza il numero di byte letti dal report precedente
+	    			bytes_read = hid_read(d,buf,bytes_to_read);				//Leggi il report successivo:
+	    			//cout<<bytes_read<<endl;						//	- se bytes_read>0 allora esiste un report più recente nel buffer -> scaricalo
+	    												//	- se bytes_read=0, non ci sono più report -> l'ultimo scaricato è quello buono
+	    												//	- se bytes_read=-1 c'é un errore critico con la device -> interrompi tutto
+	    												//La read si blocca AL PIU' per 5 secondi, dopodiché restituisce errore critico (-1)
+	    		}while(bytes_read>0);								//Cicla finché il buffer non è stato svuotato (0) oppure c'è stato errore critico (-1)
+	    		if (bytes_read == -1)								//Se c'è stato errore...
 			{
-				cout<<"  | "<<bytes_read<<" letti: ";
-				cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+			    cout<<"   D! Lettura fallita."<<endl;
+			    cout<<"   D! ERRORE: Periferica non pronta o scollegata prematuramente.\n  D| Disconnessione in corso..."<<endl;
+			    hid_close(d);									//chiudi la handle. 	-> ESCE dal ciclo.
+	    	            cout<<"  D| Device disconnessa."<<endl;
+			    d=NULL;	//Resets handle pointer for safety
 			}
-			if (bytes_read == -1)
-			{
-			    cout<<"  | ERRORE: Periferica non pronta!"<<endl;
-			    hid_close(d);
-	    	            cout<<"Device chiusa."<<endl;
-			    d=NULL;                                 //Resets handle pointer for safety
-			    status=ERROR;
+	    		else										//..altrimenti analizziamo per bene l'ultimo report scaricato...
+	    		{
+		    		if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
+		    			cout<<"   D! Lettura fallita."<<endl;					//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
+				else										//altrimenti -> stampa a video il risultato e memorizzalo in "m" -> ESCE dal ciclo.
+				{
+					cout<<"   D! "<<last_bytes_read<<" bytes letti: ";
+					cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+					memcpy( (void*) &m, (void*) buf, bytes_to_read);
+			    		status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte
+				}
 			}
+
         	}
 
-	    	/*
-	    	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
-	    	{
-	    		result=ABORTED;
-	    		//set_stop(false);		//Resetta il flag
-	    	}
-	    	else
-	    	*/
-    	
-	    	if (bytes_read==bytes_to_read)
-	    	{
-	    		memcpy( (void*) &m, (void*) buf, bytes_to_read);
-	    		status=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
-	    	}
+	    	cout<<"  D| Procedura di lettura conclusa."<<endl;
 	}
+	else cout<<"  D| ERRORE: il driver non è connesso ad alcuna periferica! (device=NULL)"<<endl;
     
 	
-	return status;				//Qui ERROR è ritornato solo se avviene un comportamento inaspettato.
+	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.
 
 }
 	
 	
 
-short int Usb::request(int type)
+short int Usb::request(const int type)
 {
-    
 
-    if(ready()) recv_measure();     //IF request_delay HAS PASSED call recv_measure();
+    if(ready())
+    {
+    	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
+    	cout<<"  D| WARNING: riconnettere la periferica o le misure non saranno aggiornate!"<<endl;
+    }
+    
     
     short int measure=0;
     
@@ -225,6 +258,7 @@ short int Usb::request(int type)
       break;
     default:
       measure=ERROR;
+      cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
       break;
     }
         
@@ -246,10 +280,14 @@ int Raspberry::recv_measure()
 
 
 
-short int Raspberry::request(int type)
+short int Raspberry::request(const int type)
 {
-    //IF request_delay HAS PASSED: recv_measure();
-    if(ready()) recv_measure();
+
+    if(ready())
+    {
+    	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
+    	cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
+    }
     
     short int measure=0;
     
@@ -262,6 +300,7 @@ short int Raspberry::request(int type)
       break;
     default:
       measure=ERROR;
+      cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;      
       break;
     }
         

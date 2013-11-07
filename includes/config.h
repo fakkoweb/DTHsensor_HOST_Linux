@@ -29,10 +29,13 @@
 #define ABORTED	-1
 
 //Costanti per distinguere i tipi di misure
-#define UNDEFINED   0
 #define TEMPERATURE    1
 #define HUMIDITY   2
 #define DUST    3
+
+//Costante per esprimere una misura non valida o non disponibile
+#define NA	-1	//ATTENZIONE: deve essere negativo (perché le misure raw da sensore variano in 0-255)
+
 
 //Costanti per il prelievo misure  --> specificali in "parameters.json"
 //#define REPORT_INTERVAL 5         //in minuti - ogni quanto il programma manda un report al server
@@ -45,7 +48,7 @@
 //#define HUMID_REFRESH_RATE = 0;
 //#define DUST_BUFFER = 0;          //Deprecato: si ricava da (REPORT_INTERVAL*60)/DUST_REFRESH_RATE
 //#define DUST_REFRESH_RATE = 0;
-#define HARDWARE_DELAY  300         //in millisecondi - intervallo minimo di richieste soddisfatte dal driver
+#define HARDWARE_DELAY  1000         //in millisecondi - intervallo minimo di richieste soddisfatte dal driver
                                     //(alle richieste sotto questo intervallo sarà data l'ultima misura effettuata)
 
 //Altre define di codice                                

@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
     
     //Inizializzazione CURL library -- necessario
 	curl_global_init(CURL_GLOBAL_ALL);
+	cout<<"Librerie inizializzate"<<endl;
     
 
 
@@ -55,25 +56,36 @@ int main(int argc, char* argv[])
     //Caricamento parametri utente (da parameters.json)
     param_struct user_config;
     if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+	else cout<<"Parametri caricati"<<endl;
 
-	//Per leggibilità usero p per accedere a user_config
-	param_struct* p = &user_config;  
+    /*  PARAMETRI DI PROVA
+	user_config.TEMP_REFRESH_RATE=5;
+	user_config.HUMID_REFRESH_RATE=15;
+	user_config.DUST_REFRESH_RATE=30;
+	user_config.REPORT_INTERVAL=5;
+    */
+    
+    //Visualizza i parametri appena caricati (verifica utente)
+    param_struct* p = &user_config;
+    cout<<"-- ID data --"<<endl;
+    cout<<"MY_VID: 0x"<<hex<< p-> MY_VID <<endl;
+    cout<<"MY_PID: 0x"<<hex<< p-> MY_PID <<endl;
+    cout<<"EXT_TEMP Local feed id: "<<dec<< p-> EXT_TEMP_lfid <<endl;
+    cout<<"EXT_HUMID Local feed id: "<< p-> EXT_HUMID_lfid <<endl;
+    cout<<"EXT_DUST Local feed id: "<< p-> EXT_DUST_lfid <<endl;
+    cout<<"INT_TEMP Local feed id: "<< p-> INT_TEMP_lfid <<endl;
+    cout<<"INT_HUMID Local feed id: "<< p-> INT_HUMID_lfid <<endl;
+    cout<<"-- Precision data --"<<endl;
+    cout<<"Temperature sample rate (sec): "<< p-> TEMP_REFRESH_RATE <<endl;
+    cout<<"Humidity sample rate (sec): "<< p-> HUMID_REFRESH_RATE <<endl;
+    cout<<"Dust sample rate (sec): "<< p-> DUST_REFRESH_RATE <<endl;
+    cout<<"Server report interval (min): "<< p-> REPORT_INTERVAL <<endl;
+    cout<<"...therefore statistics sent to server will work on N°samples = ("<<p-> REPORT_INTERVAL<<"*60)/sample_rate"<<endl;
 
+    p_sleep(3000);
 
-	/* TESTING PARAMETRI
-    cout<<p-> MY_VID <<endl;
-    cout<<p-> MY_PID <<endl;
-    cout<<p-> EXT_TEMP_lfid <<endl;
-    cout<<p-> EXT_HUMID_lfid <<endl;
-    cout<<p-> EXT_DUST_lfid <<endl;
-    cout<<p-> INT_TEMP_lfid <<endl;
-    cout<<p-> INT_HUMID_lfid <<endl;
-    cout<<p-> TEMP_REFRESH_RATE <<endl;
-    cout<<p-> HUMID_REFRESH_RATE <<endl;
-    cout<<p-> DUST_REFRESH_RATE <<endl;
-    cout<<p-> REPORT_INTERVAL <<endl;
-	*/
-
+   
+    
     
     
     
@@ -82,23 +94,19 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Inizializzazione driver virtuali
-    Raspberry int_device;
-    Usb ext_device;
+    //Raspberry int_device;
+    Usb ext_device(1240,19);
+    cout<<"Driver pronti"<<endl;
+    
     
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
-    HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );
-    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL );
-    
-    //Allacciamento dei sensori ai driver (alias board)
-    exttemp.plug_to(ext_device);
-    exthumid.plug_to(ext_device);
-    extdust.plug_to(ext_device);
-    inttemp.plug_to(int_device);
-    inthumid.plug_to(int_device);
+    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    cout<<"Sensori virtuali pronti"<<endl;
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
@@ -106,16 +114,52 @@ int main(int argc, char* argv[])
 	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
 	SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
 	SensorArray.insert ( new_row ( p->EXT_DUST_lfid, &extdust ) );
-	SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
-	SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
+	//SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
+	//SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
 
+    //Display della mappa di sensori appena creata
+    std::map<int, Sensor*>::iterator row;
+    cout<<"-- Sensori disponibili --"<<endl;
+    cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
+    for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+    {
+	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
+    }
+
+    p_sleep(3000);
+        
+    //Allacciamento dei sensori ai driver (alias board)
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
+    extdust.plug_to(ext_device);
+    //inttemp.plug_to(int_device);
+    //inthumid.plug_to(int_device);
+    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
+        
+    
+
+    cout<<"Avvio..."<<endl;
+	while(1)
+	{
+		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		{
+			row->second->wait_new_sample();
+		
+		}
+		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		{
+			row->second->display_measure();
+		
+		}
+
+	}
+	
 
 
-
-
+/*
 
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
@@ -147,7 +191,8 @@ int main(int argc, char* argv[])
     }
     return state;
     
-      
+*/
+    
     
     
     /*

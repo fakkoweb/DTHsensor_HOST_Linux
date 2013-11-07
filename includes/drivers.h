@@ -52,23 +52,30 @@ class Driver
 {
  
     protected:
-        std::chrono::duration< int, std::milli > request_delay;
-        std::chrono::steady_clock::time_point last_request;
-        bool ready();                       //Tests if device is ready to do a new request!
+        std::chrono::duration< int, std::milli > request_delay;		//GESTIONE DELAY HARDWARE: Se più sensori/processi/thread fanno richiesta al driver di seguito,
+        std::chrono::steady_clock::time_point last_request;		//limito le richieste effettive inoltrate all'hardware fisico (tengo conto dei ritardi intrinseci e
+        								//li nascondo al programmatore) SOPRATTUTTO le richieste INUTILI (ad esempio, in caso di errore,
+        								//mi basta che sia la prima richiesta a segnalarlo per le richieste subito successive).
+        
+        virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
+        				    //Implements generic driver algorithms to counter hardware limits:
+        				    //	- Minimum delay between requests
+        				    //CAN BE EXTENDED BY DERIVED CLASSES!!
         
         data_type m;                        //Contains last raw data extracted by recv_measure
         virtual int recv_measure()=0;       //Takes a new data_type from d via HID protocol from physical device
                                             //RETURNS error code.
 
     public:
-        Driver(int min_delay = HARDWARE_DELAY){
+        Driver(const int min_delay = HARDWARE_DELAY){
             if(min_delay<=0) request_delay = std::chrono::duration< int, std::milli >::zero();
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
         };
         data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
                                                                             //NOTICE: testing "ready()" assures you respect device timing!
-        virtual elem_type request(int type)=0;
+        virtual elem_type request(const int type)=0;	//RETURN an element from data_type. A new recv_measure() should be called testing
+        					//the ready() condition.
 
 };
 
@@ -83,32 +90,38 @@ class Usb : public Driver<measure_struct,short int>
                                             //Device is "opened" at first call of recv_measure()
         int vid;
         int pid;
+        virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
+        				    //Implements usb driver algorithms to counter hardware limits:
+        				    //	(base) Minimum delay between requests
+        				    //	(extension) Device IS plugged in (issue a scan if not)
+        				    //CAN BE EXTENDED BY DERIVED CLASSES!!	
         virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
                                             //RETURNS error code.
-        bool is_connected;                  //When this is FALSE, a new scan() should be performed (done automatically by Usb::recv_measure)
         
     public:
         Usb() = delete; 
-        Usb(const int vid_in, const int pid_in, int min_delay = HARDWARE_DELAY) : Driver(min_delay){
-            is_connected=false;
+        Usb(const int vid_in, const int pid_in, const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             d=NULL;
             m.temp=0;
             m.humid=0;
             m.dust=0;
             vid=vid_in;
             pid=pid_in;
+            hid_init();		//init hidapi for safety
         };
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
-            cout<<"Device chiusa."<<endl;
-        }
-        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+            cout<<"  D| Device chiusa."<<endl;
+            hid_exit();		//free hidapi data
+        };
+        
+        virtual short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
                                                     //RETURNS measure of type selected from m
 
     
-    	//Funzioni generiche usb
-		static int scan(const int vid, const int pid);
+    	//Funzioni generiche (static) usb
+	static int scan(const int vid, const int pid);
 		
 		
 		//VECCHIE FUNZ.
@@ -130,12 +143,13 @@ class Raspberry : public Driver<measure_struct,short int>
         virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
         
     public:
-        Raspberry(int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+        Raspberry(const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             m.temp=0;
             m.humid=0;
             m.dust=0;
         };
-        virtual short int request(int type);        //Calls recv_measure if request_delay has passed since last call
+        
+        virtual short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry
