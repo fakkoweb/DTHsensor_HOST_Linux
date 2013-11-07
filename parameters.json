@@ -1,0 +1,25 @@
+{
+    "device": {
+        "MY_VID": 1240,
+        "MY_PID": 19
+    },
+    "sensors": {
+        "temp": {
+            "EXT_lfid": 11,
+            "INT_lfid": 21,
+            "REFRESH_RATE": 5
+        },
+        "humid": {
+            "EXT_lfid": 12,
+            "INT_lfid": 22,
+            "REFRESH_RATE": 5
+        },
+        "dust": { 
+            "EXT_lfid": 13,
+            "REFRESH_RATE": 30
+        }
+    },
+    "report": {
+        "INTERVAL": 5
+    }
+}
