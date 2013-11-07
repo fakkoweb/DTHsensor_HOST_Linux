@@ -132,16 +132,16 @@ int main(int argc, char* argv[])
     p_sleep(3000);
         
     //Allacciamento dei sensori ai driver (alias board)
+    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
     exttemp.plug_to(ext_device);
     exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
     //inttemp.plug_to(int_device);
     //inthumid.plug_to(int_device);
-    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
         
     
 
-    cout<<"Avvio..."<<endl;
+    cout<<"Avvio loop principale..."<<endl;
 	while(1)
 	{
 		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
