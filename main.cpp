@@ -23,7 +23,7 @@
 #include "functions.h"  //FUNCTIONS (including for Curl and Json)
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 #include "curl/curl.h"  //For Curl initialization
-#include "json.h"	//For Dynamic Parameter loading from a .json file
+#include <json.h>	//For Dynamic Parameter loading from a .json file
 
 using namespace std;
 

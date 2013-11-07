@@ -3,7 +3,8 @@ PROGETTO
 Il progetto usa le librerie (da installare nel sistema):
 1- libusb-1.0
 2- libcurl-7.32
-e contiene le librerie (incluse nella distro)
+3- libboost-system e libboost-chrono
+e contiene le librerie (incluse nella distro, da non installare)
 3- hidapi (wrapper delle libusb per HID)
 4- jsoncpp
 
@@ -12,31 +13,27 @@ STRUTTURA DEI FILE
 ------------------
 
 makefile è il file che contiene le direttive per la compilazione (flag, librerie ecc.)
+	- per ogni nuova libreria inclusa, possono essere necessari flag per il compilatore o il linker!
 main.cpp è il file che implementa il progetto
-functions.cpp implementa le diverse funzioni del progetto
-/control contiene la classe control per la gestione intelligente delle funzioni
-	control.cpp la sua implementazione // ATTENZIONE: funziona solo con UNIX
-	control.h la sua interfaccia, da includere in qualsiasi file utilizzi le funzioni del progetto
-/hidapi contiene la libreria linkata per la gestione di operazioni HID
-	hidapi.h da includere in qualsiasi file interagisca direttamente con USB tramite HID
-	>>gli altri file sono le librerie che implementano lo stack USB
-/config contiene le define per la configurazione di variabili di progetto
-	config.h contiene VID, PID, la definizione dei flag di libreria e delle funzioni
+parameters.json contiene le costanti softcoded (caricate all'avvio) del progetto
+/program contiene le implementazioni delle diverse funzioni del progetto
+	- sistemare qui i nuovi .cpp
+	- aggiungere nella lista del makefile (COBJS o CPPOBJS) la path del nuovo file ma con estensione .o
+/include contiene le intestazioni per l'implementazione del progetto
+	- sistemare qui i nuovi .h  --> nessuna modifica richiesta nel makefile!
+	- config.h contiene le costanti hardcoded per il progetto
+/libs contiene intestazioni e implementazione delle librerie INCLUSE nel progetto (sono ricompilate)
 
 
 PER COMPILARE
 -------------
 
+0. Installare nel sistema le librerie richieste
 1. Navigare nella cartella del progetto da terminale
 2. Digitare "make"
 	- make ricompila SOLO i file realmente modificati
 	- Per forzare la ricompilazione di TUTTI i file, digitare "make clean" e poi "make"
-3. La compilazione può portare warning dovuti a variabili dichiarate ma non usate
+3. La compilazione può portare warning dovuti a variabili dichiarate ma non usate fino a che il progetto non sarà concluso
 
 
-SE NECESSARIO, LE LIBRERIE INCLUSE NEI SORGENTI (messe tra "virgolette") ED EVENTUALI FLAG VANNO SETTATI NEL MAKEFILE
-Se ad esempio volessimo creare un nuovo file .h da includere nel nostro usb_host.cpp basta scrivere:
-# include "nomefile.h"
-ed esplicitare il suo percorso nel makefile tra i flag di include (-Ipercorso).
-NON bisogna scrivere il percorso nell'include.
 

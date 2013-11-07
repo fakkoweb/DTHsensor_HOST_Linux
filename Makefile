@@ -18,7 +18,7 @@ all: usb_host
 ####    All values must be separated by space!!     ####
 #####################################
 LIBS      = `pkg-config libusb-1.0 libudev libcurl --libs` -lpthread -lboost_system		# Put HERE Lib flags for the Linker (-l)
-INCLUDES ?= -Iincludes -Ilibs/includes `pkg-config libusb-1.0 libcurl --cflags`			# Put HERE Include flags for the compilers (-I)
+INCLUDES ?=  -Ilibs/includes -Iincludes `pkg-config libusb-1.0 libcurl --cflags`			# Put HERE Include flags for the compilers (-I)
 
 CFLAGS   ?= -Wall -g												# Put HERE other flags for the gcc compiler
 CXXFLAGS ?= -Wall -g -std=c++11 									# Put HERE other flags for the g++ compiler
