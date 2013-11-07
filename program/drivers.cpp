@@ -180,50 +180,52 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 
 int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
-	int bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
+	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
 	unsigned char buf[bytes_to_read];
 	
 	
 	if(d!=NULL)
 	{
 		cout<<"  D| Procedura di lettura iniziata."<<endl;
-		hid_set_nonblocking(d,0);					//Default - read bloccante (settare 1 per NON bloccante)
-	    	while( bytes_read <= bytes_to_read-1 && bytes_read!=-1 )	//Questo ciclo si interrompe solo se fermato o se ha letto almeno 6byte -- !get_stop() && 
+		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
+	    	while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() && 
 		{
 	    		cout<<"   D! Tentativo "<<++i<<endl;
-	    		bytes_read = hid_read_timeout(d,buf,bytes_to_read,5000);//La read si blocca AL PIU' per 5 secondi, altrimenti la lettura potrà dirsi fallita
-	    		if (bytes_read < bytes_to_read) cout<<"   D! Lettura fallita."<<endl;
-			else
+	    		do
+	    		{
+	    			last_bytes_read=bytes_read;						//Memorizza il numero di byte letti dal report precedente
+	    			bytes_read = hid_read(d,buf,bytes_to_read);				//Leggi il report successivo:
+	    			//cout<<bytes_read<<endl;						//	- se bytes_read>0 allora esiste un report più recente nel buffer -> scaricalo
+	    												//	- se bytes_read=0, non ci sono più report -> l'ultimo scaricato è quello buono
+	    												//	- se bytes_read=-1 c'é un errore critico con la device -> interrompi tutto
+	    												//La read si blocca AL PIU' per 5 secondi, dopodiché restituisce errore critico (-1)
+	    		}while(bytes_read>0);								//Cicla finché il buffer non è stato svuotato (0) oppure c'è stato errore critico (-1)
+	    		if (bytes_read == -1)								//Se c'è stato errore...
 			{
-				cout<<"   D! "<<bytes_read<<" bytes letti: ";
-				cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
-			}
-			if (bytes_read == -1)
-			{
+			    cout<<"   D! Lettura fallita."<<endl;
 			    cout<<"   D! ERRORE: Periferica non pronta o scollegata prematuramente.\n  D| Disconnessione in corso..."<<endl;
-			    hid_close(d);
+			    hid_close(d);									//chiudi la handle. 	-> ESCE dal ciclo.
 	    	            cout<<"  D| Device disconnessa."<<endl;
-			    d=NULL;                                 //Resets handle pointer for safety
-			    status=ERROR;
+			    d=NULL;	//Resets handle pointer for safety
 			}
+	    		else										//..altrimenti analizziamo per bene l'ultimo report scaricato...
+	    		{
+		    		if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
+		    			cout<<"   D! Lettura fallita."<<endl;					//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
+				else										//altrimenti -> stampa a video il risultato e memorizzalo in "m" -> ESCE dal ciclo.
+				{
+					cout<<"   D! "<<last_bytes_read<<" bytes letti: ";
+					cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+					memcpy( (void*) &m, (void*) buf, bytes_to_read);
+			    		status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte
+				}
+			}
+
         	}
 
-	    	/*
-	    	if(get_stop())				//Se è stato fermato verrà ritornato ABORT
-	    	{
-	    		result=ABORTED;
-	    		//set_stop(false);		//Resetta il flag
-	    	}
-	    	else
-	    	*/
-    	
-	    	if (bytes_read==bytes_to_read)
-	    	{
-	    		memcpy( (void*) &m, (void*) buf, bytes_to_read);
-	    		status=NICE;			//Per sicurezza, solo se ha letto esattamente 6byte ritorna NICE
-	    	}
 	    	cout<<"  D| Procedura di lettura conclusa."<<endl;
 	}
+	else cout<<"  D| Nessuna device specificata per la lettura!";
     
 	
 	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.
