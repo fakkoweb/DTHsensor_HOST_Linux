@@ -14,7 +14,7 @@
             "INT_lfid": 22,
             "REFRESH_RATE": 10
         },
-        "dust": {
+        "dust": { 
             "EXT_lfid": 13,
             "REFRESH_RATE": 4
         }
