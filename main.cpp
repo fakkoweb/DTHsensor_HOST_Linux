@@ -23,8 +23,24 @@
 #include "functions.h"  //FUNCTIONS (including for Curl and Json)
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 #include "curl/curl.h"  //For Curl initialization
+#include "json.h"	//For Dynamic Parameter loading from a .json file
 
 using namespace std;
+
+
+
+
+
+
+//When check_not_zero finds <0, makes true the static variable:
+static bool zero_found=false;
+//Utility function: checks if at least one of a few values is 0 or less
+//Returns the same value.
+int check_not_zero(int value)
+{
+    if(value<=0) zero_found=true;
+    return value;
+}
 
 
 
@@ -54,34 +70,42 @@ int main(int argc, char* argv[])
     /////////////////////////////////////////////////////////
 
     //Caricamento parametri utente (da parameters.json)
-    param_struct user_config;
-    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
-	else cout<<"Parametri caricati"<<endl;
-
-    /*  PARAMETRI DI PROVA
-	user_config.TEMP_REFRESH_RATE=5;
-	user_config.HUMID_REFRESH_RATE=15;
-	user_config.DUST_REFRESH_RATE=30;
-	user_config.REPORT_INTERVAL=5;
-    */
+    Json::Reader reader;  // Oggetto per il parsing: file.json ---> json::value
+    Json::Value params;   // Albero di valori json estratti da reader
+    std::ifstream param_file("parameters.json", std::ifstream::binary); //Nuovo oggetto stream in ingresso (associato al file "filename.json")
+    if ( !reader.parse( param_file, params, true ) )
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout  << "Errore di lettura dal file di configurazione:\n"
+                   << reader.getFormattedErrorMessages();
+        return 1;
+    }
     
-    //Visualizza i parametri appena caricati (verifica utente)
-    param_struct* p = &user_config;
+    //Visualizza i parametri appena caricati (e verifica che gli interi non siano nulli o minori di 0!)
+    cout<<"Parametri caricati"<<endl;
     cout<<"-- ID data --"<<endl;
-    cout<<"MY_VID: 0x"<<hex<< p-> MY_VID <<endl;
-    cout<<"MY_PID: 0x"<<hex<< p-> MY_PID <<endl;
-    cout<<"EXT_TEMP Local feed id: "<<dec<< p-> EXT_TEMP_lfid <<endl;
-    cout<<"EXT_HUMID Local feed id: "<< p-> EXT_HUMID_lfid <<endl;
-    cout<<"EXT_DUST Local feed id: "<< p-> EXT_DUST_lfid <<endl;
-    cout<<"INT_TEMP Local feed id: "<< p-> INT_TEMP_lfid <<endl;
-    cout<<"INT_HUMID Local feed id: "<< p-> INT_HUMID_lfid <<endl;
+    cout<<"MY_VID: 0x"<<hex<< check_not_zero( params["device"].get("MY_VID",0).asInt() ) <<endl;
+    cout<<"MY_PID: 0x"<<hex<< check_not_zero( params["device"].get("MY_PID",0).asInt() ) <<endl;
+    cout<<"Outdoor Temp Local feed id: "<<dec<< check_not_zero( params["sensors"]["temp"]["ext"].get("lfid",0).asInt() ) <<endl;
+    cout<<"Outdoor Humid Local feed id: "<< check_not_zero( params["sensors"]["humid"]["ext"].get("lfid",0).asInt() ) <<endl;
+    cout<<"Outdoor Dust Local feed id: "<< check_not_zero( params["sensors"]["dust"].get("lfid",0).asInt() ) <<endl;
+    cout<<"Indoor Temp Local feed id: "<< check_not_zero( params["sensors"]["temp"]["int"].get("lfid",0).asInt() ) <<endl;
+    cout<<"Indoor Humid Local feed id: "<< check_not_zero( params["sensors"]["humid"]["int"].get("lfid",0).asInt() ) <<endl;
     cout<<"-- Precision data --"<<endl;
-    cout<<"Temperature sample rate (sec): "<< p-> TEMP_REFRESH_RATE <<endl;
-    cout<<"Humidity sample rate (sec): "<< p-> HUMID_REFRESH_RATE <<endl;
-    cout<<"Dust sample rate (sec): "<< p-> DUST_REFRESH_RATE <<endl;
-    cout<<"Server report interval (min): "<< p-> REPORT_INTERVAL <<endl;
-    cout<<"...therefore statistics sent to server will work on N°samples = ("<<p-> REPORT_INTERVAL<<"*60)/sample_rate"<<endl;
-
+    cout<<"Temperature sample rate (sec): "<< check_not_zero( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt() ) <<endl;
+    cout<<"Humidity sample rate (sec): "<< check_not_zero( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() ) <<endl;
+    cout<<"Dust sample rate (sec): "<< check_not_zero( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt() ) <<endl;
+    cout<<"Server report interval (min): "<< check_not_zero( params["report"].get("INTERVAL",0).asInt() ) <<endl;
+    cout<<"...therefore will work on N°samples = ("<< params["report"].get("INTERVAL",0).asInt() <<"*60)/sample_rate"<<endl;
+    if(zero_found)
+    {
+    	cout<<"WARNING: Some values from configuration are not valid (0 or less). Exiting.."<<endl;
+    	return 1;
+    }
+    else zero_found=false;
+    
+    
+    
     p_sleep(3000);
 
    
@@ -101,21 +125,21 @@ int main(int argc, char* argv[])
     
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
-    DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, true );
+    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
+    DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
 	typedef pair <int, Sensor*> new_row;
-	SensorArray.insert ( new_row ( p->EXT_TEMP_lfid, &exttemp ) );
-	SensorArray.insert ( new_row ( p->EXT_HUMID_lfid, &exthumid ) );
-	SensorArray.insert ( new_row ( p->EXT_DUST_lfid, &extdust ) );
-	//SensorArray.insert ( new_row ( p->INT_TEMP_lfid, &inttemp ) );
-	//SensorArray.insert ( new_row ( p->INT_HUMID_lfid, &inthumid ) );
+	SensorArray.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+	SensorArray.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+	SensorArray.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
+	//SensorArray.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+	//SensorArray.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
@@ -142,6 +166,9 @@ int main(int argc, char* argv[])
     
 
     cout<<"Avvio loop principale..."<<endl;
+    
+    
+    //TEST LOOP - CANCELLARE QUESTO LOOP QUANDO IL RESTO DEL PROGRAMMA E' IMPLEMENTATO
 	while(1)
 	{
 		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
@@ -158,21 +185,22 @@ int main(int argc, char* argv[])
 	}
 	
 
-
 /*
+
+
 
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
     ///////////////////////////////////////////////////////
     
     //Registrazione device - ritorna la device_id registrata sul server
-    int device_id = register_device(p->MY_VID,p->MY_PID);   //DA IMPLEMENTARE!!
+    int device_id = register_device(params["device"].get("MY_VID",0).asInt() , params["device"].get("MY_PID",0).asInt());   //DA IMPLEMENTARE!!
     
     //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
     //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
     //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
     //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
-    register_sensors(device_id,SensorArray);                //DA IMPLEMENTARE!!
+    register_sensors(device_id,SensorArray,params["sensor"]);                //DA IMPLEMENTARE!!
 
 
 
@@ -186,27 +214,30 @@ int main(int argc, char* argv[])
     bool exit=false;
     while ( state == NICE && exit == false )
     {
-        state=report_routine(device_id,SensorArray);        //DA IMPLEMENTARE
+        state=post_report(SensorArray);        //DA IMPLEMENTARE
         //TO IMPLEMENT: exit control on variable!
     }
     return state;
     
+
+
 */
-    
-    
-    
-    /*
-    for(i=0;i<5;i++)
-    {
-        a[i].wait_new_statistic();
-    }
-    for(i=0;i<5;i++)
-    {
-        a[i].get_raw_statistic();
-    }
-    */
-    
-    
+
+
+
+
+
+
+
+/////////////////////
+
+//   OLD VERSION
+
+/////////////////////
+
+
+
+
     
     
     /*

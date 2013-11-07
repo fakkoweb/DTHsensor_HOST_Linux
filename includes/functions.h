@@ -29,6 +29,7 @@
 
 //External libs
 #include "p_sleep.h"
+#include "json.h"	//for accessing Json::Value
 
 //Internal libs
 #include "sensors.h"
@@ -37,23 +38,6 @@
 using namespace std;
 
 
-
-
-//Struct used to load parameters from json file
-typedef struct _PARAM_STRUCT
-{
-    int MY_VID ;
-    int MY_PID ;
-    int EXT_TEMP_lfid ;
-    int EXT_HUMID_lfid ;
-    int EXT_DUST_lfid ;
-    int INT_TEMP_lfid ;
-    int INT_HUMID_lfid ;
-    int TEMP_REFRESH_RATE ;
-    int HUMID_REFRESH_RATE ;
-    int DUST_REFRESH_RATE ;
-    int REPORT_INTERVAL ;
-} param_struct;
 
 
 
@@ -74,14 +58,15 @@ int http_post(const string url, const string json);
 ////////////////////////////////////////
 // PARAMETERS LOADING FROM A json file
 // LOADS PARAMETERS TO GLOBALS IN config.h
-int param_load(param_struct& user_config,const string filename);
+// OLD!! int param_load(param_struct& user_config,const string filename);
 
 
 //////////////////////
 // PROJECT ROUTINES
 int register_device(const int vid, const int pid);                      //Checks if MAC_ADDRESS is registered. If not, registers. RETURNS the deviceID.
-int register_sensors(const int device_id, map<int, Sensor*>& sa);       //Checks if Sensor is registered. If not, registers. RETURNS ERROR,ABORT,NICE
-int report_routine(const int device_id, const map<int, Sensor*>& sa);   //Waits for new measures/statistics from Sensors in sa and posts it to server
+int register_sensors(const int device_id, const map<int, Sensor*>& sa, const Json::Value& sd);  //Checks if Sensor is registered. If not, registers. RETURNS ERROR,ABORT,NICE
+												//The Json::Value is for registering further data like "tags"
+int post_report(const map<int, Sensor*>& sa);   			//Gets statistics from Sensors (without waiting!!) in sa and posts it to server
                                                                         //RETURNS ERROR,ABORT,NICE
 
 

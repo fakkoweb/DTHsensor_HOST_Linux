@@ -1,21 +1,35 @@
 {
     "device": {
         "MY_VID": 1240,
-        "MY_PID": 19
+        "MY_PID": 19,
+        "MY_MAC": "00:22:fb:8f:9d:fe"
     },
     "sensors": {
         "temp": {
-            "EXT_lfid": 11,
-            "INT_lfid": 21,
+            "ext": {
+                "lfid": 11,
+                "tags": "outdoor, temperature"
+            },
+            "int": {
+                "lfid": 12,
+                "tags": "indoor, temperature, raspberry"
+            },
             "REFRESH_RATE": 5
         },
         "humid": {
-            "EXT_lfid": 12,
-            "INT_lfid": 22,
+            "ext": {
+                "lfid": 21,
+                "tags": "outdoor, humidity"
+            },
+            "int": {
+                "lfid": 22,
+                "tags": "indoor, humidity, raspberry"
+            },
             "REFRESH_RATE": 10
         },
-        "dust": { 
-            "EXT_lfid": 13,
+        "dust": {
+            "lfid": 3,
+            "tags": "outdoor, dust",
             "REFRESH_RATE": 15
         }
     },

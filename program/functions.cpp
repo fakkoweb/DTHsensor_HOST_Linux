@@ -1,23 +1,10 @@
-#include "curl/curl.h"
-#include "json.h"
+
 #include "functions.h"
-#include <boost/chrono/chrono.hpp>
-#include <cstring>
-#include <string>
 
 
 
-static bool zero_found=false;
-//Utility function: checks if at least one of a few values is 0 or less
-//Returns the same value.
-int check_not_zero(int value)
-{
-    if(value<=0) zero_found=true;
-    return value;
-}
-//When a 0 is found, makes true the static variable:
 
-
+/*
 
 //Curl chiama questa routine (personalizzabile) per ogni "receive" che fa (per header e payload)
 //SERVE SE:
@@ -98,6 +85,8 @@ int http_get(const string url, string& json)
 
 }
 
+*/
+
 /* OLD FILE GET
 //HTTP_GET fa una semplice richiesta HTTP all'indirizzo fornitole e restituisce il path del file binario con la risorsa ottenuta
 int http_get(const string url, string& json)
@@ -171,6 +160,7 @@ int http_get(const string url, string& json)
 }
 */
 
+/*
 
 int http_post(const string url, const string json)
 {
@@ -189,15 +179,7 @@ int http_post(const string url, const string json)
 
 	 if(easyhandle)
 	 {
-	 	 
-	 	 /*
-	 	 json = fopen(json_filename.c_str(),"wb");
-		 if (json == NULL) {
-		    curl_easy_cleanup(easyhandle);
-		    return -1;
-		 }
-		 */
-    
+
         //c_str() converts a string type to a const char*    
 		 // set URL to post   
 		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
@@ -225,55 +207,14 @@ int http_post(const string url, const string json)
 	  
 }
 
-
-
-int param_load(param_struct& user_config, const string filename)
-{
-    
-    int esito=ERROR;
-    Json::Value params;   // will contains the root value after parsing.
-    Json::Reader reader;
-    
-    //Nuovo oggetto stream in ingressp (associato al file "filename.json")
-    std::ifstream param_file(filename, std::ifstream::binary);
-    
-    bool parsingSuccessful = reader.parse( param_file, params, true );
-    if ( !parsingSuccessful )
-    {
-        // report to the user the failure and their locations in the document.
-        std::cout  << "Errore di lettura dal file di configurazione "<<filename<<":\n"
-                   << reader.getFormattedErrorMessages();
-        esito=ERROR;
-    }
-    else
-    {
-        param_struct* p = &user_config;
-        p->MY_VID = check_not_zero( params["device"].get("MY_VID",0).asInt() );
-        p->MY_PID = check_not_zero( params["device"].get("MY_PID",0).asInt() );
-        p->EXT_TEMP_lfid = check_not_zero( params["sensors"]["temp"].get("EXT_lfid",0).asInt() );
-        p->EXT_HUMID_lfid = check_not_zero( params["sensors"]["humid"].get("EXT_lfid",0).asInt() );
-        p->EXT_DUST_lfid = check_not_zero( params["sensors"]["dust"].get("EXT_lfid",0).asInt() );
-        p->INT_TEMP_lfid = check_not_zero( params["sensors"]["temp"].get("INT_lfid",0).asInt() );
-        p->INT_HUMID_lfid = check_not_zero( params["sensors"]["humid"].get("INT_lfid",0).asInt() );
-        //TEMP_BUFFER = 
-        p->TEMP_REFRESH_RATE = check_not_zero( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt() );
-        //HUMID_BUFFER = 
-        p->HUMID_REFRESH_RATE = check_not_zero( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() );
-        //DUST_BUFFER = 
-        p->DUST_REFRESH_RATE = check_not_zero( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt() );
-        p->REPORT_INTERVAL = check_not_zero( params["report"].get("INTERVAL",0).asInt() );
-        if(zero_found) esito=ERROR;
-        else esito=NICE;
-        zero_found=false;
-    }
-    
-    return esito;
-    
-}
+*/
 
 
 
-int register_device( const int VID, const int PID )
+
+
+
+int register_device( const int vid, const int pid )
 {
     
     
@@ -282,7 +223,7 @@ int register_device( const int VID, const int PID )
 
 
 
-int register_sensors( const int device_id, map<int, Sensor*>& sa )
+int register_sensors( const int device_id, const map<int, Sensor*>& sa, const Json::Value& sd)
 {
     
     
@@ -291,7 +232,7 @@ int register_sensors( const int device_id, map<int, Sensor*>& sa )
 
 
 
-int report_routine( const int device_id, const map<int, Sensor*>& sa )
+int post_report( const map<int, Sensor*>& sa )
 {
     
     
