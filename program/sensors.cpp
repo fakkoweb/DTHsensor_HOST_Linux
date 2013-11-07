@@ -107,7 +107,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         if(!thread_must_exit)
         {
 		//New sample
-		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(int)board<<")"<<endl;
+		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
 		push( sample() );
 		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
 		new_sample.notify_all();

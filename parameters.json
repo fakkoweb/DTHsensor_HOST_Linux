@@ -16,7 +16,7 @@
         },
         "dust": { 
             "EXT_lfid": 13,
-            "REFRESH_RATE": 4
+            "REFRESH_RATE": 15
         }
     },
     "report": {

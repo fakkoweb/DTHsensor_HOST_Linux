@@ -55,34 +55,19 @@ int main(int argc, char* argv[])
 
     //Caricamento parametri utente (da parameters.json)
     param_struct user_config;
-<<<<<<< HEAD
-    //if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+	else cout<<"Parametri caricati"<<endl;
+
+    /*  PARAMETRI DI PROVA
 	user_config.TEMP_REFRESH_RATE=5;
 	user_config.HUMID_REFRESH_RATE=15;
 	user_config.DUST_REFRESH_RATE=30;
 	user_config.REPORT_INTERVAL=5;
-	
-	cout<<"Parametri caricati"<<endl;
-=======
-    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
-
-param_struct* p = &user_config;
-    cout<<p-> MY_VID <<endl;
-    cout<<p-> MY_PID <<endl;
-    cout<<p-> EXT_TEMP_lfid <<endl;
-    cout<<p-> EXT_HUMID_lfid <<endl;
-    cout<<p-> EXT_DUST_lfid <<endl;
-    cout<<p-> INT_TEMP_lfid <<endl;
-    cout<<p-> INT_HUMID_lfid <<endl;
-    cout<<p-> TEMP_REFRESH_RATE <<endl;
-    cout<<p-> HUMID_REFRESH_RATE <<endl;
-    cout<<p-> DUST_REFRESH_RATE <<endl;
-    cout<<p-> REPORT_INTERVAL <<endl;
+    */
 
 
->>>>>>> param_load_testing
-    
-/*    
+
+   
     
     ///////////////////////////////////////////////////////
     //DESCRIZIONE DELLA CONFIGURAZIONE FISICA DEL SISTEMA

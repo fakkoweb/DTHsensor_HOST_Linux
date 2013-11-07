@@ -225,7 +225,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 	    	cout<<"  D| Procedura di lettura conclusa."<<endl;
 	}
-	else cout<<"  D| Nessuna device specificata per la lettura!";
+	else cout<<"  D| ERRORE: il driver non è connesso ad alcuna periferica! (device=NULL)"<<endl;
     
 	
 	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.
