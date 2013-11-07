@@ -64,10 +64,29 @@ int main(int argc, char* argv[])
 	user_config.DUST_REFRESH_RATE=30;
 	user_config.REPORT_INTERVAL=5;
     */
+    
+    //Visualizza i parametri appena caricati (verifica utente)
+    param_struct* p = &user_config;
+    cout<<"-- ID data --"<<endl;
+    cout<<"MY_VID: 0x"<<hex<< p-> MY_VID <<endl;
+    cout<<"MY_PID: 0x"<<hex<< p-> MY_PID <<endl;
+    cout<<"EXT_TEMP Local feed id: "<<dec<< p-> EXT_TEMP_lfid <<endl;
+    cout<<"EXT_HUMID Local feed id: "<< p-> EXT_HUMID_lfid <<endl;
+    cout<<"EXT_DUST Local feed id: "<< p-> EXT_DUST_lfid <<endl;
+    cout<<"INT_TEMP Local feed id: "<< p-> INT_TEMP_lfid <<endl;
+    cout<<"INT_HUMID Local feed id: "<< p-> INT_HUMID_lfid <<endl;
+    cout<<"-- Precision data --"<<endl;
+    cout<<"Temperature sample rate (sec): "<< p-> TEMP_REFRESH_RATE <<endl;
+    cout<<"Humidity sample rate (sec): "<< p-> HUMID_REFRESH_RATE <<endl;
+    cout<<"Dust sample rate (sec): "<< p-> DUST_REFRESH_RATE <<endl;
+    cout<<"Server report interval (min): "<< p-> REPORT_INTERVAL <<endl;
+    cout<<"...therefore statistics sent to server will work on N°samples = ("<<p-> REPORT_INTERVAL<<"*60)/sample_rate"<<endl;
 
-
+    p_sleep(3000);
 
    
+    
+    
     
     ///////////////////////////////////////////////////////
     //DESCRIZIONE DELLA CONFIGURAZIONE FISICA DEL SISTEMA
@@ -76,26 +95,16 @@ int main(int argc, char* argv[])
     //Inizializzazione driver virtuali
     //Raspberry int_device;
     Usb ext_device(1240,19);
-    cout<<"Driver avviati"<<endl;
+    cout<<"Driver pronti"<<endl;
     
-    //Creazione dei sensori virtuali
-	param_struct* p = &user_config;    
+    //Creazione dei sensori virtuali   
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
     TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
     //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
     //HumidSensor inthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     HumidSensor exthumid( p->HUMID_REFRESH_RATE, p->REPORT_INTERVAL, true );
     DustSensor extdust( p->DUST_REFRESH_RATE, p->REPORT_INTERVAL, true );
-    cout<<p->DUST_REFRESH_RATE<<endl;
-    cout<<"Sensori virtuali avviati"<<endl;
-    
-    //Allacciamento dei sensori ai driver (alias board)
-    exttemp.plug_to(ext_device);
-    exthumid.plug_to(ext_device);
-    extdust.plug_to(ext_device);
-    //inttemp.plug_to(int_device);
-    //inthumid.plug_to(int_device);
-    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
+    cout<<"Sensori virtuali pronti"<<endl;
     
     //Associazione dei local_feed_id ai giusti sensori
    	map <int, Sensor*> SensorArray; 
@@ -109,9 +118,28 @@ int main(int argc, char* argv[])
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
 
+    //Display della mappa di sensori appena creata
+    std::map<int, Sensor*>::iterator row;
+    cout<<"-- Sensori disponibili --"<<endl;
+    cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
+    for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+    {
+	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
+    }
 
-	std::map<int, Sensor*>::iterator row;
-	
+    p_sleep(3000);
+        
+    //Allacciamento dei sensori ai driver (alias board)
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
+    extdust.plug_to(ext_device);
+    //inttemp.plug_to(int_device);
+    //inthumid.plug_to(int_device);
+    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
+        
+    
+
+    cout<<"Avvio..."<<endl;
 	while(1)
 	{
 		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
