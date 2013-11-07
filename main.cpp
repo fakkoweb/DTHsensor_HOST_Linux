@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
 
     //Caricamento parametri utente (da parameters.json)
     param_struct user_config;
+<<<<<<< HEAD
     //if ( param_load(user_config,"parameters.json") != NICE ) return 1;
 	user_config.TEMP_REFRESH_RATE=5;
 	user_config.HUMID_REFRESH_RATE=15;
@@ -62,8 +63,26 @@ int main(int argc, char* argv[])
 	user_config.REPORT_INTERVAL=5;
 	
 	cout<<"Parametri caricati"<<endl;
+=======
+    if ( param_load(user_config,"parameters.json") != NICE ) return 1;
+
+param_struct* p = &user_config;
+    cout<<p-> MY_VID <<endl;
+    cout<<p-> MY_PID <<endl;
+    cout<<p-> EXT_TEMP_lfid <<endl;
+    cout<<p-> EXT_HUMID_lfid <<endl;
+    cout<<p-> EXT_DUST_lfid <<endl;
+    cout<<p-> INT_TEMP_lfid <<endl;
+    cout<<p-> INT_HUMID_lfid <<endl;
+    cout<<p-> TEMP_REFRESH_RATE <<endl;
+    cout<<p-> HUMID_REFRESH_RATE <<endl;
+    cout<<p-> DUST_REFRESH_RATE <<endl;
+    cout<<p-> REPORT_INTERVAL <<endl;
+
+
+>>>>>>> param_load_testing
     
-    
+/*    
     
     ///////////////////////////////////////////////////////
     //DESCRIZIONE DELLA CONFIGURAZIONE FISICA DEL SISTEMA
@@ -75,7 +94,7 @@ int main(int argc, char* argv[])
     cout<<"Driver avviati"<<endl;
     
     //Creazione dei sensori virtuali
-    param_struct* p = &user_config;
+	param_struct* p = &user_config;    
     //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
     TempSensor exttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL, true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
     //TempSensor inttemp( p->TEMP_REFRESH_RATE, p->REPORT_INTERVAL );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
@@ -125,8 +144,8 @@ int main(int argc, char* argv[])
 	
 
 
+/*
 
-	/*
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
     ///////////////////////////////////////////////////////
@@ -157,7 +176,7 @@ int main(int argc, char* argv[])
     }
     return state;
     
-	*/    
+*/
     
     
     /*
