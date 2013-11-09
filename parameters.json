@@ -14,7 +14,7 @@
                 "lfid": 12,
                 "tags": "indoor, temperature, raspberry"
             },
-            "REFRESH_RATE": 5
+            "REFRESH_RATE": 10
         },
         "humid": {
             "ext": {
@@ -30,7 +30,7 @@
         "dust": {
             "lfid": 3,
             "tags": "outdoor, dust",
-            "REFRESH_RATE": 15
+            "REFRESH_RATE": 10
         }
     },
     "report": {

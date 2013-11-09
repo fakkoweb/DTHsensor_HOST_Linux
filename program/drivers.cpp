@@ -30,7 +30,7 @@ bool Usb::ready()
 	bool device_ready=false;
 	
 	//(1) Check base class/driver constraint
-	bool base_ready = Driver<measure_struct,short int>::ready();	//Verifico le condizioni del driver di base.
+	bool base_ready = Driver<measure_struct,unsigned short int>::ready();	//Verifico le condizioni del driver di base.
 
 	if(base_ready)							//Se sono verificate, procedo con quelle specifiche
 	{
@@ -181,6 +181,7 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
 	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
+	char temp;
 	unsigned char buf[bytes_to_read];
 	
 	
@@ -216,7 +217,18 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 				{
 					cout<<"   D! "<<last_bytes_read<<" bytes letti: ";
 					cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+					
+					/* SWAP
+					for(i=0;i<6;i=i+2)
+					{
+						temp=buf[i];
+						buf[i]=buf[i+1];
+						buf[i+1]=temp;
+					}
+					*/
+					
 					memcpy( (void*) &m, (void*) buf, bytes_to_read);
+					
 			    		status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte
 				}
 			}
@@ -234,7 +246,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 	
 	
 
-short int Usb::request(const int type)
+unsigned short int Usb::request(const int type)
 {
 
     if(ready())
@@ -244,7 +256,7 @@ short int Usb::request(const int type)
     }
     
     
-    short int measure=0;
+    unsigned short int measure=0;
     
     switch ( type ) {
     case TEMPERATURE:
@@ -280,7 +292,7 @@ int Raspberry::recv_measure()
 
 
 
-short int Raspberry::request(const int type)
+unsigned short int Raspberry::request(const int type)
 {
 
     if(ready())
@@ -289,7 +301,7 @@ short int Raspberry::request(const int type)
     	cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
     }
     
-    short int measure=0;
+    unsigned short int measure=0;
     
     switch ( type ) {
     case TEMPERATURE:

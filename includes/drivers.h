@@ -36,13 +36,13 @@ using namespace std;
 
 
 //DEPRECATA: Driver call usata quando i driver erano statici -> puntatore a funzione
-//typedef short int (*driver_call)();
+//typedef unsigned short int (*driver_call)();
 
 typedef struct _MEASURE_STRUCT
 {
-	short int dust;
-	short int temp;
-	short int humid;
+	unsigned short int dust;
+	unsigned short int temp;
+	unsigned short int humid;
 } measure_struct;
 
 
@@ -83,7 +83,7 @@ class Driver
 
 //CLASSE ISTANZIABILE -- Rappresenta una device USB via HID
 //Contiene tutte le funzioni relative a USB
-class Usb : public Driver<measure_struct,short int>
+class Usb : public Driver<measure_struct,unsigned short int>
 {
     protected:
         hid_device* d;                      //Selected hardware device via HID protocol. IF IT IS NULL, NO DEVICE IS CONNECTED SO CHECK FIRST!!
@@ -116,7 +116,7 @@ class Usb : public Driver<measure_struct,short int>
             hid_exit();		//free hidapi data
         };
         
-        virtual short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
+        virtual unsigned short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
                                                     //RETURNS measure of type selected from m
 
     
@@ -137,7 +137,7 @@ class Usb : public Driver<measure_struct,short int>
 
 //CLASSE INSTANZIABILE -- Rappresenta l'interfaccia seriale del Raspberry
 //Contiene tutte le funzioni relative a RASP
-class Raspberry : public Driver<measure_struct,short int>
+class Raspberry : public Driver<measure_struct,unsigned short int>
 {
     private:
         virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
@@ -149,7 +149,7 @@ class Raspberry : public Driver<measure_struct,short int>
             m.dust=0;
         };
         
-        virtual short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
+        virtual unsigned short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
                                             //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry

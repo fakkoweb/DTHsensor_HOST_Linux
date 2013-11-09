@@ -20,7 +20,7 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     r=NULL;
     
     buffer_lenght = (avg_interval*60)/sample_rate;
-    raw_buffer = new short int[buffer_lenght];
+    raw_buffer = new unsigned short int[buffer_lenght];
     format_buffer = new float[buffer_lenght];
 
     refresh_rate = sample_rate;
@@ -80,7 +80,7 @@ void Sensor::reset()
     
     cout<<"  S| Buffer e variabili resettate."<<endl;
     
-    raw_buffer = new short int[buffer_lenght];
+    raw_buffer = new unsigned short int[buffer_lenght];
     format_buffer = new float[buffer_lenght];
     
     cout<<"  S| Buffer rigenerati."<<endl;
@@ -153,9 +153,9 @@ void Sensor::wait_new_statistic()
 
 
 
-short int Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is last sample
+unsigned short int Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is last sample
 {   
-	short int measure=0;
+	unsigned short int measure=0;
     	lock_guard<mutex> access(rw);
 	if(board!=NULL)
 	{
@@ -170,14 +170,14 @@ short int Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is l
 	return measure;
 }
 
-void Sensor::plug_to(const Driver<measure_struct,short int>& new_board)
+void Sensor::plug_to(const Driver<measure_struct,unsigned short int>& new_board)
 {
     //if(new_board!=NULL)
     //{
         if(board!=NULL) reset();
         
         //Set new board
-        board = const_cast< Driver<measure_struct,short int>* > (&new_board);
+        board = const_cast< Driver<measure_struct,unsigned short int>* > (&new_board);
         
         //Start a new autosampling thread
         if(autorefresh==true)

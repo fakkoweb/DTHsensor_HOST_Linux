@@ -137,11 +137,12 @@ int main(int argc, char* argv[])
     //TEST LOOP - CANCELLARE QUESTO LOOP QUANDO IL RESTO DEL PROGRAMMA E' IMPLEMENTATO
 	while(1)
 	{
-		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
-		{
+		row=SensorArray.begin();
+		//for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		//{
 			row->second->wait_new_sample();
 		
-		}
+		//}
 		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
 		{
 			row->second->display_measure();
