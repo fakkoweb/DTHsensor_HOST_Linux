@@ -90,10 +90,10 @@ int main(int argc, char* argv[])
     
     
     //Creazione dei sensori virtuali
-    //Prototipo: Sensor s( sample_rate , average_interval ); -> (secondi, minuti)
-    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );     //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (secondi, minuti, bool)
+    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
+    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;

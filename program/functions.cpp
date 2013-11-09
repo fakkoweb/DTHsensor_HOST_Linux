@@ -55,7 +55,7 @@ Json::Value load_params(const string jsonfile)
 	    	cout<<"WARNING: Some values from configuration are not valid (0 or less). Params cleared!"<<endl;
 	    	loaded_params.clear();
 	    }
-	    else zero_found=false;
+	    zero_found=false;	//reset check_not_zero() flag
 	    
     }
     
