@@ -63,8 +63,9 @@ int http_post(const string url, const string json);
 
 //////////////////////
 // PROJECT ROUTINES
+Json::Value load_params(const string jsonfile);
 int register_device(const int vid, const int pid);                      //Checks if MAC_ADDRESS is registered. If not, registers. RETURNS the deviceID.
-int register_sensors(const int device_id, const map<int, Sensor*>& sa, const Json::Value& sd);  //Checks if Sensor is registered. If not, registers. RETURNS ERROR,ABORT,NICE
+int register_sensors(const int device_id, const map<int, Sensor*>& sa); //Checks if Sensor is registered. If not, registers. RETURNS ERROR,ABORT,NICE
 												//The Json::Value is for registering further data like "tags"
 int post_report(const map<int, Sensor*>& sa);   			//Gets statistics from Sensors (without waiting!!) in sa and posts it to server
                                                                         //RETURNS ERROR,ABORT,NICE
