@@ -25,8 +25,12 @@ float fvariance(float* array, int dim)
 
 float TempSensor::convert(short int raw)
 {
+
+    float temp = 0.0;
+    
+    temp = (((raw*165)/16382)-40);
  
-    return raw*2;
+    return temp;
 
     
     
@@ -35,8 +39,11 @@ float TempSensor::convert(short int raw)
 
 float HumidSensor::convert(short int raw)
 {
+    float hum = 0.0;
 
-    return raw*3;
+    hum = ((raw*100)/16832);
+    
+    return hum;
     
     
     
