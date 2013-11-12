@@ -146,7 +146,6 @@ class Raspberry : public Driver<measure_struct,short int>
         Raspberry(const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
             m.temp=0;
             m.humid=0;
-            m.dust=0;
         };
         
         virtual short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
