@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 		
 		
 		cout<<"Il programma rieffettuerà la scansione fra 3 secondi"<<endl;
-		sleep(3000);
+		p_sleep(3000);
 	
 		//Altre procedure;
 	
