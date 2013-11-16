@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+//#include <inttypes.h>
 #include <chrono>
 #ifdef _WIN32
     #include <windows.h>
@@ -36,13 +37,13 @@ using namespace std;
 
 
 //DEPRECATA: Driver call usata quando i driver erano statici -> puntatore a funzione
-//typedef unsigned short int (*driver_call)();
+//typedef uint16_t (*driver_call)();
 
 typedef struct _MEASURE_STRUCT
 {
-	unsigned short int dust;
-	unsigned short int temp;
-	unsigned short int humid;
+	uint16_t dust;
+	uint16_t temp;
+	uint16_t humid;
 } measure_struct;
 
 
@@ -87,7 +88,7 @@ class Driver
 
 //CLASSE ISTANZIABILE -- Rappresenta una device USB via HID
 //Contiene tutte le funzioni relative a USB
-class Usb : public Driver<measure_struct,unsigned short int>
+class Usb : public Driver<measure_struct,uint16_t>
 {
     protected:
         hid_device* d;                      //Selected hardware device via HID protocol. IF IT IS NULL, NO DEVICE IS CONNECTED SO CHECK FIRST!!
@@ -120,8 +121,8 @@ class Usb : public Driver<measure_struct,unsigned short int>
             hid_exit();		//free hidapi data
         };
         
-        virtual unsigned short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
-                                                    		   //RETURNS measure of type selected from m
+        virtual uint16_t request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
+                                                    	 //RETURNS measure of type selected from m
 
     
     	//Funzioni generiche (static) usb
@@ -141,7 +142,7 @@ class Usb : public Driver<measure_struct,unsigned short int>
 
 //CLASSE INSTANZIABILE -- Rappresenta l'interfaccia seriale del Raspberry
 //Contiene tutte le funzioni relative a RASP
-class Raspberry : public Driver<measure_struct,unsigned short int>
+class Raspberry : public Driver<measure_struct,uint16_t>
 {
     private:
         virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
@@ -152,8 +153,8 @@ class Raspberry : public Driver<measure_struct,unsigned short int>
             m.humid=0;
         };
         
-        virtual unsigned short int request(const int type);        //Calls recv_measure if request_delay has passed since last call
-                                            //RETURNS measure of type selected from m    
+        virtual uint16_t request(const int type);        //Calls recv_measure if request_delay has passed since last call
+                                            		 //RETURNS measure of type selected from m    
         
         //Funzioni generiche raspberry
         

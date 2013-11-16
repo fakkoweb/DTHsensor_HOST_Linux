@@ -30,7 +30,7 @@ bool Usb::ready()
 	bool device_ready=false;
 
 	//(1) Check base class/driver constraint
-	bool base_ready = Driver<measure_struct,unsigned short int>::ready();	//Verifico le condizioni del driver di base.
+	bool base_ready = Driver<measure_struct,uint16_t>::ready();	//Verifico le condizioni del driver di base.
 
 	if(base_ready)							//Se sono verificate, procedo con quelle specifiche
 	{
@@ -248,7 +248,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 
 
-unsigned short int Usb::request(const int type)
+uint16_t Usb::request(const int type)
 {
 
     lock_guard<mutex> access(rw);
@@ -260,7 +260,7 @@ unsigned short int Usb::request(const int type)
     }
     
     
-    unsigned short int measure=0;
+    uint16_t measure=0;
     
     switch ( type ) {
     case TEMPERATURE:
@@ -300,7 +300,7 @@ int Raspberry::recv_measure()
 
 
 
-unsigned short int Raspberry::request(const int type)
+uint16_t Raspberry::request(const int type)
 {
 
 
@@ -310,7 +310,7 @@ unsigned short int Raspberry::request(const int type)
 			cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
 	}
 
-	unsigned short int measure=0;
+	uint16_t measure=0;
 
 	switch ( type ) {
 	case TEMPERATURE:
