@@ -182,7 +182,8 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 {	
 	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
 	char temp;
-	unsigned char buf[bytes_to_read];
+	unsigned char buf[6] = { 0 , 0 , 0 , 0 , 0 , 0 } ;
+	std::chrono::milliseconds retry_interval( 10 ) ;			//sleep amount in case of soft fail
 
 
 	if(d!=NULL)
@@ -191,9 +192,11 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
 		while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() &&
 		{
+			buf[6] = { 0 , 0 , 0 , 0 , 0 , 0 } ;
 			cout<<"   D! Tentativo "<<++i<<endl;
 			do
 			{
+
 				last_bytes_read=bytes_read;						//Memorizza il numero di byte letti dal report precedente
 				bytes_read = hid_read(d,buf,bytes_to_read);				//Leggi il report successivo:
 				//cout<<bytes_read<<endl;						//	- se bytes_read>0 allora esiste un report più recente nel buffer -> scaricalo
@@ -202,6 +205,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 				//La read si blocca AL PIU' per 5 secondi, dopodiché restituisce errore critico (-1)
 			}while(bytes_read>0);								//Cicla finché il buffer non è stato svuotato (0) oppure c'è stato errore critico (-1)
 
+			//HARD FAIL
 			if (bytes_read == -1)								//Se c'è stato errore...
 			{
 				cout<<"   D! Lettura fallita."<<endl;
@@ -212,12 +216,17 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 			}
 			else										//..altrimenti analizziamo per bene l'ultimo report scaricato...
 			{
+				//SOFT FAIL
 				if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
 					cout<<"   D! Lettura fallita."<<endl;					//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
+					std::this_thread::sleep_for( retry_interval ) ;
+				//GOOD
 				else										//altrimenti -> stampa a video il risultato e memorizzalo in "m" -> ESCE dal ciclo.
 				{
+					//Debug dump visualization
 					cout<<"   D! "<<last_bytes_read<<" bytes letti: ";
 					cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+					
 					
 					/* SWAP
 					for(i=0;i<6;i=i+2)
@@ -228,7 +237,19 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 					}
 					*/
 					
-					memcpy( (void*) &m, (void*) buf, bytes_to_read);
+					//Old approach
+					//memcpy( (void*) &m, (void*) buf, bytes_to_read);
+					
+					
+					//Lo shift dei registri del PIC è stato spostato lato driver
+					m.temp = (( pReadBuffer[4] << 8 ) + pReadBuffer[5])>>2 ;
+					m.humid =  ((pReadBuffer[2]<< 8 ) + pReadBuffer[3]) & 0x3fff;
+					m.dust = ( pReadBuffer[0] << 8 ) + pReadBuffer[1] ;
+					
+					if ( m.humid == 0xFFFF || m.temp == 0xFFFF )
+					{
+						std::cout<<"   D! WARNING: La device ha ritornato valori di Temperatura e Umidita' non validi." <<std::endl;
+					}
 					
 			    		status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte
 
@@ -256,7 +277,7 @@ uint16_t Usb::request(const int type)
     if(ready())
     {
     	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
-    	cout<<"  D| WARNING: riconnettere la periferica o le misure non saranno aggiornate!"<<endl;
+    	cout<<"  D| WARNING: riconnettere la periferica o le misure non verranno aggiornate!"<<endl;
     }
     
     
