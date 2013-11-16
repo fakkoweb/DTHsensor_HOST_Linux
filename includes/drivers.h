@@ -50,8 +50,9 @@ typedef struct _MEASURE_STRUCT
 template <class data_type, class elem_type>
 class Driver
 {
- 
+
     protected:
+    	mutex rw;			    //Guarantees mutual access from multiple sensors
         std::chrono::duration< int, std::milli > request_delay;		//GESTIONE DELAY HARDWARE: Se più sensori/processi/thread fanno richiesta al driver di seguito,
         std::chrono::steady_clock::time_point last_request;		//limito le richieste effettive inoltrate all'hardware fisico (tengo conto dei ritardi intrinseci e
         								//li nascondo al programmatore) SOPRATTUTTO le richieste INUTILI (ad esempio, in caso di errore,
@@ -72,10 +73,13 @@ class Driver
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay;//This way first recv_measure is always done!!
         };
-        data_type request_all(){ if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
-                                                                            //NOTICE: testing "ready()" assures you respect device timing!
-        virtual elem_type request(const int type)=0;	//RETURN an element from data_type. A new recv_measure() should be called testing
-        					//the ready() condition.
+        data_type request_all(){ lock_guard<mutex> access(rw); if(ready()) recv_measure(); return m; };   //A default function that returns the WHOLE data_type
+                                                                            				  //NOTICE: testing "ready()" assures you respect device timing!
+        virtual elem_type request(const int type)=0;	//RETURN an element from data_type. To implement it you have to:
+        						// - PROTECT funcion with the "rw" mutex provided
+        						// - Test your ready condition, which extends the base one
+        						// - Issue a recv_measure when possible (if ready returns true)
+        						// - Return only the elem_type requested from the struct
 
 };
 
@@ -117,7 +121,7 @@ class Usb : public Driver<measure_struct,unsigned short int>
         };
         
         virtual unsigned short int request(const int type);        //SPECIALIZED: Calls recv_measure if request_delay has passed since last call
-                                                    //RETURNS measure of type selected from m
+                                                    		   //RETURNS measure of type selected from m
 
     
     	//Funzioni generiche (static) usb

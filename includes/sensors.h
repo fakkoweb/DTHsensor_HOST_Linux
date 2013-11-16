@@ -108,7 +108,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         void reset();
                                                 
         //THREADING STRUCTURES
-        mutex rw;
+        mutex rw;				//Guarantees mutual access between autorefresh thread and external requesting threads
         condition_variable new_sample;
         condition_variable new_statistic;
         thread* r;

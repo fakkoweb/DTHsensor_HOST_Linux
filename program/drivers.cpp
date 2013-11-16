@@ -251,6 +251,8 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 unsigned short int Usb::request(const int type)
 {
 
+    lock_guard<mutex> access(rw);
+
     if(ready())
     {
     	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
