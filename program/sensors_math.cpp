@@ -23,53 +23,31 @@ float fvariance(float* array, int dim)
 //////////////////////////////////
 // SPECIFIC SENSOR MATH FUNCTIONS
 
-float TempSensor::convert(uint16_t raw)
+double TempSensor::convert(uint16_t raw)
 {
 
-    float temp = 0.0;
-    
-    temp = (((raw*165)/16382)-40);
- 
-    return temp;
+	double real_T = ((raw * 165)/T_H_DIV)-40;
 
-    
-    
+    	return real_T;
     
 }
 
-float HumidSensor::convert(uint16_t raw)
+double HumidSensor::convert(uint16_t raw)
 {
-    float hum = 0.0;
 
-    hum = ((raw*100)/16832);
+	double real_H = (raw *100)/T_H_DIV;
     
-    return hum;
-    
-    
-    
+    	return real_H;
 }
 
 
-float DustSensor::convert(uint16_t raw)
+double DustSensor::convert(uint16_t raw)
 {
-
-	float mgm_dust = 0.0;
-	float m = 0.16;
-	float q = 0.08;
-    float factor_conversion = 0.0039;
-    float dust_volt = factor_conversion * raw;
-
-    if (dust_volt > 3.5)
-    {
-    	mgm_dust = 0.55;
-    }else{
-
-    	mgm_dust = ((dust_volt * m)-q);
-    }
-
-    return mgm_dust;
-    
-    
+	const double minDust = -0.08;
+	double voltDust = raw*3.3/1000;
+	double realDust = voltDust*0.17-0.08-minDust;
+	
+	return realDust;  
 }
 
 

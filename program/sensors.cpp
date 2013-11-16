@@ -21,7 +21,7 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     
     buffer_lenght = (avg_interval*60)/sample_rate;
     raw_buffer = new uint16_t[buffer_lenght];
-    format_buffer = new float[buffer_lenght];
+    format_buffer = new double[buffer_lenght];
 
     refresh_rate = sample_rate;
 }
@@ -81,7 +81,7 @@ void Sensor::reset()
     cout<<"  S| Buffer e variabili resettate."<<endl;
     
     raw_buffer = new uint16_t[buffer_lenght];
-    format_buffer = new float[buffer_lenght];
+    format_buffer = new double[buffer_lenght];
     
     cout<<"  S| Buffer rigenerati."<<endl;
     

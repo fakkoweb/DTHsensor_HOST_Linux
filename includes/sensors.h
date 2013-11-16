@@ -44,7 +44,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     
         //BUFFERING STRUCTURES
         uint16_t *raw_buffer;
-        float *format_buffer;		//Contiene una versione convertita di raw_buffer - UTILE per calcoli che richiederebbero conversione di tutti gli elementi!!
+        double *format_buffer;		//Contiene una versione convertita di raw_buffer - UTILE per calcoli che richiederebbero conversione di tutti gli elementi!!
         int next;
         int buffer_lenght;		//IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
         bool buffer_filled;		//when do we reach the end of buffer?
@@ -68,7 +68,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         	if(elem>=0) return raw_buffer[elem];
         	else return raw_buffer[buffer_lenght-1];
         };
-        float format_top()
+        double format_top()
         {
         	return convert(raw_top());		//faster
         };
@@ -85,7 +85,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
             }
             else return 0;
         };
-        float format_pick(const int index)
+        double format_pick(const int index)
         {
         	return convert(raw_pick(index));	//faster
         };
@@ -93,7 +93,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         //SAMPLING & CONVERSION
         virtual int mtype()=0;					//returns the type (its code) of measure sensor requests to driver
         uint16_t sample(){ return board->request(mtype()); };	//Chiamata da get_measure, semplicemente chiama board (la request() col tipo misura richiesto)
-        virtual float convert(const uint16_t) = 0;       	//THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
+        virtual double convert(const uint16_t) = 0;       	//THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
 
         
         //SENSOR CONTROL
@@ -136,12 +136,12 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         void wait_new_statistic(); //safe                               //Stessa cosa di wait_new_sample() ma per media e varianza        
         
         //METODI SECONDARI (sfruttano i metodi primari)
-        float get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
+        double get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
         float get_average(){ return convert(get_raw_average()); };
         float get_variance(){ return convert(get_raw_variance()); };
         
         virtual string stype()=0;	//returns a string explaining the type of sensor
-        void display_measure(){ cout<<stype()<<": "<<get_measure()<<endl; };
+        void display_measure(){ cout<<stype()<<": "<<get_measure()<<" "<<sunits()<<endl; };
         void plug_to(const Driver<measure_struct,uint16_t>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
 
 };
@@ -150,20 +150,22 @@ class TempSensor : public Sensor
 {
     protected:   
         virtual int mtype(){ return TEMPERATURE; };
-        virtual float convert(const uint16_t);                                       //TO IMPLEMENT!!
+        virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!
     public:
         TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Temperatura"; return st; };
+        virtual string sunits(){ string st="°C"; return st; };
 };
 
 class HumidSensor : public Sensor
 {
     protected:
         virtual int mtype(){ return HUMIDITY; };      
-        virtual float convert(const uint16_t);                                       //TO IMPLEMENT!!        
+        virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!        
     public:
         HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Umidita'"; return st; };
+        virtual string sunits(){ string st="%"; return st; };        
   
 };
 
@@ -171,10 +173,11 @@ class DustSensor : public Sensor
 {
     protected:
         virtual int mtype(){ return DUST; };  
-        virtual float convert(const uint16_t);                                       //TO IMPLEMENT!!     
+        virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!     
     public:
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
-        virtual string stype(){ string st="Polveri"; return st; };      
+        virtual string stype(){ string st="Polveri"; return st; };
+        virtual string sunits(){ string st="mg/m^3"; return st; };      
 };
 
 
