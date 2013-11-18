@@ -181,7 +181,6 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
 	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
-	char temp;
 	unsigned char buf[6] = { 0 , 0 , 0 , 0 , 0 , 0 } ;
 	std::chrono::milliseconds retry_interval( 10 ) ;			//sleep amount in case of soft fail
 
@@ -192,7 +191,9 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
 		while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() &&
 		{
-			buf[6] = { 0 , 0 , 0 , 0 , 0 , 0 } ;
+			//Re-init
+			for(i=0;i<6;i++) buf[i] = 0 ;
+			
 			cout<<"   D! Tentativo "<<++i<<endl;
 			do
 			{
@@ -218,8 +219,10 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 			{
 				//SOFT FAIL
 				if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
+				{
 					cout<<"   D! Lettura fallita."<<endl;					//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
 					std::this_thread::sleep_for( retry_interval ) ;
+				}
 				//GOOD
 				else										//altrimenti -> stampa a video il risultato e memorizzalo in "m" -> ESCE dal ciclo.
 				{
@@ -242,9 +245,9 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 					
 					
 					//Lo shift dei registri del PIC è stato spostato lato driver
-					m.temp = (( pReadBuffer[4] << 8 ) + pReadBuffer[5])>>2 ;
-					m.humid =  ((pReadBuffer[2]<< 8 ) + pReadBuffer[3]) & 0x3fff;
-					m.dust = ( pReadBuffer[0] << 8 ) + pReadBuffer[1] ;
+					m.temp = (( buf[4] << 8 ) + buf[5])>>2 ;
+					m.humid =  ((buf[2]<< 8 ) + buf[3]) & 0x3fff;
+					m.dust = ( buf[0] << 8 ) + buf[1] ;
 					
 					if ( m.humid == 0xFFFF || m.temp == 0xFFFF )
 					{

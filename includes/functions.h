@@ -44,8 +44,8 @@ using namespace std;
 
 //////////////////////////
 // GENERIC MATH FUNCTIONS
-float faverage(float* array, int dim);
-float fvariance(float* array, int dim);
+double faverage(double* array, int dim);
+double fvariance(double* array, int dim);
 
 
 /////////////////////////////////////////////////////////

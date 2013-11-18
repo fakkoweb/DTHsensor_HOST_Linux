@@ -48,10 +48,10 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         int next;
         int buffer_lenght;		//IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
         bool buffer_filled;		//when do we reach the end of buffer?
-        float raw_average;
-        float average;
-        float raw_variance;
-        float variance;
+        double raw_average;
+        double average;
+        double raw_variance;
+        double variance;
         
         //BUFFERING LOW LEVEL OPERATIONS (NOT SAFE!! use locks before calling them!!)
         void push(const uint16_t elem)
@@ -128,8 +128,8 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         uint16_t get_raw(const int index=0);	//safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
                                                                         //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
-        float get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };	//safe
-        float get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };	//safe
+        double get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };	//safe
+        double get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };	//safe
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
                                                                         //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure
@@ -137,10 +137,11 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         
         //METODI SECONDARI (sfruttano i metodi primari)
         double get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
-        float get_average(){ return convert(get_raw_average()); };
-        float get_variance(){ return convert(get_raw_variance()); };
+        double get_average(){ return convert(get_raw_average()); };
+        double get_variance(){ return convert(get_raw_variance()); };
         
         virtual string stype()=0;	//returns a string explaining the type of sensor
+        virtual string sunits()=0;	//returns a string explaining the units of measure used
         void display_measure(){ cout<<stype()<<": "<<get_measure()<<" "<<sunits()<<endl; };
         void plug_to(const Driver<measure_struct,uint16_t>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
 

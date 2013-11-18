@@ -115,11 +115,13 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		//New statistic
 		if(buffer_filled)           //if buffer has filled buffer_lenght samples
 		{
-		    raw_average=faverage((float*)raw_buffer,buffer_lenght);
+
+		    raw_average=faverage((double*)raw_buffer,buffer_lenght);
 		    average=faverage(format_buffer,buffer_lenght);
-		    raw_variance=fvariance((float*)raw_buffer,buffer_lenght);
+		    raw_variance=fvariance((double*)raw_buffer,buffer_lenght);
 		    variance=fvariance(format_buffer,buffer_lenght);
 		    new_statistic.notify_all();
+
 		}
 	}
 
