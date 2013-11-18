@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     
     //Inizializzazione driver virtuali
-    //Raspberry int_device;
+    Raspberry int_device;
     Usb ext_device(1240,19);
     cout<<"Driver pronti"<<endl;
     
@@ -92,42 +92,53 @@ int main(int argc, char* argv[])
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (secondi, minuti, bool)
     TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
+    HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
     
-    //Associazione dei local_feed_id ai giusti sensori
-   	map <int, Sensor*> SensorArray; 
-	typedef pair <int, Sensor*> new_row;
-	SensorArray.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
-	SensorArray.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
-	SensorArray.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
-	//SensorArray.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
-	//SensorArray.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
+    
+    //Associazione dei local_feed_id ai giusti sensori tramite indice
+    map <int, Sensor*> AllSensors;		//Indice di tutti i sensori con il proprio lfid
+    map <int, Sensor*> ExtSensors;		//Indice dei soli sensori esterni
+    map <int, Sensor*> IntSensors; 		//Indice dei soli sensori interni
+    
+    typedef pair <int, Sensor*> new_row;	//Populating...
+	AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+	ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+	AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+	ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+	AllSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
+	ExtSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
+	AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+	IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );	
+	AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
+	IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
 
-    //Display della mappa di sensori appena creata
+
+    //Display indice di tutti i sensori
     std::map<int, Sensor*>::iterator row;
     cout<<"-- Sensori disponibili --"<<endl;
     cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
-    for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+    for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
     {
 	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
     }
 
     p_sleep(3000);
+    
         
     //Allacciamento dei sensori ai driver (alias board)
     cout<<"Sensori allacciati e pronti alla lettura"<<endl;
     exttemp.plug_to(ext_device);
     exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
-    //inttemp.plug_to(int_device);
-    //inthumid.plug_to(int_device);
+    inttemp.plug_to(int_device);
+    inthumid.plug_to(int_device);
         
     
 
@@ -137,17 +148,26 @@ int main(int argc, char* argv[])
     //TEST LOOP - CANCELLARE QUESTO LOOP QUANDO IL RESTO DEL PROGRAMMA E' IMPLEMENTATO
 	while(1)
 	{
-		row=SensorArray.begin();
-		//for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+		row=AllSensors.begin();
+		//for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
 		//{
 			row->second->wait_new_sample();
 		
 		//}
-		for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
-		{
+		cout<<"Misure interne:"<<endl;
+		for (row=IntSensors.begin(); row!=IntSensors.end(); row++)
+		{	
+			cout<<"| ";
 			row->second->display_measure();
 		
 		}
+		cout<<"Misure esterne:"<<endl;
+		for (row=ExtSensors.begin(); row!=ExtSensors.end(); row++)
+		{
+			cout<<"| ";
+			row->second->display_measure();
+		
+		}		
 
 	}
 	
@@ -167,7 +187,7 @@ int main(int argc, char* argv[])
     //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
     //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
     //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
-    register_sensors(device_id,SensorArray,params["sensor"]);                //DA IMPLEMENTARE!!
+    register_sensors(device_id,AllSensors,params["sensor"]);                //DA IMPLEMENTARE!!
 
 
 
@@ -181,7 +201,7 @@ int main(int argc, char* argv[])
     bool exit=false;
     while ( state == NICE && exit == false )
     {
-        state=post_report(SensorArray);        //DA IMPLEMENTARE
+        state=post_report(AllSensors);        //DA IMPLEMENTARE
         //TO IMPLEMENT: exit control on variable!
     }
     return state;
