@@ -1,5 +1,6 @@
 #include "sensors.h"
 #include "functions.h"  //for average and variance generic functions
+#include <math.h>
 
 
 
@@ -18,8 +19,9 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     autorefresh=enable_autorefresh;
     close_thread=false;
     r=NULL;
-    
-    buffer_lenght = (avg_interval*60)/sample_rate;
+    //remember: avg_interval is in minutes, sample_rate is in milliseconds
+    buffer_lenght = (int) ((avg_interval*60)*1000)/sample_rate ;
+    cout<<buffer_lenght<<endl;
     raw_buffer = new uint16_t[buffer_lenght];
     format_buffer = new double[buffer_lenght];
 
@@ -131,7 +133,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		
 		//Thread should wait "refresh_rate" seconds if not closing
 		if(!thread_must_exit) 
-			p_sleep(refresh_rate*1000);
+			p_sleep(refresh_rate);
     	}
     
     }while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop

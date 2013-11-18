@@ -101,7 +101,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
                                                 //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
-        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! UTILE SOLO SE autorefresh E' TRUE -- in secondi
+        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! UTILE SOLO SE autorefresh E' TRUE -- in millisecondi
         void refresh();                         //Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
                                                 //Se autorefresh è FALSE solo get_measure può chiamarla
@@ -120,7 +120,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     	
     	//COSTRUTTORE & DISTRUTTORE
         Sensor() = delete;                          //disabling zero-argument constructor completely
-        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true); //sample_rate = secondi per l'autocampionamento (se attivato)
+        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true); //sample_rate = millisecondi per l'autocampionamento (se attivato)
                                                                                             //avg_interval = minuti ogni quanto viene calcolata la media
         ~Sensor();	//safe
         

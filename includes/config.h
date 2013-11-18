@@ -48,7 +48,7 @@
 //#define HUMID_REFRESH_RATE = 0;
 //#define DUST_BUFFER = 0;          //Deprecato: si ricava da (REPORT_INTERVAL*60)/DUST_REFRESH_RATE
 //#define DUST_REFRESH_RATE = 0;
-#define HARDWARE_DELAY  1000         //in millisecondi - intervallo minimo di richieste soddisfatte dal driver
+#define HARDWARE_DELAY  10          //in millisecondi - intervallo minimo di richieste soddisfatte dal driver
                                     //(alle richieste sotto questo intervallo sarà data l'ultima misura effettuata)
 #define T_H_DIV		16382		//divisions used for temp and humid conversion: 2^14-2
 

@@ -52,7 +52,7 @@ bool Usb::ready()
 
 			if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
 			last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
-			//anche tra una scansione e un'altra.
+										//anche tra una scansione e un'altra.
 		}
 		else device_ready=true;				//Se la handle è valida, DEVICE READY
 
@@ -192,6 +192,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 		{
 			//Re-init
 			for(i=0;i<6;i++) buf[i] = 0 ;
+			i=0;
 			
 			cout<<"   D! Tentativo "<<++i<<endl;
 			do
