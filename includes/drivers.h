@@ -31,6 +31,10 @@
 //External libs
 #include "hidapi.h"
 #include "p_sleep.h"
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
 
 
 using namespace std;
@@ -98,7 +102,7 @@ class Usb : public Driver<measure_struct,uint16_t>
         virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
         				    //Implements usb driver algorithms to counter hardware limits:
         				    //	(base) Minimum delay between requests
-        				    //	(extension) Device IS plugged in (issue a scan if not)
+        				    //	(extension) Device IS plugged in (issue a scan and try plug if not)
         				    //CAN BE EXTENDED BY DERIVED CLASSES!!	
         virtual int recv_measure();         //SPECIALIZED: Takes a new "measure_struct" from d via HID protocol from physical device.
                                             //RETURNS error code.
@@ -144,14 +148,25 @@ class Usb : public Driver<measure_struct,uint16_t>
 //Contiene tutte le funzioni relative a RASP
 class Raspberry : public Driver<measure_struct,uint16_t>
 {
-    private:
-        virtual int recv_measure();         //SPECIALIZED: TO IMPLEMENT!! Takes a new measure_struct from physical device
+    protected:
+    	int i2cHandle;
+        virtual bool ready();               //TESTS IF DEVICE IS READY (NOT BUSY!) TO SATISFY A NEW REQUEST
+        				    //Implements serial raspberry driver algorithms to counter hardware limits:
+        				    //	(base) Minimum delay between requests
+        				    //	(extension) Serial handle IS open (try open it if not)
+        				    //CAN BE EXTENDED BY DERIVED CLASSES!!		
+        virtual int recv_measure();         //SPECIALIZED: Takes a new measure_struct from physical device
         
     public:
         Raspberry(const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+            i2cHandle=0;
             m.temp=0;
             m.humid=0;
         };
+        ~Raspberry(){
+            cout<<"  D| Handle seriale chiusa."<<endl;
+            if(i2cHandle!=0) close(i2cHandle);
+        }
         
         virtual uint16_t request(const int type);        //Calls recv_measure if request_delay has passed since last call
                                             		 //RETURNS measure of type selected from m    

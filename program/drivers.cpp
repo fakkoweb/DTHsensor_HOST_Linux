@@ -1,6 +1,5 @@
 
 #include "drivers.h"
-#include "hidapi.h"
 
 
 ///////////////////////////
@@ -51,7 +50,7 @@ bool Usb::ready()
 			}
 			else cout<<"  D| ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
 
-			if(!device_ready) cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
+			if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
 			last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
 			//anche tra una scansione e un'altra.
 		}
@@ -280,7 +279,7 @@ uint16_t Usb::request(const int type)
     if(ready())
     {
     	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
-    	cout<<"  D| WARNING: riconnettere la periferica o le misure non verranno aggiornate!"<<endl;
+    	cout<<"  D| WARNING: riconnettere la periferica, misure non aggiornate!"<<endl;
     }
     
     
@@ -312,13 +311,76 @@ uint16_t Usb::request(const int type)
 /////////////////////////////
 //RASPBERRY DRIVER PROCEDURES
 
+
+bool Raspberry::ready()
+{
+
+	bool device_ready=false;
+
+	//(1) Check base class/driver constraint
+	bool base_ready = Driver<measure_struct,uint16_t>::ready();	//Verifico le condizioni del driver di base.
+
+	if(base_ready)							//Se sono verificate, procedo con quelle specifiche
+	{
+		//(2) Check if handle is already open
+		if(i2cHandle==0)                                                //Se la handle attuale non è valida...
+		{
+			cout<<"  D| Nessuna handle aperta. Avvio connessione..."<<endl;
+			i2cHandle = open("/dev/i2c-1",O_RDWR);				//Create a file descriptor for i2c bus
+			if ( ioctl( i2cHandle , I2C_SLAVE , 0x27) == 0 )		//Tell the I2C peripheral the device address
+			{
+				cout<<"  D| Connessione riuscita. Handle pronta."<<endl;
+				device_ready=true;
+			}
+			else cout<<"  D| ERRORE: Connessione non riuscita. (?)"<<endl;
+
+			if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
+		}
+		else device_ready=true;						//Se la handle è valida, DEVICE READY
+
+	}
+
+	return device_ready;				//Solo se (1) e (2) vere allora ready() ritorna TRUE!
+}
+
+
+
 int Raspberry::recv_measure()
 {
+	/* i2c funziona in modo diverso da usb:
+		- io dico l'indirizzo dove andare a leggere (in questo caso è 0x4e che sarebbe 0x27 shiftato come richiede il protocollo)
+		- dopo un'attesa sufficiente, provvedo a leggere i dati
+	*/
+	uint8_t Data[4] = {0x4E,0,0,0};
 	int status = ERROR;
-	//TODO i2c raspberry
-	//m.temp? m.humid?
-	m.temp;//=nuova misura
-	m.humid;//=nuova misura
+	
+	if(i2cHandle!=0)
+	{
+	
+		cout<<"  D! Abilitazione lettura..."<<endl;
+		if ( write(i2cHandle,Data,1) !=1)
+		{
+			cout<<"  D! ERRORE: abilitazione lettura fallita!"<<endl;
+		}
+		else
+		{	
+			cout<<"  D! Abilitazione lettura riuscita."<<endl;
+			p_sleep(40);	//Sleep for 40000 microsecond it's equals to sleep for 40 ms.
+					//It is necessary to let sensor reach nirvana
+
+			if(( read( i2cHandle ,Data , 4 )) == 4 )
+			{
+				std::cout<<"   D! leggo 1 "<<std::endl;
+				//shifting..
+				m.temp = ((Data[2] << 8)+Data[3])>>2;
+				m.humid = ((Data[0] << 8) +Data[1]);
+				status=NICE;
+			}
+			else cout<<"  D! ERRORE: Problema sulla lettura (?)"<<endl;
+		}
+				
+	}
+	
 	return status;
 }
 
@@ -327,11 +389,12 @@ int Raspberry::recv_measure()
 uint16_t Raspberry::request(const int type)
 {
 
-
+    	lock_guard<mutex> access(rw);
+    	
 	if(ready())
 	{
-		if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
-			cout<<"  D| WARNING: le misure non sono aggiornate."<<endl;
+		if( recv_measure() == ERROR )	//IF ready condition is satisfied, call recv_measure();
+		cout<<"  D| WARNING: problemi su seriale, misure non aggiornate!"<<endl;
 	}
 
 	uint16_t measure=0;
