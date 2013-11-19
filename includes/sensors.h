@@ -8,6 +8,7 @@
 
 //Internal dependencies
 #include "drivers.h"
+#include "OMV.h"
 
 //Standard included libraries
 #include <cstdlib>
@@ -38,57 +39,24 @@ using namespace std;
 
 
 
-class Sensor                                        //ABSTRACT CLASS: only sub-classes can be instantiated!
+class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
 {
     protected:
     
-        //BUFFERING STRUCTURES
-        uint16_t *raw_buffer;
-        double *format_buffer;		//Contiene una versione convertita di raw_buffer - UTILE per calcoli che richiederebbero conversione di tutti gli elementi!!
-        int next;
-        int buffer_lenght;		//IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! -- da parameters.json
-        bool buffer_filled;		//when do we reach the end of buffer?
-        double raw_average;
+        //BUFFERING VARIABLES
+        uint16_t raw_measure;
+        //OLD:	double format_measure;		//Memorizza una versione convertita di raw_buffer - non più necessaria, ora la misura è convertita su richiesta
         double average;
-        double raw_variance;
         double variance;
         
-        //BUFFERING LOW LEVEL OPERATIONS (NOT SAFE!! use locks before calling them!!)
-        void push(const uint16_t elem)
-        {
-            raw_buffer[next]=elem;
-            format_buffer[next]=convert(elem);
-            next=(next+1)%buffer_lenght;
-            if(next==0) buffer_filled=true;
-            else buffer_filled=false;
-        };
-        uint16_t raw_top()
-        {
-        	int elem=next-1;
-        	if(elem>=0) return raw_buffer[elem];
-        	else return raw_buffer[buffer_lenght-1];
-        };
-        double format_top()
-        {
-        	return convert(raw_top());		//faster
-        };
-        uint16_t raw_pick(const int index)
-        { 
-            int location;
-            if(index<buffer_lenght && index>=0)
-            {
-                if(index>next) location=buffer_lenght-(index-next);
-                else location=(next-index)%buffer_lenght;
-                
-                if (location > 0) return raw_buffer[location-1];
-                else return raw_buffer[buffer_lenght-1];
-            }
-            else return 0;
-        };
-        double format_pick(const int index)
-        {
-        	return convert(raw_pick(index));	//faster
-        };
+        
+        //AVERAGING AND VARIANCE CALCULATION	//asdfg
+        OMV MeanGuy;							//Classe per il calcolo della media on-line (Knuth/Welford algorithm) --> vedi lista di inizializzazione del costruttore!
+        std::chrono::duration< int, std::milli > avg_delay;		//GESTIONE AVERAGE INTERVAL: Ogni sample() del sensore viene calcolata una nuova media e varianza,
+        std::chrono::steady_clock::time_point last_avg_request;		//basate sul valore corrente e sulla storia precedente. Ad ogni avg_delay (scelto in base alle esigenze)
+        								//il sensore salva la media e resetta il calcolo di media e varianza, confrontando avg_delay con
+        								//il tempo trascorso da last_avg_request. Poi setta last_avg_request al tempo corrente.
+        
         
         //SAMPLING & CONVERSION
         virtual int mtype()=0;					//returns the type (its code) of measure sensor requests to driver
@@ -106,6 +74,7 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
                                                 //Se autorefresh è FALSE solo get_measure può chiamarla
         void reset();
+                  
                                                 
         //THREADING STRUCTURES
         mutex rw;				//Guarantees mutual access between autorefresh thread and external requesting threads
@@ -118,28 +87,29 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
     public:
     	//"safe" si intende nel contesto in cui UN SOLO thread usi la classe e sia attivo il thread per l'autosampling
     	
+    	
     	//COSTRUTTORE & DISTRUTTORE
         Sensor() = delete;                          //disabling zero-argument constructor completely
-        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true); //sample_rate = millisecondi per l'autocampionamento (se attivato)
-                                                                                            //avg_interval = minuti ogni quanto viene calcolata la media
+        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true);	//sample_rate = millisecondi per l'autocampionamento (se attivato)
+                                                                                            			//avg_interval = minuti ogni quanto viene resettata la media (è calcolata on-line)
+														//inizializzato: MeanGuy() = sceglie se considerare o meno un MinOffset per il calcolo della media
         ~Sensor();	//safe
         
+        
         //METODI DI ACCESSO PRIMARI (gestiscono i lock)
-        uint16_t get_raw(const int index=0);	//safe                          //Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
+        uint16_t get_raw();	//safe                          	//Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
-                                                                        //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
-        double get_raw_average(){ lock_guard<mutex> access(rw); return raw_average; };	//safe
-        double get_raw_variance(){ lock_guard<mutex> access(rw); return raw_variance; };	//safe
+                                                                        //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )                 
+        double get_average(){ lock_guard<mutex> access(rw); return average; };
+        double get_variance(){ lock_guard<mutex> access(rw); return variance; };        
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
                                                                         //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure
         void wait_new_statistic(); //safe                               //Stessa cosa di wait_new_sample() ma per media e varianza        
         
-        //METODI SECONDARI (sfruttano i metodi primari)
-        double get_measure(const int index=0){ return convert(get_raw(index)); };//Stessa cosa di get_raw() ma la converte prima di restituirla                        
-        double get_average(){ return convert(get_raw_average()); };
-        double get_variance(){ return convert(get_raw_variance()); };
         
+        //METODI SECONDARI (sfruttano i metodi primari)
+        double get_measure(){ return convert(get_raw()); };		//Fa la stessa cosa di get_raw(), ma la converte prima di restituirla (ON-THE-GO CONVERSION)
         virtual string stype()=0;	//returns a string explaining the type of sensor
         virtual string sunits()=0;	//returns a string explaining the units of measure used
         void display_measure(){ cout<<stype()<<": "<<get_measure()<<" "<<sunits()<<endl; };

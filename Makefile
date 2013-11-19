@@ -23,8 +23,8 @@ INCLUDES ?=  -Ilibs/includes -Iincludes `pkg-config libusb-1.0 libcurl --cflags`
 CFLAGS   ?= -Wall -g												# Put HERE other flags for the gcc compiler
 CXXFLAGS ?= -Wall -g -std=c++11 									# Put HERE other flags for the g++ compiler
 
-COBJS     = libs/hidapi/hid-libusb.o												# Where are C files?
-CPPOBJS   = libs/jsoncpp/jsoncpp.o libs/p_sleep.o main.o program/control.o program/sensors.o program/sensors_math.o program/drivers.o program/functions.o	# Where are C++ files?
+COBJS     = libs/hidapi/hid-libusb.o																	# Where are C files?
+CPPOBJS   = libs/jsoncpp/jsoncpp.o libs/p_sleep.o main.o program/control.o program/sensors.o program/sensors_math.o program/drivers.o program/functions.o program/OMV.o	# Where are C++ files?
 #####################################
 
 OBJS      = $(COBJS) $(CPPOBJS)

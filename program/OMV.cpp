@@ -29,7 +29,7 @@ public:
  *	fino al prossimo reset;
  *
  */
-OMV::OMV(bool aMin=false) {
+OMV::OMV(bool aMin) {
 	if(aMin){
 		minCalc=true;
 	}
@@ -46,7 +46,7 @@ OMV::~OMV() {
  * al reset un minimo personalizzato
  */
 
-void OMV::reset(double min=0) {
+void OMV::reset(double min) {
 	n=0;
 	mean=0;
 	M2=0;

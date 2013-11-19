@@ -7,25 +7,25 @@
 ////////////////////////////
 //GENERIC SENSOR PROCEDURES
 
-Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh) 
+Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh) : MeanGuy(false)
 {
+
+    //Convert avg_interval in a valid chrono type
+    if(avg_interval<=0) avg_delay = std::chrono::duration< int, std::milli >::zero();
+    else avg_delay = std::chrono::seconds(avg_interval*60);
+
     board=NULL;
-    next=0;
-    buffer_filled=false;
-    raw_average=0;
+    raw_measure=0;
+    
+    //MeanGuy.setMin(?);
     average=0;
-    raw_variance=0;
     variance=0;
+    
     autorefresh=enable_autorefresh;
+    refresh_rate = sample_rate;
     close_thread=false;
     r=NULL;
-    //remember: avg_interval is in minutes, sample_rate is in milliseconds
-    buffer_lenght = (int) ((avg_interval*60)*1000)/sample_rate ;
-    cout<<buffer_lenght<<endl;
-    raw_buffer = new uint16_t[buffer_lenght];
-    format_buffer = new double[buffer_lenght];
 
-    refresh_rate = sample_rate;
 }
 
 
@@ -44,8 +44,6 @@ Sensor::~Sensor()
         cout<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
-    delete raw_buffer;
-    delete format_buffer;
 }
 
 
@@ -67,23 +65,18 @@ void Sensor::reset()
         cout<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
-    delete raw_buffer;
-    delete format_buffer;
-    
     board=NULL;
-    next=0;
-    buffer_filled=false;
-    raw_average=0;
+    raw_measure=0;
+    
+    //MeanGuy.setMin(?);
     average=0;
-    raw_variance=0;
     variance=0;
+    
     close_thread=false;
     r=NULL;
     
-    cout<<"  S| Buffer e variabili resettate."<<endl;
     
-    raw_buffer = new uint16_t[buffer_lenght];
-    format_buffer = new double[buffer_lenght];
+    cout<<"  S| Buffer e variabili resettate."<<endl;
     
     cout<<"  S| Buffer rigenerati."<<endl;
     
@@ -96,13 +89,14 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
     bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
     do
     {
+    
         if(autorefresh)
         {	
         	access.lock();		//ALL sampling operation by thread should be ATOMICAL. So we put locks here (just for autorefreshing thread)  
         				//and not put locks on elementary operations on buffers (it would cause ricursive locks!)
-		//cout<<"Thread is alive!"<<endl;
+					//cout<<"Thread is alive!"<<endl;
 		
-		//Thread should now be closed?
+		//Is thread been asked to be closed?
 		thread_must_exit=close_thread;		
         }
         
@@ -110,28 +104,47 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         {
 		//New sample
 		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
-		push( sample() );
-		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
-		new_sample.notify_all();
+		raw_measure=sample();
 		
-		//New statistic
-		if(buffer_filled)           //if buffer has filled buffer_lenght samples
+		//Conversion
+		//OLD:	Sensor does not store the converted measure since it is not needed anymore.
+		//	When user asks for a converted measure, it will be converted on-the-go from raw_measure;
+		
+		//Mean and Variance
+		MeanGuy.add(convert(raw_measure));	//asdfg
+		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
+		
+		//Notify that a new sample is now available
+		new_sample.notify_all();
+
+		//Check if avg_interval minutes (alias "chrono::seconds avg_delay") have passed since last Mean&Variance request
+		if ( std::chrono::steady_clock::now() > (last_avg_request + avg_delay) )
 		{
-
-		    raw_average=faverage((double*)raw_buffer,buffer_lenght);
-		    average=faverage(format_buffer,buffer_lenght);
-		    raw_variance=fvariance((double*)raw_buffer,buffer_lenght);
-		    variance=fvariance(format_buffer,buffer_lenght);
-		    new_statistic.notify_all();
-
+			//Ask MeanGuy for latest Mean and Variance
+			cout<<" S| Media pronta e richiesta!"<<endl;
+			average=MeanGuy.getMean();	//asdfg
+			variance=MeanGuy.getVariance();	//asdfg
+			cout<<"  S! -Debug- Mean: "<<average<<sunits()<<" Var: "<<variance<<sunits()<<endl;
+			cout<<"Il thread resterà sospeso per ragioni di debug per 10 secondi..."<<endl;
+			p_sleep(10000);
+			
+			//Reset MeanGuy
+			MeanGuy.reset();		//asdfg
+			
+			//Notify that new statistics are now available
+			new_statistic.notify_all();
+			
+			//State that new last request was NOW
+			last_avg_request = std::chrono::steady_clock::now();
 		}
+
 	}
 
 	if(autorefresh)
 	{
 		access.unlock();
 		
-		//Thread should wait "refresh_rate" seconds if not closing
+		//Thread should wait "refresh_rate" milliseconds if is not closing
 		if(!thread_must_exit) 
 			p_sleep(refresh_rate);
     	}
@@ -157,7 +170,7 @@ void Sensor::wait_new_statistic()
 
 
 
-uint16_t Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is last sample
+uint16_t Sensor::get_raw()
 {   
 	uint16_t measure=0;
     	lock_guard<mutex> access(rw);
@@ -167,8 +180,7 @@ uint16_t Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is la
 	    {
 	    	refresh();         //on demand refresh if autorefresh is FALSE
 	    }
-	    if(index==0) measure=raw_top();
-	    else measure=raw_pick(index);
+	    measure=raw_measure;
 	}
 	else cout<<" S| Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
 	return measure;
@@ -176,21 +188,29 @@ uint16_t Sensor::get_raw(const int index)  //index=n of samples ago ---> 0 is la
 
 void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board)
 {
-    //if(new_board!=NULL)
-    //{
+
+	//Reset board and also the thread if present
         if(board!=NULL) reset();
         
         //Set new board
         board = const_cast< Driver<measure_struct,uint16_t>* > (&new_board);
+        
+        
+        //---------------------------------------------------------------
+        //Set new last_avg_request initialization: is done only when driver is first attached!! So that:
+        // - if autorefresh is true, thread will start calculating on-line average and will reset it when avg_delay has passed since NOW
+        // - if autorefresh is false, the average can still make sense if get_measure() and get_raw_measure() are called periodically bu user
+       	last_avg_request = std::chrono::steady_clock::now();
+        
         
         //Start a new autosampling thread
         if(autorefresh==true)
         {
             	//CALL OF REFRESH THREAD - Avvia il thread per l'autosampling
         	r= new thread (&Sensor::refresh,this);	// Per eseguire refresh() è richiesto this quando è un metodo della classe stessa
-		wait_new_sample();     			// Aspettiamo che il thread abbia almeno calcolato il primo sample() per considerare il sensore "collegato"   	
+		//wait_new_sample();     			// Aspettiamo che il thread abbia almeno calcolato il primo sample() per considerare il sensore "collegato"   	
         }
-    //}
+        
     
 }
 

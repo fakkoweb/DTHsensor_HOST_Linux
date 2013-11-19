@@ -152,6 +152,7 @@ int main(int argc, char* argv[])
 	{
 		
 		row=AllSensors.begin();
+		//BISOGNA IMPLEMENTARE UNA ATTESA PARALLELA SU TUTTI I SENSORI!!
 		//for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
 		//{
 			row->second->wait_new_sample();
