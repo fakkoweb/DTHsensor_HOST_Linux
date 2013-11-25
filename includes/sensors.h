@@ -141,8 +141,21 @@ class Sensor                                        //ABSTRACT CLASS: only sub-c
         float get_variance(){ return convert(get_raw_variance()); };
         
         virtual string stype()=0;	//returns a string explaining the type of sensor
+		virtual string sunits()=0; //returns a string explaining the unit of measure
         void display_measure(){ cout<<stype()<<": "<<get_raw()<<endl; };
         void plug_to(const Driver<measure_struct,short int>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
+		virtual string getTimeStamp()
+		{
+			time_t now;
+   			time(&now);
+   			char buf[sizeof "2011-10-08T07:07:09Z"];
+    		strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+ 			stringstream ss;
+ 			string s;
+ 			ss<<buf;
+ 			ss>>s;
+ 			return s;
+		}
 
 };
 
@@ -154,6 +167,7 @@ class TempSensor : public Sensor
     public:
         TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Temperatura"; return st; };
+		virtual string sunits(){ string st="C°"; return st;};
 };
 
 class HumidSensor : public Sensor
@@ -164,6 +178,7 @@ class HumidSensor : public Sensor
     public:
         HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Umidita'"; return st; };
+		virtual string sunits(){ string st="%"; return st;};
   
 };
 
@@ -174,7 +189,8 @@ class DustSensor : public Sensor
         virtual float convert(const short int);                                       //TO IMPLEMENT!!     
     public:
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
-        virtual string stype(){ string st="Polveri"; return st; };      
+        virtual string stype(){ string st="Polveri"; return st; };   
+		virtual string sunits(){ string st="mg/m^3"; return st;};   
 };
 
 

@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <ctime>
 #include <map>
 #ifdef _WIN32
     #include <windows.h>
@@ -24,6 +25,7 @@
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 #include "curl/curl.h"  //For Curl initialization
 #include "json.h"	//For Dynamic Parameter loading from a .json file
+#include "http_manager.h"
 
 using namespace std;
 

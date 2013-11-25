@@ -241,98 +241,6 @@ int register_device( const string mac_addr )
     
 }
 
-
-
-int register_sensors( const string mac_addr, const Json::Value& sd)
-{
-    string check_registration_s;
-    string check_feed;
-    string check_new_registration_s;
-	
-	// check the list of registered sensors:
-   	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", check_registration_s);
-   	//cout<<check_registration_s<<endl;
-
-	//check if the temperature sensor already exists:
-    check_feed="\"local_feed_id\":"+sd["temp"]["ext"].get("lfid",0).asInt();
-	if (check_registration_s.find(check_feed) == std::string::npos)
-    {
-    	//cout << "non presente!" << '\n';
-	    Json::Value reg_sensor;
-      	reg_sensor["feed_id"]=0;
-      	reg_sensor["tags"]=sd["temp"]["ext"].get("tags",0).asString();
-      	reg_sensor["local_feed_id"]=sd["temp"]["ext"].get("lfid",0).asInt();
-      	reg_sensor["raspb_wifi_mac"]=mac_addr;
-      	//cout<< reg_sensor;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	//cout<<check_new_registration_s;  
-	}
-
-	check_feed="\"local_feed_id\":"+sd["temp"]["int"].get("lfid",0).asInt();
-	if (check_registration_s.find(check_feed) == std::string::npos)
-	{
-		//cout << "non presente!" << '\n';
-	    Json::Value reg_sensor;
-      	reg_sensor["feed_id"]=0;
-      	reg_sensor["tags"]=sd["temp"]["int"].get("tags",0).asString();
-      	reg_sensor["local_feed_id"]=sd["temp"]["int"].get("lfid",0).asInt();
-      	reg_sensor["raspb_wifi_mac"]=mac_addr;
-      	//cout<< reg_sensor;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	//cout<<check_new_registration_s; 
-
-	//check if the humid sensor already exists:
-	check_feed="\"local_feed_id\":"+sd["humid"]["ext"].get("lfid",0).asInt();
-	if (check_registration_s.find(check_feed) == std::string::npos)
-    {
-    	//cout << "non presente!" << '\n';
-	    Json::Value reg_sensor;
-      	reg_sensor["feed_id"]=0;
-      	reg_sensor["tags"]=sd["humid"]["ext"].get("tags",0).asString();
-      	reg_sensor["local_feed_id"]=sd["humid"]["ext"].get("lfid",0).asInt();
-      	reg_sensor["raspb_wifi_mac"]=mac_addr;
-      	//cout<< reg_sensor;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	//cout<<check_new_registration_s;  
-	}
-
-	check_feed="\"local_feed_id\":"+sd["humid"]["int"].get("lfid",0).asInt();
-	if (check_registration_s.find(check_feed) == std::string::npos)
-	{
-		//cout << "non presente!" << '\n';
-	    Json::Value reg_sensor;
-      	reg_sensor["feed_id"]=0;
-      	reg_sensor["tags"]=sd["humid"]["int"].get("tags",0).asString();
-      	reg_sensor["local_feed_id"]=sd["humid"]["int"].get("lfid",0).asInt();
-      	reg_sensor["raspb_wifi_mac"]=mac_addr;
-      	//cout<< reg_sensor;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	//cout<<check_new_registration_s;
-
- 	//check if the dust sensor already exists:
-	check_feed="\"local_feed_id\":"+sd["dust"].get("lfid",0).asInt();
-	if (check_registration_s.find(check_feed) == std::string::npos)
-    {
-    	//cout << "non presente!" << '\n';
-	    Json::Value reg_sensor;
-      	reg_sensor["feed_id"]=0;
-      	reg_sensor["tags"]=sd["dust"].get("tags",0).asString();
-      	reg_sensor["local_feed_id"]=sd["dust"].get("lfid",0).asInt();
-      	reg_sensor["raspb_wifi_mac"]=mac_addr;
-      	//cout<< reg_sensor;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	//cout<<check_new_registration_s;  
-	}
-	
-		
-	/*for(Json::Value::iterator i = sd.begin(); i !=sd.end(); ++i)
-	{	
-		}*/
-    		
-}
-
-
-
 int post_report( const string mac_addr,const map<int, Sensor*>& sa )
 {
     
@@ -348,7 +256,7 @@ int post_report( const string mac_addr,const map<int, Sensor*>& sa )
     
 	Json::Value sensorpost;
 	sensorpost["raspb_wifi_mac"]=mac_addr;
-	sensorpost["send_timestamp"]=getTimeStamp();//da implementare!
+	sensorpost["send_timestamp"]=getTimeStamp();
 	
 	Json::Value sensor_v;
 	sensor_v= Json::Value(Json::arrayValue);
@@ -356,11 +264,11 @@ int post_report( const string mac_addr,const map<int, Sensor*>& sa )
 	Json::Value misure;
 	for(MapType::const_iterator row=sa.begin(); row!=sa.end(); row++)
 	{ 
-	 	misure["value_timestamp"]=row->second->get_TimeStamp_m();//manca
+	 	misure["value_timestamp"]=row->second->getTimeStamp();
 		misure["average_value"]=row->second->get_raw_average();
 		misure["local_feed_id"]=row->first;
 		misure["variance"]=row->second->get_raw_variance();
-		misure["units_of_measurement"]=row->second->sunits();//?? manca
+		misure["units_of_measurement"]=row->second->sunits();
 		sensor_v.append(misure);
 	}
 
@@ -372,7 +280,110 @@ int post_report( const string mac_addr,const map<int, Sensor*>& sa )
 
 }
 
-string getTimeStamp(){}
+string getTimeStamp(){
+
+	time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+ 	stringstream ss;
+ 	string s;
+ 	ss<<buf;
+ 	ss>>s;
+ return s;
+}
+
+int register_sensors( const string mac_addr, const Json::Value& sd)
+{
+    string check_registration_s;
+    string check_feed;
+    string check_new_registration_s;
+	
+	// check the list of registered sensors:
+   	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", check_registration_s);
+   	//cout<<check_registration_s<<endl;
+	
+	for(Json::Value::iterator i = sd.begin(); i !=sd.end(); ++i)
+	{
+		Json::Value value = (*i);
+		if(	element.isMember("lfid"))
+		{
+			//check if the sensor already exists:
+			check_feed="\"local_feed_id\":"+element.get("lfid",0).asString();
+			if (check_registration_s.find(check_feed) == std::string::npos)
+    		{
+				Json::Value reg_sensor;
+      			reg_sensor["feed_id"]=0;
+      			reg_sensor["tags"]=element.get("tags",0).asString();
+      			reg_sensor["local_feed_id"]=element.get("lfid",0).asInt();
+      			reg_sensor["raspb_wifi_mac"]=mac_addr;
+
+				http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
+      	    	//cout<<check_new_registration_s;
+			}
+		} 
+		else
+		{
+			 for(Json::Value::iterator j = element.begin(); j !=element.end(); ++j)
+			{
+      			Json::Value element1 = (*j);
+				if(element1.size()!=0)
+				{
+					 //check if the sensor already exists:
+					check_feed="\"local_feed_id\":"+element1.get("lfid",0).asString();
+					if (check_registration_s.find(check_feed) == std::string::npos)
+					{
+						Json::Value reg_sensor;
+      					reg_sensor["feed_id"]=0;
+      					reg_sensor["tags"]=element1.get("tags",0).asString();
+      					reg_sensor["local_feed_id"]=element1.get("lfid",0).asInt();
+      					reg_sensor["raspb_wifi_mac"]=mac_addr;
+
+						http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
+      					//cout<<check_new_registration_s;
+						
+					}
+				}      
+			}
+		}
+		
+	}
+
+}
+
+
+int check_status()
+{
+	string check_authentication;
+	Json::Value authentication;
+	Json::Reader reader;
+	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/auth/gruppo19", check_authentication);
+	cout<<check_authentication;
+	bool parsedSuccess = reader.parse(check_authentication,authentication,false);
+	cout<< authentication.toStyledString();
+	if(authentication.get("authenticated",0).asString()=="false")
+	//Error Handling
+	return 1;
+	else return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
