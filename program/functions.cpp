@@ -357,14 +357,14 @@ int check_status()
 	string check_authentication;
 	Json::Value authentication;
 	Json::Reader reader;
-	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/auth/gruppo19", check_authentication);
+	http_get_auth("http://crowdsensing.ismb.it/SC/rest/apis/auth/gruppo19", check_authentication);
 	cout<<check_authentication;
 	bool parsedSuccess = reader.parse(check_authentication,authentication,false);
 	cout<< authentication.toStyledString();
-	if(authentication.get("authenticated",0).asString()=="false")
+	//if(authentication.get("authenticated",0).asString()=="false")
 	//Error Handling
-	return 1;
-	else return 0;
+	//return 1;
+	//else return 0;
 }
 
 
