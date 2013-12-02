@@ -1,11 +1,9 @@
-#include <iostream>
-#include <curl/curl.h>
-#include "json.h"
-#include <string.h>
 
-using namespace std;
+#include "http_manager.h"
 
-static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
+
+
+size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
   int written = fwrite(ptr, size, nmemb, (FILE *)stream);
   return written;
@@ -17,7 +15,7 @@ struct MemoryStruct {
 };
 
 
-static void *myrealloc(void *ptr, size_t size)
+void *myrealloc(void *ptr, size_t size)
 {
   /* There might be a realloc() out there that doesn't like reallocing
      NULL pointers, so we take care of it here */
@@ -27,7 +25,7 @@ static void *myrealloc(void *ptr, size_t size)
     return malloc(size);
 }
 
-static size_t
+size_t
 WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
 {
   size_t realsize = size * nmemb;
