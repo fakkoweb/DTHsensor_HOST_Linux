@@ -3,220 +3,9 @@
 
 
 
-
-/*
-
-//Curl chiama questa routine (personalizzabile) per ogni "receive" che fa (per header e payload)
-//SERVE SE:
-//  - è specificata una funzione write_callback tramite l'opzione WRITE_FUNCTION
-//  - si può specificare l'ultimo argomento void* tramite opzione WRITE_DATA
-//N.B.: SE WRITE_FUNCTION NON E' SPECIFICATO l'opzione WRITE_DATA vuole un FILE*!!
-//
-//Argomenti:
-//ptr -> puntatore ai dati ricevuti
-//size -> dimensione della singola unità di informazione
-//nmemb -> quante volte size sono stati ricevuti
-//stream -> A SCELTA: in questo caso la funzione mette in stream ciò che riceve
-//          e ritorna il numero di byte effettivamente scritti!
-size_t write_callback(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-	  //Per ogni receive gli chiedo di scrivere sul buffer aperto puntato da stream
-      char* c_stream = (char*)stream;                   //create a char version of stream
-	  c_stream = new char[(size*nmemb)+1];      
-	  strncpy( c_stream, (char*)ptr, size*nmemb ); //to copy bytes I use the void version of stream
-	  c_stream[size*nmemb]='\0';                        //to put the \0 I use the char version of stream
-	  return (size*nmemb)+1;
-}
-
-
-
-//HTTP_GET fa una semplice richiesta HTTP all'indirizzo fornitole e restituisce il path del file binario con la risorsa ottenuta
-int http_get(const string url, string& json)
-{
-	  
-	  // for each connection (and curl state variables) a handle must be defined  
-	  CURL *curl_handle;
-	  char* data;
-	  char* headers;
-	  CURLcode res;
-	  
-	  // init the curl session   
-	  curl_handle = curl_easy_init();
-	  
-	  
-	  if(curl_handle)
-	  {
-		  // set URL to get   
-		  curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
-		 
-		  // no progress meter please   
-		  curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-		 
-		  // What operation curl has to do as soon as receives data? Put them in write_data function!   
-		  curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_callback);
-		 
-
-		  // we want the headers be written to this file handle   
-		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEHEADER, (void*)headers);
-		 
-		  // we want the body be written to this file handle instead of stdout   
-		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEDATA, (void*)data);
-		 
-		  // get it!   
-		  res=curl_easy_perform(curl_handle);
-		  
-		  // Check for errors   
-		  if(res != CURLE_OK)
-		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-		  
-		  // convert data to string to export  
-		  json.assign(data);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
-		 
-		  // delete bullshit   
-		  delete headers;
-		  delete data;
-	 
-		  // cleanup curl stuff   
-		  curl_easy_cleanup(curl_handle);
-		  
-	  }
-	 
-	  return 0;
-
-}
-
-*/
-
-/* OLD FILE GET
-//HTTP_GET fa una semplice richiesta HTTP all'indirizzo fornitole e restituisce il path del file binario con la risorsa ottenuta
-int http_get(const string url, string& json)
-{
-	  
-	  // for each connection (and curl state variables) a handle must be defined  
-	  CURL *curl_handle;
-	  
-	  static const char *headerfilename = "head.out";
-	  FILE* headerfile;
-	  static const char *bodyfilename = "body.out";
-	  FILE* bodyfile;
-	 
-	  CURLcode res;
-	 
-	  res_filename = bodyfilename;
-	 
-	  // init the curl session   
-	  curl_handle = curl_easy_init();
-	  
-	  
-	  if(curl_handle)
-	  {
-		  // set URL to get   
-		  curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
-		 
-		  // no progress meter please   
-		  curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-		 
-		  // What operation curl has to do as soon as receives data? Put them in write_data function!   
-		  curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_callback);
-		 
-		  // open the files   
-		  headerfile = fopen(headerfilename,"wb");
-		  if (headerfile == NULL) {
-		    curl_easy_cleanup(curl_handle);
-		    return -1;
-		  }
-		  bodyfile = fopen(bodyfilename,"wb");
-		  if (bodyfile == NULL) {
-		    curl_easy_cleanup(curl_handle);
-		    return -1;
-		  }
-		 
-		  // we want the headers be written to this file handle   
-		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEHEADER, headerfile);
-		 
-		  // we want the body be written to this file handle instead of stdout   
-		  curl_easy_setopt(curl_handle,   CURLOPT_WRITEDATA, bodyfile);
-		 
-		  // get it!   
-		  res=curl_easy_perform(curl_handle);
-		  
-		  // Check for errors   
-		  if(res != CURLE_OK)
-		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-		  
-		  // close the header file   
-		  fclose(headerfile);
-		 
-		  // close the body file   
-		  fclose(bodyfile);
-	 
-		  // cleanup curl stuff   
-		  curl_easy_cleanup(curl_handle);
-		  
-	  }
-	 
-	  return 0;
-
-}
-*/
-
-/*
-
-int http_post(const string url, const string json)
-{
-
-	CURL* easyhandle;
-	//FILE* json;
-	CURLcode res;
-    //void* dataptr=NULL;
-    
-    // Set a list of custom headers  
-	struct curl_slist* headers=NULL;
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	 // init the curl session   
-	 easyhandle = curl_easy_init();
-
-	 if(easyhandle)
-	 {
-
-        //c_str() converts a string type to a const char*    
-		 // set URL to post   
-		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
-
-		 // set binary data to post   
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json.c_str() );
-
-		 // set the size of the postfields data (-1 means "use strlen() to calculate it)    
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, -1);
-
-		 // pass our list of custom made headers    
-		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
-
-		 res=curl_easy_perform(easyhandle); // post away!  
-		    
-		    // Check for errors   
-		    if(res != CURLE_OK)
-		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-			      
-		 curl_slist_free_all(headers); // free the header list  
-
-	 }
-
-	 return 0;
-	  
-}
-
-*/
-
-
-
-
-
-
-
 int register_device( const string mac_addr )
 {
+    int esito=ERROR;
     string check_registration;
     string check_new_registration;
     string device_nf("Missing resource");
@@ -225,25 +14,33 @@ int register_device( const string mac_addr )
     http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr, check_registration);
     cout<<check_registration;
     check_registration= check_registration.substr(0,16);
-    if (check_registration==device_nf)
+    
+    //Device already registered?
+    if (check_registration==device_nf)		//NO
      { 
-    	json::Value reg_device;
+    	Json::Value reg_device;
        	reg_device["id"]=0;
       	reg_device["username"]="gruppo19";
       	reg_device["raspb_wifi_mac"]=mac_addr;
        	cout<<reg_device;
       	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), check_new_registration);
        	//cout<<check_new_registration;
+       	
+       	//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
      }
-     /*else
-     {	cout<<"Il device è già registrato!";
-       }*/
+     else					//YES
+     {
+     	cout<<"Il device è già registrato!";
+     	esito = ABORTED;
+     }
+     
+     return esito;
     
 }
 
-int post_report( const string mac_addr,const map<int, Sensor*>& sa )
+int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 {
-    
+        int esito=ERROR;
 	string check_new_registration_p;
 	//geoloc
 	Json::Value position;
@@ -262,7 +59,8 @@ int post_report( const string mac_addr,const map<int, Sensor*>& sa )
 	sensor_v= Json::Value(Json::arrayValue);
 	
 	Json::Value misure;
-	for(MapType::const_iterator row=sa.begin(); row!=sa.end(); row++)
+    	std::map<int, Sensor*>::iterator row;
+	for(row=sa.begin(); row!=sa.end(); row++)
 	{ 
 	 	misure["value_timestamp"]=row->second->getTimeStamp();
 		misure["average_value"]=row->second->get_raw_average();
@@ -272,83 +70,121 @@ int post_report( const string mac_addr,const map<int, Sensor*>& sa )
 		sensor_v.append(misure);
 	}
 
-    Json::Value reg_post= sensorpost;
+    std::map<int, Sensor*>::iterator row;
+    cout<<"-- Sensori disponibili --"<<endl;
+    cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
+    for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
+    {
+	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
+    }
+
+    	Json::Value reg_post= sensorpost;
 	reg_post["position"]=position;
 	reg_post["sensor_values"]=sensor_v;
 
 	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+mac_addr+"/posts", reg_post.toStyledString(), check_new_registration_p);
+
+	//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
+	
+	return esito;
 
 }
 
 string getTimeStamp(){
 
 	time_t now;
-    time(&now);
-    char buf[sizeof "2011-10-08T07:07:09Z"];
-    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+    	time(&now);
+    	char buf[sizeof "2011-10-08T07:07:09Z"];
+    	strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
  	stringstream ss;
  	string s;
  	ss<<buf;
  	ss>>s;
- return s;
+ 	return s;
 }
 
+
+//Chiede al server la lista dei sensori attualmente registrati. Provvede a registrare quelli nuovi se necessario.
+//La funzione ritorna:
+//- ABORTED se tutti i nuovi sensori erano già registrati,
+//- NICE se almeno un nuovo sensore è stato registrato perché non presente,
+//- ERROR se almeno un sensore DOVEVA essere registrato ma la registrazione è fallita.
 int register_sensors( const string mac_addr, const Json::Value& sd)
 {
-    string check_registration_s;
-    string check_feed;
-    string check_new_registration_s;
-	
+	int esito=ERROR;
+	string registered_sensors_s;
+
 	// check the list of registered sensors:
-   	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", check_registration_s);
-   	//cout<<check_registration_s<<endl;
+   	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", registered_sensors_s);
+   	//cout<<registered_sensors_s<<endl;
 	
-	for(Json::Value::iterator i = sd.begin(); i !=sd.end(); ++i)
-	{
-		Json::Value value = (*i);
-		if(	element.isMember("lfid"))
-		{
-			//check if the sensor already exists:
-			check_feed="\"local_feed_id\":"+element.get("lfid",0).asString();
-			if (check_registration_s.find(check_feed) == std::string::npos)
+	esito = register_sensor(mac_addr,sd,registered_sensors_s);
+	return esito;
+}
+
+
+//Controlla l'esistenza di lfid (uno solo!) nel nodo json "sd" passato e in quelli in esso contenuti. Se non presenti in "rs" li registra usando "mac_addr".
+//La funzione ritorna:
+//- ABORTED se tutti i nuovi sensori erano già registrati,
+//- NICE se almeno un nuovo sensore è stato registrato perché non presente,
+//- ERROR se almeno un sensore DOVEVA essere registrato ma la registrazione è fallita.
+int register_sensor( const string mac_addr, const Json::Value& node, const string rs )
+{
+	int esito=ABORTED, inner_esito=ERROR;
+    	string check_feed;
+    	string check_new_registration_s;
+
+	//if you find an lfid code in the node..
+    	if(sd.isMember("lfid"))
+    	{
+		//check if the sensor already exists:
+		check_feed="\"local_feed_id\":"+node.get("lfid",0).asString();
+		if (rs.find(check_feed) == std::string::npos)		//NO
     		{
-				Json::Value reg_sensor;
+			Json::Value reg_sensor;
       			reg_sensor["feed_id"]=0;
-      			reg_sensor["tags"]=element.get("tags",0).asString();
-      			reg_sensor["local_feed_id"]=element.get("lfid",0).asInt();
-      			reg_sensor["raspb_wifi_mac"]=mac_addr;
-
-				http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      	    	//cout<<check_new_registration_s;
-			}
-		} 
-		else
-		{
-			 for(Json::Value::iterator j = element.begin(); j !=element.end(); ++j)
-			{
-      			Json::Value element1 = (*j);
-				if(element1.size()!=0)
-				{
-					 //check if the sensor already exists:
-					check_feed="\"local_feed_id\":"+element1.get("lfid",0).asString();
-					if (check_registration_s.find(check_feed) == std::string::npos)
-					{
-						Json::Value reg_sensor;
-      					reg_sensor["feed_id"]=0;
-      					reg_sensor["tags"]=element1.get("tags",0).asString();
-      					reg_sensor["local_feed_id"]=element1.get("lfid",0).asInt();
-      					reg_sensor["raspb_wifi_mac"]=mac_addr;
-
-						http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
-      					//cout<<check_new_registration_s;
-						
-					}
-				}      
-			}
+      			reg_sensor["tags"]=node.get("tags",0).asString();
+      			reg_sensor["local_feed_id"]=node.get("lfid",0).asInt();
+			reg_sensor["raspb_wifi_mac"]=mac_addr;
+			http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
+    			//cout<<check_new_registration_s;
+    			
+    			//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
 		}
+		else									//YES
+		{
+			cout<<"This sensor was already registered...";
+			esito=ABORTED;
+		}
+    	}
+    	//otherwise maybe the attributes may contain lfids..
+    	else
+    	{
+	    	for(Json::Value::iterator i = sd.begin(); i !=sd.end(); ++i)
+		{
+			Json::Value element = (*i);
+			//END CONDITION: if the attribute contains other attributes, recursively call myself
+			if(element.size()!=0)
+			{
+				inner_esito=register_sensor(mac_addr, element, rs);
+				//PROPAGAZIONE STATO DI ERRORE
+				//esito deve riportare l'errore più grave avvenuto in una delle sottochiamate (inner_esito)
+				if(inner_esito!=esito && esito!=ERROR)			//Verifica solo se ci sono stati cambiamenti (se esito era ERROR non ci importa più)
+				{
+					if(inner_esito != ABORTED) esito = inner_esito;		//se esito era ABORTED, inner_esito avrà riportato un cambiamento: reg. effettuata (NICE) o fallita (ERROR)
+												//se esito era NICE, l'algoritmo va comunque bene.
+				}
+			}
 		
+		}
 	}
-
+	
+	//Esito riporterà:
+	//- ABORTED se i sensori erano già tutti registrati,
+	//- NICE se almeno una registrazione è avvenuta (TUTTE con successo),
+	//- ERROR se almeno una registrazione era necessaria MA è fallita.
+	return esito;	
+	
 }
 
 
@@ -359,7 +195,7 @@ int check_status()
 	Json::Reader reader;
 	http_get_auth("http://crowdsensing.ismb.it/SC/rest/apis/auth/gruppo19", check_authentication);
 	cout<<check_authentication;
-	bool parsedSuccess = reader.parse(check_authentication,authentication,false);
+	reader.parse(check_authentication,authentication,false);
 	cout<< authentication.toStyledString();
 	//if(authentication.get("authenticated",0).asString()=="false")
 	//Error Handling

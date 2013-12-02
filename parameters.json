@@ -28,8 +28,10 @@
             "REFRESH_RATE": 10
         },
         "dust": {
-            "lfid": 3,
-            "tags": "outdoor, dust",
+            "ext": {
+		"lfid": 3,
+		"tags": "outdoor, dust"
+            },
             "REFRESH_RATE": 15
         }
     },

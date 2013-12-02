@@ -1,3 +1,8 @@
+#ifndef _HTTP_MANAGER_H_
+#define _HTTP_MANAGER_H_
+//////////////////////
+
+
 #include <iostream>
 #include <curl/curl.h>
 #include "json.h"
@@ -19,3 +24,11 @@ int http_get(const string url, string& json);
 int http_post(const string url, const string json_in, string &json_out);
 int http_post_auth(const string url, const string json_in, string &json_out);
 int http_get_auth(const string url, string& json);
+
+
+
+
+
+/////////////////
+#endif
+

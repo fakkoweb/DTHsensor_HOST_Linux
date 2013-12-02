@@ -25,7 +25,7 @@
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 #include "curl/curl.h"  //For Curl initialization
 #include "json.h"	//For Dynamic Parameter loading from a .json file
-#include "http_manager.h"
+//#include "http_manager.h"
 
 using namespace std;
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     cout<<"MY_PID: 0x"<<hex<< check_not_zero( params["device"].get("MY_PID",0).asInt() ) <<endl;
     cout<<"Outdoor Temp Local feed id: "<<dec<< check_not_zero( params["sensors"]["temp"]["ext"].get("lfid",0).asInt() ) <<endl;
     cout<<"Outdoor Humid Local feed id: "<< check_not_zero( params["sensors"]["humid"]["ext"].get("lfid",0).asInt() ) <<endl;
-    cout<<"Outdoor Dust Local feed id: "<< check_not_zero( params["sensors"]["dust"].get("lfid",0).asInt() ) <<endl;
+    cout<<"Outdoor Dust Local feed id: "<< check_not_zero( params["sensors"]["dust"]["ext"].get("lfid",0).asInt() ) <<endl;
     cout<<"Indoor Temp Local feed id: "<< check_not_zero( params["sensors"]["temp"]["int"].get("lfid",0).asInt() ) <<endl;
     cout<<"Indoor Humid Local feed id: "<< check_not_zero( params["sensors"]["humid"]["int"].get("lfid",0).asInt() ) <<endl;
     cout<<"-- Precision data --"<<endl;
@@ -194,16 +194,22 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
     ///////////////////////////////////////////////////////
+    int dev_reg_status=ERROR;
+    int sens_reg_status=ERROR;
+    bool ready_to_post=false;
     
-    //Registrazione device - ritorna la device_id registrata sul server
-    int device_id = register_device(params["device"].get("MY_VID",0).asInt() , params["device"].get("MY_PID",0).asInt());   //DA IMPLEMENTARE!!
     
-    //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
-    //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
-    //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
-    //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
-    register_sensors(device_id,SensorArray,params["sensor"]);                //DA IMPLEMENTARE!!
-
+    //Registrazione device - ritorna NICE o ABORTED se ha successo, altrimenti riproverà al prossimo giro
+    dev_reg_status = register_device(params["device"].get("MY_MAC",0).asString());
+    
+    if(dev_reg_status!=ERROR && sens_reg_status==ERROR)
+    {
+	    //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
+	    //(1) ATTENZIONE se si cambiano i valori lfid dei sensori (ma non la loro posizione) da parameters.json il sistema sarà diverso!!
+	    //(2) ATTENZIONE scambiare gli lfid tra loro mischierebbe le misure al server!
+	    sens_reg_status = register_sensors(params["device"].get("MY_MAC",0).asString() , params["sensors"]);
+    }
+    ready_to_post = (dev_reg_status!=ERROR && sens_reg_status!=ERROR);
 
 
 
