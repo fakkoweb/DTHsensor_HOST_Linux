@@ -18,8 +18,7 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     raw_measure=0;
     
     //MeanGuy.setMin(?);
-    average=0;
-    variance=0;
+    statistic=0;
     
     autorefresh=enable_autorefresh;
     refresh_rate = sample_rate;
@@ -69,8 +68,7 @@ void Sensor::reset()
     raw_measure=0;
     
     //MeanGuy.setMin(?);
-    average=0;
-    variance=0;
+    statistic=0;
     
     close_thread=false;
     r=NULL;
@@ -104,6 +102,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         {
 		//New sample
 		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
+		statistic.tot_sample++;
 		raw_measure=sample();
 		
 		//Conversion
@@ -111,9 +110,16 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		//	When user asks for a converted measure, it will be converted on-the-go from raw_measure;
 		
 		//Mean and Variance
+
+		if(raw_measure==INVALID){
+			//dobbiamo davvero fare qualcosa?
+		}
+		else{
 		MeanGuy.add(convert(raw_measure));	//asdfg
 		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
+		}
 		
+
 		//Notify that a new sample is now available
 		new_sample.notify_all();
 
@@ -122,11 +128,15 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		{
 			//Ask MeanGuy for latest Mean and Variance
 			cout<<" S| Media pronta e richiesta!"<<endl;
-			average=MeanGuy.getMean();	//asdfg
-			variance=MeanGuy.getVariance();	//asdfg
-			cout<<"  S! -Debug- Mean: "<<average<<sunits()<<" Var: "<<variance<<sunits()<<endl;
-			cout<<"Il thread resterà sospeso per ragioni di debug per 10 secondi..."<<endl;
-			p_sleep(10000);
+			statistic.average=MeanGuy.getMean();	//asdfg
+			statistic.variance=MeanGuy.getVariance();	//asdfg
+			statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
+			if(statistic.percentage_validity>THRESHOLD){
+				statistic.valid=true;
+			}
+			else{
+				statistic.valid=false;
+			}
 			
 			//Reset MeanGuy
 			MeanGuy.reset();		//asdfg

@@ -105,3 +105,9 @@ void OMV::setMin(double aMin){
 	min=aMin;
 	minCalc=true;
 }
+/*
+ * double OMV::getSampleNumber()
+ */
+double OMV::getSampleNumber(){
+	return n;
+}

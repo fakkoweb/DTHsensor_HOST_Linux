@@ -43,6 +43,7 @@ public:
 	double getVariance();
 	double getMin();
 	void setMin(double aMin);
+	double getSampleNumber();
 };
 
 #endif /* OMV_H_ */

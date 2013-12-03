@@ -1,7 +1,7 @@
 #ifndef _SENSORS_H_
 #define _SENSORS_H_
 ////////////////////
-
+#define THRESHOLD 60
 
 //Include user configuration
 #include "config.h"
@@ -38,6 +38,14 @@
 
 using namespace std;
 
+typedef struct _STATISTIC_STRUCT
+{
+	double average;
+	double variance;
+	bool valid;
+	double percentage_validity;
+	int tot_sample;
+} statistic_struct;
 
 
 class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
@@ -47,8 +55,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         //BUFFERING VARIABLES
         uint16_t raw_measure;
         //OLD:	double format_measure;		//Memorizza una versione convertita di raw_buffer - non più necessaria, ora la misura è convertita su richiesta
-        double average;
-        double variance;
+        statistic_struct statistic;
         
         
         //AVERAGING AND VARIANCE CALCULATION	//asdfg
@@ -100,9 +107,12 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         //METODI DI ACCESSO PRIMARI (gestiscono i lock)
         uint16_t get_raw();	//safe                          	//Restituisce l'ultima misura. Se autorefresh è FALSE ed è trascorso min_sample_rate
                                                                         //dall'ultima chiamata, richiede anche una nuova misura (sample), altrimenti da l'ULTIMA effettuata
-                                                                        //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )                 
-        double get_average(){ lock_guard<mutex> access(rw); return average; };
-        double get_variance(){ lock_guard<mutex> access(rw); return variance; };        
+                                                                        //( in futuro: IMPLEMENTARE una versione che dia il measure_code della misura restituita )
+
+        /**double get_average(){ lock_guard<mutex> access(rw); return average; };
+        double get_variance(){ lock_guard<mutex> access(rw); return variance; };**/
+        statistic_struct get_statistic(){ lock_guard<mutex> access(rw); return statistic; };
+
         void wait_new_sample(); //safe                                  //Se chiamata, ritorna solo quando il sensore effettua la prossima misura
                                                                         //- HA EFFETTO SOLO SE AUTOREFRESH E' ATTIVO (altrimenti non ha senso perchè la richiesta la farebbe get_measure)
                                                                         //- E' UTILE SE SUBITO DOPO VIENE CHIAMATA get_measure
