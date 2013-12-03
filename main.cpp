@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <ctime>
 #include <map>
 #ifdef _WIN32
     #include <windows.h>
@@ -23,7 +24,9 @@
 #include "functions.h"  //FUNCTIONS (including for Curl and Json)
                         //-- ALERT: libcurl needs to be initialized manually with curl_global_init()!!
 #include "curl/curl.h"  //For Curl initialization
-#include <json.h>	//For Dynamic Parameter loading from a .json file
+#include "json.h"	//For Dynamic Parameter loading from a .json file
+//#include "http_manager.h"
+
 
 using namespace std;
 
@@ -68,10 +71,7 @@ int main(int argc, char* argv[])
     curl_global_init(CURL_GLOBAL_ALL);
     cout<<"Librerie inizializzate"<<endl;
     
-    
-    
-    
-    
+
     p_sleep(3000);
 
    
@@ -193,15 +193,22 @@ int main(int argc, char* argv[])
     ///////////////////////////////////////////////////////
     //ANNUNCIO DEL SISTEMA AL SERVER
     ///////////////////////////////////////////////////////
+    int dev_reg_status=ERROR;
+    int sens_reg_status=ERROR;
+    bool ready_to_post=false;
     
-    //Registrazione device - ritorna la device_id registrata sul server
-    int device_id = register_device(params["device"].get("MY_VID",0).asInt() , params["device"].get("MY_PID",0).asInt());   //DA IMPLEMENTARE!!
+
+    //Registrazione device - ritorna NICE o ABORTED se ha successo, altrimenti riproverà al prossimo giro
+    dev_reg_status = register_device(params["device"].get("MY_MAC",0).asString());
     
-    //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
-    //(1) ATTENZIONE se si cambiano gli lfid dei sensori da parameters.json il sistema sarà diverso!!
-    //(2) ATTENZIONE scambiare gli lfid tra loro mischierà le misure al server!
-    //UNA VOLTA REGISTRATA LA DEVICE E I SENSORI occorre cancellarla e registrarla nuovamente.
-    register_sensors(device_id,AllSensors,params["sensor"]);                //DA IMPLEMENTARE!!
+    if(dev_reg_status!=ERROR && sens_reg_status==ERROR)
+    {
+	    //Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
+	    //(1) ATTENZIONE se si cambiano i valori lfid dei sensori (ma non la loro posizione) da parameters.json il sistema sarà diverso!!
+	    //(2) ATTENZIONE scambiare gli lfid tra loro mischierebbe le misure al server!
+	    sens_reg_status = register_sensors(params["device"].get("MY_MAC",0).asString() , params["sensors"]);
+    }
+    ready_to_post = (dev_reg_status!=ERROR && sens_reg_status!=ERROR);
 
 
 

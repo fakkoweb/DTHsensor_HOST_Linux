@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #ifdef _WIN32
     #include <windows.h>
 #else
@@ -114,6 +115,18 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         virtual string sunits()=0;	//returns a string explaining the units of measure used
         void display_measure(){ cout<<stype()<<": "<<get_measure()<<" "<<sunits()<<endl; };
         void plug_to(const Driver<measure_struct,uint16_t>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
+	virtual string getTimeStamp()	//IN REALTA' INUTILE..
+		{
+			time_t now;
+   			time(&now);
+   			char buf[sizeof "2011-10-08T07:07:09Z"];
+    			strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+ 			stringstream ss;
+ 			string s;
+ 			ss<<buf;
+ 			ss>>s;
+ 			return s;
+		}
 
 };
 
@@ -126,6 +139,7 @@ class TempSensor : public Sensor
         TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Temperatura"; return st; };
         virtual string sunits(){ string st="°C"; return st; };
+
 };
 
 class HumidSensor : public Sensor
@@ -137,6 +151,7 @@ class HumidSensor : public Sensor
         HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Umidita'"; return st; };
         virtual string sunits(){ string st="%"; return st; };        
+
   
 };
 
@@ -149,6 +164,7 @@ class DustSensor : public Sensor
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Polveri"; return st; };
         virtual string sunits(){ string st="mg/m^3"; return st; };      
+
 };
 
 
