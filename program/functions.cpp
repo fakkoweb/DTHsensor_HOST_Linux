@@ -59,7 +59,7 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 	sensor_v= Json::Value(Json::arrayValue);
 	
 	Json::Value misure;
-    	std::map<int, Sensor*>::iterator row;
+    	std::map<int, Sensor*>::const_iterator row;
 	for(row=sa.begin(); row!=sa.end(); row++)
 	{ 
 	 	misure["value_timestamp"]=row->second->getTimeStamp();
@@ -70,13 +70,6 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 		sensor_v.append(misure);
 	}
 
-    std::map<int, Sensor*>::iterator row;
-    cout<<"-- Sensori disponibili --"<<endl;
-    cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
-    for (row=SensorArray.begin(); row!=SensorArray.end(); row++)
-    {
-	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
-    }
 
     	Json::Value reg_post= sensorpost;
 	reg_post["position"]=position;
@@ -135,7 +128,7 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
     	string check_new_registration_s;
 
 	//if you find an lfid code in the node..
-    	if(sd.isMember("lfid"))
+    	if(node.isMember("lfid"))
     	{
 		//check if the sensor already exists:
 		check_feed="\"local_feed_id\":"+node.get("lfid",0).asString();
@@ -160,7 +153,7 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
     	//otherwise maybe the attributes may contain lfids..
     	else
     	{
-	    	for(Json::Value::iterator i = sd.begin(); i !=sd.end(); ++i)
+	    	for(Json::Value::iterator i = node.begin(); i !=node.end(); ++i)
 		{
 			Json::Value element = (*i);
 			//END CONDITION: if the attribute contains other attributes, recursively call myself
