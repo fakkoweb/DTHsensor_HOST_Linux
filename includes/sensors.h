@@ -1,7 +1,7 @@
 #ifndef _SENSORS_H_
 #define _SENSORS_H_
 ////////////////////
-#define THRESHOLD 60
+
 
 //Include user configuration
 #include "config.h"

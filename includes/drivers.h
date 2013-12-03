@@ -1,7 +1,7 @@
 #ifndef _DRIVERS_H_
 #define _DRIVERS_H_
 ////////////////////
-#define INVALID 199
+
 
 //Include user configuration
 #include "config.h"

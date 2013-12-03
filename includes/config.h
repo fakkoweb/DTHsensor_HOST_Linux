@@ -35,8 +35,9 @@
 
 //Costante per esprimere una misura non valida o non disponibile
 #define NA	-1	//ATTENZIONE: deve essere negativo (perché le misure raw da sensore variano in 0-255)
+#define INVALID 0xFFFF
 
-
+#define THRESHOLD 60
 //Costanti per il prelievo misure  --> specificali in "parameters.json"
 //#define REPORT_INTERVAL 5         //in minuti - ogni quanto il programma manda un report al server
                                     //(ovvero l'intervallo utile di tempo su cui calcolare la media e varianza)
