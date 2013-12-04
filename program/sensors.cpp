@@ -93,6 +93,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 {
     unique_lock<mutex> access(rw,std::defer_lock);
     bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
+
     do
     {
     
@@ -118,14 +119,16 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		//	When user asks for a converted measure, it will be converted on-the-go from raw_measure;
 		
 		//Mean and Variance
-
-		if(raw_measure==INVALID){
+		/*
+		if(raw_measure==INVALID)
+		{
 			//dobbiamo davvero fare qualcosa?
 		}
-		else{
-		MeanGuy.add(convert(raw_measure));	//asdfg
-		cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
-		}
+		else
+		{*/
+			MeanGuy.add(convert(raw_measure));	//asdfg
+			cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
+		//}
 		
 
 		//Notify that a new sample is now available
@@ -139,10 +142,12 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			statistic.average=MeanGuy.getMean();	//asdfg
 			statistic.variance=MeanGuy.getVariance();	//asdfg
 			statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
-			if(statistic.percentage_validity>THRESHOLD){
+			if(statistic.percentage_validity>THRESHOLD)
+			{
 				statistic.valid=true;
 			}
-			else{
+			else
+			{
 				statistic.valid=false;
 			}
 			
@@ -154,6 +159,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			
 			//State that new last request was NOW
 			last_avg_request = std::chrono::steady_clock::now();
+
 		}
 
 	}
@@ -164,7 +170,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		
 		//Thread should wait "refresh_rate" milliseconds if is not closing
 		if(!thread_must_exit) 
-			p_sleep(refresh_rate);
+			 std::this_thread::sleep_for(std::chrono::milliseconds(refresh_rate));
     	}
     
     }while(autorefresh && !thread_must_exit);   //If there is no thread autorefreshing, there must be no loop
@@ -225,7 +231,7 @@ void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board)
         if(autorefresh==true)
         {
             	//CALL OF REFRESH THREAD - Avvia il thread per l'autosampling
-        	r= new thread (&Sensor::refresh,this);	// Per eseguire refresh() è richiesto this quando è un metodo della classe stessa
+        	r= new thread (&Sensor::refresh,this);		// Per eseguire refresh() è richiesto this quando è un metodo della classe stessa
 		//wait_new_sample();     			// Aspettiamo che il thread abbia almeno calcolato il primo sample() per considerare il sensore "collegato"   	
         }
         

@@ -40,36 +40,37 @@ elem_type Driver<data_type,elem_type>::request(const unsigned int type)
 {
 
    	uint16_t measure=0;
-    	elem_type* d = (elem_type*)&m;
+    	elem_type* d = (elem_type*)&m;	//d is a pointer accessing m as an array with offset type
 
     	lock_guard<mutex> access(rw);
     
-    	//If driver is ready(), performing a new recv_measure() and updating driver state
+    	//If driver is ready(), performing a new recv_measure() and updating driver "state"
+    	//N.B. ready() DOES NOT SAY MEASURE IS VALID OR NOT!!
 	if(ready()) state=recv_measure();
 	
-	//ONLY IF "type" exists in data_type...
+	//ONLY IF "type" exists in data_type "m"...
 	if( type <= n_elems && type > 0)
 	{	
-		//...if state is not NICE, last read failed so measure is INVALID    
+		//...if "state" is not NICE means last read failed so measure MUST BE INVALID    
 	    	if(state!=NICE)
 	    	{
 	    		measure=INVALID;
 	    		cout<<"  D| WARNING: problemi con la periferica, ultima misura non valida!"<<endl;
 	    	}
-	    	//...if state is NICE, last read was successful so pick selected measure from data_type
+	    	//...if "state" is NICE means last read was successful so pick the selected measure from data_type "m"
 	    	else
 	    	{
 	    		measure=d[type-1];
 	    	}
 	}
-	//else (when "type" does not exist) return ALWAYS an invalid measure
+	//ELSE (when "type" does not exist) return ALWAYS an INVALID measure
 	else
 	{
 		measure=INVALID;
 		cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
 	}
 
-
+	
 	//N.B. measure is returned ALSO if device is not ready(): this will ALWAYS be LAST the measure retrieved if "state" is NICE, INVALID otherwise
 	return measure;
 

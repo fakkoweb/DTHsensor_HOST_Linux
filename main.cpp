@@ -9,6 +9,7 @@
 #include <iostream>
 #include <ctime>
 #include <map>
+#include <list>
 #ifdef _WIN32
     #include <windows.h>
 #else
@@ -90,38 +91,41 @@ int main(int argc, char* argv[])
     
     
     //Creazione dei sensori virtuali
-    //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
-    //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    //--->> Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
+    //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui ogni sensore calcola la media (in minuti)
+    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );	  //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
     //HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
     
     
-    //Associazione dei local_feed_id ai giusti sensori tramite indice
-    map <int, Sensor*> AllSensors;		//Indice di tutti i sensori con il proprio lfid
+    //Creazione delle strutture di indicizzazione locale
+    map <int, Sensor*> AllSensors;		//Indice di tutti i sensori associati al proprio lfid
     map <int, Sensor*> ExtSensors;		//Indice dei soli sensori esterni
     map <int, Sensor*> IntSensors; 		//Indice dei soli sensori interni
+    map<int, Sensor*>::iterator row;			//Iteratore generico per accedere alle map    
+    list<thread*> Waiters;			//Lista di thread per attendere (in parallelo) le statistiche prodotte dal sensore per "apparecchiarle"
     
+    
+
+    //Associazione dei local_feed_id ai giusti sensori tramite indice
     typedef pair <int, Sensor*> new_row;	//Populating...
 	/*AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
 	ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
 	AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
 	ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );*/
-	AllSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
-	ExtSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
+	AllSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
+	ExtSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
 	/*AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
 	IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );	
 	AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
 	IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	*/
     //In questo modo non è importante come sono posizionati i sensori nell'array
-    //Ogni sensore è indicizzato tramite il proprio local_feed_id
-    //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
+    //Ogni sensore è localmente indicizzato tramite il proprio local_feed_id!
 
 
     //Display indice di tutti i sensori
-    std::map<int, Sensor*>::iterator row;
     cout<<"-- Sensori disponibili --"<<endl;
     cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
     for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
@@ -152,20 +156,42 @@ int main(int argc, char* argv[])
 	{
 		
 		row=AllSensors.begin();
-		//BISOGNA IMPLEMENTARE UNA ATTESA PARALLELA SU TUTTI I SENSORI!!
-		//for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
-		//{
-			row->second->wait_new_sample();
+		int j=0;
+		//Creazione della coda camerieri, ognuno in attesa su un sensore
+		for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
+		{
+			Waiters.push_back
+			(
+				new thread
+					(
+						[](Sensor* s) -> void
+						{
+							cout<<"Waiter creato e in attesa di nuova statistica..."<<endl;
+							s->wait_new_statistic();
+							cout<<"Waiter: statistica pronta e termino"<<endl;
+							return;
+						}
+					, row->second)
+			);
+		}
 		
-		//}
+		//Attesa dei camerieri (dal primo all'ultimo) che ritornano quando statistica pronta
+		while ( !Waiters.empty() )
+		{
+			cout<<"Attento la terminazione dei Waiters..."<<endl;
+			Waiters.front()->join();
+			Waiters.pop_front();
+			cout<<"Terminazione dei Waiters completata. Le statistiche sono pronte per essere prelevate dai sensori."<<endl;
+		}
 		
+		//Uso e consumazione delle statistiche
 		if(!IntSensors.empty())
 		{
 			cout<<"Misure interne:"<<endl;
 			for (row=IntSensors.begin(); row!=IntSensors.end(); row++)
 			{	
 				cout<<"| ";
-				row->second->display_measure();
+				row->second->display_statistic();
 			}
 		
 		}
@@ -176,10 +202,11 @@ int main(int argc, char* argv[])
 			for (row=ExtSensors.begin(); row!=ExtSensors.end(); row++)
 			{
 				cout<<"| ";
-				row->second->display_measure();
+				row->second->display_statistic();
 		
 			}		
 		}
+		
 
 	}
     }

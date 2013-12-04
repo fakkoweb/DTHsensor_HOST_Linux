@@ -73,7 +73,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
 
         
         //SENSOR CONTROL
-        Driver<measure_struct,uint16_t>* board;//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
+        Driver<measure_struct,uint16_t>* board;	//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
                                                 //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
                                                 //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
@@ -124,6 +124,11 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         virtual string stype()=0;	//returns a string explaining the type of sensor
         virtual string sunits()=0;	//returns a string explaining the units of measure used
         void display_measure(){ cout<<stype()<<": "<<get_measure()<<" "<<sunits()<<endl; };
+        void display_statistic()
+        {
+        	lock_guard<mutex> access(rw);
+        	cout<<stype()<<":"<<endl<<"Media: "<<statistic.average<<" "<<sunits()<<endl<<"Varianza: "<<statistic.variance<<" "<<sunits()<<endl;
+        };
         void plug_to(const Driver<measure_struct,uint16_t>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
 	virtual string getTimeStamp()	//IN REALTA' INUTILE..
 		{

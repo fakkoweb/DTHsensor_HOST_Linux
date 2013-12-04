@@ -81,6 +81,7 @@ class Driver
             if(min_delay<=0) request_delay = std::chrono::duration< int, std::milli >::zero();
             else request_delay = std::chrono::milliseconds(min_delay);
             last_request = std::chrono::steady_clock::now() - request_delay; //This way first recv_measure is always performed regardless of timer
+            state=ERROR;	//for programming safety, initialize state as ERROR (even if unlogic)
         };
         data_type request_all();   				//A utility method that returns data_type AS A WHOLE
         							//It has the same rules of request() -- see below
