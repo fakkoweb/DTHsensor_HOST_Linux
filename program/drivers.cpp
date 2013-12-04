@@ -312,8 +312,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 					{
 						std::cout<<"   D! WARNING: La device ha ritornato valori di Temperatura e Umidita' non validi." <<std::endl;
 					}
-					
-			    		status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte
+					else status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte validi!
 
 				}
 			}
@@ -323,6 +322,11 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 		cout<<"  D| Procedura di lettura conclusa."<<endl;
 	}
 	else cout<<"  D| ERRORE: il driver non è connesso ad alcuna periferica! (device=NULL)"<<endl;
+
+
+	//Do a simple stat of recv_measure
+	if(status==NICE) num_succeded_reads++;
+	else num_failed_reads++;
 
 
 	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.

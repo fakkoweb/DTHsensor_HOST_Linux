@@ -101,6 +101,10 @@ class Driver
 //Contiene tutte le funzioni relative a USB
 class Usb : public Driver<measure_struct,uint16_t>
 {
+    private:
+    	unsigned long long int num_failed_reads;	//A simple stat for recv_measure
+    	unsigned long long int num_succeded_reads;
+
     protected:
         hid_device* d;                      //Selected hardware device via HID protocol. IF IT IS NULL, NO DEVICE IS CONNECTED SO CHECK FIRST!!
                                             //Device is "opened" at first call of recv_measure()
@@ -122,6 +126,8 @@ class Usb : public Driver<measure_struct,uint16_t>
     public:
         Usb() = delete; 
         Usb(const int vid_in, const int pid_in, const int min_delay = HARDWARE_DELAY) : Driver(min_delay){
+    	    num_failed_reads=0;
+    	    num_succeded_reads=0;
             d=NULL;
             m.temp=0;
             m.humid=0;
