@@ -32,7 +32,7 @@
 #include <json.h>	//for accessing Json::Value
 
 //Internal libs
-#include "sensors.h"
+#include "sensors.h"	//for map of sensors and statistic_struct type support
 #include "http_manager.h"
 
 

@@ -18,7 +18,11 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     raw_measure=0;
     
     //MeanGuy.setMin(?);
-    statistic=0;
+    statistic.average=0;
+    statistic.variance=0;
+    statistic.valid=false;		//to be sure it will be set to true!
+    statistic.percentage_validity=0;
+    statistic.tot_sample=0;
     
     autorefresh=enable_autorefresh;
     refresh_rate = sample_rate;
@@ -68,7 +72,11 @@ void Sensor::reset()
     raw_measure=0;
     
     //MeanGuy.setMin(?);
-    statistic=0;
+    statistic.average=0;
+    statistic.variance=0;
+    statistic.valid=false;		//to be sure it will be set to true!
+    statistic.percentage_validity=0;
+    statistic.tot_sample=0;
     
     close_thread=false;
     r=NULL;

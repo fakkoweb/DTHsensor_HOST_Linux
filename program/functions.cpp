@@ -40,7 +40,7 @@ Json::Value load_params(const string jsonfile)
 	    cout<<"MY_PID: 0x"<<hex<< check_not_zero( loaded_params["device"].get("MY_PID",0).asInt() ) <<endl;
 	    cout<<"Outdoor Temp Local feed id: "<<dec<< check_not_zero( loaded_params["sensors"]["temp"]["ext"].get("lfid",0).asInt() ) <<endl;
 	    cout<<"Outdoor Humid Local feed id: "<< check_not_zero( loaded_params["sensors"]["humid"]["ext"].get("lfid",0).asInt() ) <<endl;
-	    cout<<"Outdoor Dust Local feed id: "<< check_not_zero( loaded_params["sensors"]["dust"].get("lfid",0).asInt() ) <<endl;
+	    cout<<"Outdoor Dust Local feed id: "<< check_not_zero( loaded_params["sensors"]["dust"]["ext"].get("lfid",0).asInt() ) <<endl;
 	    cout<<"Indoor Temp Local feed id: "<< check_not_zero( loaded_params["sensors"]["temp"]["int"].get("lfid",0).asInt() ) <<endl;
 	    cout<<"Indoor Humid Local feed id: "<< check_not_zero( loaded_params["sensors"]["humid"]["int"].get("lfid",0).asInt() ) <<endl;
 	    cout<<"-- Precision data --"<<endl;
@@ -102,6 +102,7 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 {
         int esito=ERROR;
 	string check_new_registration_p;
+	statistic_struct s_tmp;
 	//geoloc
 	Json::Value position;
 	position["kind"]="latitude#location";
@@ -121,11 +122,12 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 	Json::Value misure;
     	std::map<int, Sensor*>::const_iterator row;
 	for(row=sa.begin(); row!=sa.end(); row++)
-	{ 
+	{
+		s_tmp = row->second->get_statistic();
 	 	misure["value_timestamp"]=row->second->getTimeStamp();
-		misure["average_value"]=row->second->get_average();
+		misure["average_value"]=s_tmp.average;
 		misure["local_feed_id"]=row->first;
-		misure["variance"]=row->second->get_variance();
+		misure["variance"]=s_tmp.variance;
 		misure["units_of_measurement"]=row->second->sunits();
 		sensor_v.append(misure);
 	}

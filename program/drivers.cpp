@@ -18,6 +18,64 @@ bool Driver<data_type,elem_type>::ready()
 
 }
 
+template <class data_type, class elem_type>
+data_type Driver<data_type,elem_type>::request_all()
+{
+	unsigned int i=0;
+   	elem_type* d = (elem_type*)&m;
+
+	lock_guard<mutex> access(rw);
+	
+	//If driver is ready(), performing a new recv_measure() and updating driver state
+	if(ready()) state=recv_measure();
+	
+	//If state is not NICE, set all elem_types to INVALID   
+    	if(state!=NICE) for (i=0;i<n_elems;i++) d[i]=INVALID;
+
+	return m;
+}
+
+template <class data_type, class elem_type>
+elem_type Driver<data_type,elem_type>::request(const unsigned int type)
+{
+
+   	uint16_t measure=0;
+    	elem_type* d = (elem_type*)&m;
+
+    	lock_guard<mutex> access(rw);
+    
+    	//If driver is ready(), performing a new recv_measure() and updating driver state
+	if(ready()) state=recv_measure();
+	
+	//ONLY IF "type" exists in data_type...
+	if( type <= n_elems && type > 0)
+	{	
+		//...if state is not NICE, last read failed so measure is INVALID    
+	    	if(state!=NICE)
+	    	{
+	    		measure=INVALID;
+	    		cout<<"  D| WARNING: problemi con la periferica, ultima misura non valida!"<<endl;
+	    	}
+	    	//...if state is NICE, last read was successful so pick selected measure from data_type
+	    	else
+	    	{
+	    		measure=d[type-1];
+	    	}
+	}
+	//else (when "type" does not exist) return ALWAYS an invalid measure
+	else
+	{
+		measure=INVALID;
+		cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
+	}
+
+
+	//N.B. measure is returned ALSO if device is not ready(): this will ALWAYS be LAST the measure retrieved if "state" is NICE, INVALID otherwise
+	return measure;
+
+
+}
+
 
 
 
@@ -26,6 +84,7 @@ bool Driver<data_type,elem_type>::ready()
 
 bool Usb::ready()
 {
+
 	bool device_ready=false;
 
 	//(1) Check base class/driver constraint
@@ -50,7 +109,7 @@ bool Usb::ready()
 			}
 			else cout<<"  D| ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
 
-			if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
+			//if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
 			last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
 										//anche tra una scansione e un'altra.
 		}
@@ -220,7 +279,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 				//SOFT FAIL
 				if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
 				{
-					cout<<"   D! Lettura fallita."<<endl;					//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
+					cout<<"   D! Lettura fallita."<<endl;						//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
 					std::this_thread::sleep_for( retry_interval ) ;
 				}
 				//GOOD
@@ -271,7 +330,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 }
 
 
-
+/*
 uint16_t Usb::request(const int type)
 {
 
@@ -279,8 +338,8 @@ uint16_t Usb::request(const int type)
 
     if(ready())
     {
-    	if( recv_measure() == ERROR )	//IF request_delay HAS PASSED call recv_measure();
-    	cout<<"  D| WARNING: riconnettere la periferica, misure non aggiornate!"<<endl;
+    	state=recv_measure();
+    	if( state == ERROR ) cout<<"  D| WARNING: riconnettere la periferica, misure non aggiornate!"<<endl;
     }
     
     
@@ -297,7 +356,7 @@ uint16_t Usb::request(const int type)
       measure=m.dust;
       break;
     default:
-      measure=ERROR;
+      measure=INVALID;
       cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
       break;
     }
@@ -306,7 +365,7 @@ uint16_t Usb::request(const int type)
     
 
 }
-
+*/
 
 
 /////////////////////////////
@@ -386,7 +445,7 @@ int Raspberry::recv_measure()
 }
 
 
-
+/*
 uint16_t Raspberry::request(const int type)
 {
 
@@ -417,3 +476,4 @@ uint16_t Raspberry::request(const int type)
 
 
 }
+*/
