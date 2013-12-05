@@ -91,10 +91,10 @@ int main(int argc, char* argv[])
     
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
-    //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    //HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
+    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
+    HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
     
@@ -105,16 +105,21 @@ int main(int argc, char* argv[])
     map <int, Sensor*> IntSensors; 		//Indice dei soli sensori interni
     
     typedef pair <int, Sensor*> new_row;	//Populating...
-	/*AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+	AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
 	ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+
 	AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
-	ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );*/
+	ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+
 	AllSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
 	ExtSensors.insert ( new_row ( params["sensors"]["dust"].get("lfid",0).asInt(), &extdust ) );
-	/*AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
-	IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );	
+
+	AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+	IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+
 	AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
-	IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	*/
+	IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
+
     //In questo modo non è importante come sono posizionati i sensori nell'array
     //Ogni sensore è indicizzato tramite il proprio local_feed_id
     //ATTENZIONE: occorre PRIMA fare la get al server per ottenere/recuperare i local_feed!!
@@ -133,13 +138,14 @@ int main(int argc, char* argv[])
     
         
     //Allacciamento dei sensori ai driver (alias board)
-    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
-    //exttemp.plug_to(ext_device);
-    //exthumid.plug_to(ext_device);
+
+
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
-    //inttemp.plug_to(int_device);
-    //inthumid.plug_to(int_device);
-        
+    inttemp.plug_to(int_device);
+    inthumid.plug_to(int_device);
+    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
     
 
     cout<<"Avvio loop principale..."<<endl;
@@ -155,7 +161,7 @@ int main(int argc, char* argv[])
 		//BISOGNA IMPLEMENTARE UNA ATTESA PARALLELA SU TUTTI I SENSORI!!
 		//for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
 		//{
-			row->second->wait_new_sample();
+			row->second->wait_new_statistic();
 		
 		//}
 		
@@ -164,8 +170,17 @@ int main(int argc, char* argv[])
 			cout<<"Misure interne:"<<endl;
 			for (row=IntSensors.begin(); row!=IntSensors.end(); row++)
 			{	
-				cout<<"| ";
-				row->second->display_measure();
+				cout<<"| Average:"<< row->second->get_statistic().average << " Variance:" << row->second->get_statistic().variance << endl;
+				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
+				cout<<"| Statistic has to be considered as ";
+				if (row->second->get_statistic().valid){
+					cout << "valid";
+				}
+				else{
+					cout << "invalid";
+				}
+
+				cout << endl;
 			}
 		
 		}
@@ -175,8 +190,17 @@ int main(int argc, char* argv[])
 			cout<<"Misure esterne:"<<endl;
 			for (row=ExtSensors.begin(); row!=ExtSensors.end(); row++)
 			{
-				cout<<"| ";
-				row->second->display_measure();
+				cout<<"| Average:"<< row->second->get_statistic().average << " Variance:" << row->second->get_statistic().variance << endl;
+				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
+				cout<<"| Statistic has to be considered as ";
+				if (row->second->get_statistic().valid){
+					cout << "valid";
+				}
+				else{
+					cout << "invalid";
+				}
+
+				cout << endl;
 		
 			}		
 		}
