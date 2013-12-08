@@ -55,7 +55,7 @@ elem_type Driver<data_type,elem_type>::request(const unsigned int type)
 	    	if(state!=NICE)
 	    	{
 	    		measure=INVALID;
-	    		cout<<"  D| WARNING: problemi con la periferica, ultima misura non valida!"<<endl;
+	    		cerr<<"  D| WARNING: problemi con la periferica, ultima misura non valida!"<<endl;
 	    	}
 	    	//...if "state" is NICE means last read was successful so pick the selected measure from data_type "m"
 	    	else
@@ -67,7 +67,7 @@ elem_type Driver<data_type,elem_type>::request(const unsigned int type)
 	else
 	{
 		measure=INVALID;
-		cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
+		cerr<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
 	}
 
 	
@@ -96,7 +96,7 @@ bool Usb::ready()
 		//(2) Check if device is physically plugged in
 		if(d==NULL)                                                //Se la handle attuale non è valida...
 		{
-			cout<<"  D| Nessuna periferica. Avvio scansione..."<<endl;
+			cerr<<"  D| Nessuna periferica. Avvio scansione..."<<endl;
 			if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
 			{
 				cout<<"  D| Periferica individuata. Avvio connessione..."<<endl;
@@ -246,7 +246,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 	if(d!=NULL)
 	{
-		cout<<"  D| Procedura di lettura iniziata."<<endl;
+		cerr<<"  D| Procedura di lettura iniziata."<<endl;
 		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
 		while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() &&
 		{
@@ -254,13 +254,13 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 			for(i=0;i<6;i++) buf[i] = 0 ;
 			i=0;
 			
-			cout<<"   D! Tentativo "<<++i<<endl;
+			cerr<<"   D! Tentativo "<<++i<<endl;
 			do
 			{
 
 				last_bytes_read=bytes_read;						//Memorizza il numero di byte letti dal report precedente
 				bytes_read = hid_read(d,buf,bytes_to_read);				//Leggi il report successivo:
-				//cout<<bytes_read<<endl;						//	- se bytes_read>0 allora esiste un report più recente nel buffer -> scaricalo
+				//cerr<<bytes_read<<endl;						//	- se bytes_read>0 allora esiste un report più recente nel buffer -> scaricalo
 				//	- se bytes_read=0, non ci sono più report -> l'ultimo scaricato è quello buono
 				//	- se bytes_read=-1 c'é un errore critico con la device -> interrompi tutto
 				//La read si blocca AL PIU' per 5 secondi, dopodiché restituisce errore critico (-1)
@@ -269,10 +269,10 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 			//HARD FAIL
 			if (bytes_read == -1)								//Se c'è stato errore...
 			{
-				cout<<"   D! Lettura fallita."<<endl;
-				cout<<"   D! ERRORE: Periferica non pronta o scollegata prematuramente.\n  D| Disconnessione in corso..."<<endl;
+				cerr<<"   D! Lettura fallita."<<endl;
+				cerr<<"   D! ERRORE: Periferica non pronta o scollegata prematuramente.\n  D| Disconnessione in corso..."<<endl;
 				hid_close(d);									//chiudi la handle. 	-> ESCE dal ciclo.
-				cout<<"  D| Device disconnessa."<<endl;
+				cerr<<"  D| Device disconnessa."<<endl;
 				d=NULL;	//Resets handle pointer for safety
 			}
 			else										//..altrimenti analizziamo per bene l'ultimo report scaricato...
@@ -280,15 +280,15 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 				//SOFT FAIL
 				if (last_bytes_read < bytes_to_read)						//se i byte letti dell'ultima misura nel buffer (la più recente) non sono del numero giusto
 				{
-					cout<<"   D! Lettura fallita."<<endl;						//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
+					cerr<<"   D! Lettura fallita."<<endl;						//-> la lettura è fallita, bisogna riprovare. 	-> NON ESCE dal ciclo.
 					std::this_thread::sleep_for( retry_interval ) ;
 				}
 				//GOOD
 				else										//altrimenti -> stampa a video il risultato e memorizzalo in "m" -> ESCE dal ciclo.
 				{
 					//Debug dump visualization
-					cout<<"   D! "<<last_bytes_read<<" bytes letti: ";
-					cout<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
+					cerr<<"   D! "<<last_bytes_read<<" bytes letti: ";
+					cerr<<(int)buf[0]<<" "<<(int)buf[1]<<" "<<(int)buf[2]<<" "<<(int)buf[3]<<" "<<(int)buf[4]<<" "<<(int)buf[5]<<" "<<endl;
 					
 					
 					/* SWAP
@@ -311,7 +311,7 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 					
 					if ( m.humid == 0xFFFF || m.temp == 0xFFFF )
 					{
-						std::cout<<"   D! WARNING: La device ha ritornato valori di Temperatura e Umidita' non validi." <<std::endl;
+						std::cerr<<"   D! WARNING: La device ha ritornato valori di Temperatura e Umidita' non validi." <<std::endl;
 					}
 					else status=NICE;								//In conclusione, la funzione ritorna NICE solo se ha letto esattamente 6byte validi!
 
@@ -320,9 +320,9 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 		}
 
-		cout<<"  D| Procedura di lettura conclusa."<<endl;
+		cerr<<"  D| Procedura di lettura conclusa."<<endl;
 	}
-	else cout<<"  D| ERRORE: il driver non è connesso ad alcuna periferica! (device=NULL)"<<endl;
+	else cerr<<"  D| ERRORE: il driver non è connesso ad alcuna periferica! (device=NULL)"<<endl;
 
 
 	//Do a simple stat of recv_measure
@@ -422,26 +422,26 @@ int Raspberry::recv_measure()
 	if(i2cHandle!=0)
 	{
 	
-		cout<<"  D! Abilitazione lettura..."<<endl;
+		cerr<<"  D! Abilitazione lettura..."<<endl;
 		if ( write(i2cHandle,Data,1) !=1)
 		{
-			cout<<"  D! ERRORE: abilitazione lettura fallita!"<<endl;
+			cerr<<"  D! ERRORE: abilitazione lettura fallita!"<<endl;
 		}
 		else
 		{	
-			cout<<"  D! Abilitazione lettura riuscita."<<endl;
+			cerr<<"  D! Abilitazione lettura riuscita."<<endl;
 			p_sleep(40);	//Sleep for 40000 microsecond it's equals to sleep for 40 ms.
 					//It is necessary to let sensor reach nirvana
 
 			if(( read( i2cHandle ,Data , 4 )) == 4 )
 			{
-				std::cout<<"   D! leggo 1 "<<std::endl;
+				std::cerr<<"   D! leggo 1 "<<std::endl;
 				//shifting..
 				m.temp = ((Data[2] << 8)+Data[3])>>2;
 				m.humid = ((Data[0] << 8) +Data[1]);
 				status=NICE;
 			}
-			else cout<<"  D! ERRORE: Problema sulla lettura (?)"<<endl;
+			else cerr<<"  D! ERRORE: Problema sulla lettura (?)"<<endl;
 		}
 				
 	}
