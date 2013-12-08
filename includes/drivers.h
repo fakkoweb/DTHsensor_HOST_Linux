@@ -45,9 +45,9 @@ using namespace std;
 
 typedef struct _MEASURE_STRUCT
 {
-	uint16_t dust;
 	uint16_t temp;
 	uint16_t humid;
+	uint16_t dust;
 } measure_struct;
 
 

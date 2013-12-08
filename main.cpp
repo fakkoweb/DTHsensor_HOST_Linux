@@ -180,7 +180,6 @@ int main(int argc, char* argv[])
 			);
 		}
 
-		
 		//Attesa dei camerieri (dal primo all'ultimo) che ritornano quando statistica pronta
 		while ( !Waiters.empty() )
 		{
@@ -210,7 +209,6 @@ int main(int argc, char* argv[])
 			}
 		
 		}
-		
 		if(!ExtSensors.empty())
 		{
 			cout<<"Misure esterne:"<<endl;
