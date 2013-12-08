@@ -42,7 +42,7 @@ Sensor::~Sensor()
         access.lock();
         close_thread=true;
         access.unlock();
-        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;     
+        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;
         r->join();
         cout<<"  S| Chiusura thread embedded completata."<<endl;
     }
@@ -110,7 +110,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         if(!thread_must_exit)
         {
 		//New sample
-		cout<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
+		cerr<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
 		statistic.tot_sample++;
 		raw_measure=sample();
 		
@@ -127,7 +127,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		else
 		{*/
 			MeanGuy.add(convert(raw_measure));	//asdfg
-			cout<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
+			cerr<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
 		//}
 		
 
@@ -138,7 +138,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		if ( std::chrono::steady_clock::now() > (last_avg_request + avg_delay) )
 		{
 			//Ask MeanGuy for latest Mean and Variance
-			cout<<" S| Media pronta e richiesta!"<<endl;
+			cerr<<" S| Media pronta e richiesta!"<<endl;
 			statistic.average=MeanGuy.getMean();	//asdfg
 			statistic.variance=MeanGuy.getVariance();	//asdfg
 			statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
@@ -206,7 +206,7 @@ uint16_t Sensor::get_raw()
 	    }
 	    measure=raw_measure;
 	}
-	else cout<<" S| Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
+	else cerr<<" S| Attenzione: nessuna device allacciata al sensore.\n | Usare il metodo plug_to() per associare."<<endl;
 	return measure;
 }
 
