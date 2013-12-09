@@ -51,6 +51,7 @@ void OMV::reset(double min) {
 	mean=0;
 	M2=0;
 	if(minCalc) this->min=min;
+	global_samples=0;
 }
 
 /*
@@ -110,4 +111,10 @@ void OMV::setMin(double aMin){
  */
 double OMV::getSampleNumber(){
 	return n;
+}
+void OMV::addSample(){
+	global_samples++;
+}
+int OMV::getGlobalSampleNumber(){
+	return global_samples;
 }

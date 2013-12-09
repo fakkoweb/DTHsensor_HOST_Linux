@@ -34,6 +34,7 @@ private:
 	double M2;
 	double min;
 	bool minCalc;
+	int global_samples;
 public:
 	OMV(bool aMin=false);
 	virtual ~OMV();
@@ -44,6 +45,8 @@ public:
 	double getMin();
 	void setMin(double aMin);
 	double getSampleNumber();
+	void addSample();
+	int getGlobalSampleNumber();
 };
 
 #endif /* OMV_H_ */

@@ -111,7 +111,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         {
 		//New sample
 		cerr<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
-		statistic.tot_sample++;
+		MeanGuy.addSample();
 		raw_measure=sample();
 		
 		//Conversion
@@ -141,6 +141,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			cerr<<" S| Media pronta e richiesta!"<<endl;
 			statistic.average=MeanGuy.getMean();	//asdfg
 			statistic.variance=MeanGuy.getVariance();	//asdfg
+			statistic.tot_sample=MeanGuy.getGlobalSampleNumber();
 			statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
 			if(statistic.percentage_validity>THRESHOLD)
 			{
