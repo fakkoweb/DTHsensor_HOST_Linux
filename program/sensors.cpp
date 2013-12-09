@@ -119,16 +119,12 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 		//	When user asks for a converted measure, it will be converted on-the-go from raw_measure;
 		
 		//Mean and Variance
-		/*
-		if(raw_measure==INVALID)
+
+		if(raw_measure!=INVALID)
 		{
-			//dobbiamo davvero fare qualcosa?
-		}
-		else
-		{*/
 			MeanGuy.add(convert(raw_measure));	//asdfg
 			cerr<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
-		//}
+		}
 		
 
 		//Notify that a new sample is now available
