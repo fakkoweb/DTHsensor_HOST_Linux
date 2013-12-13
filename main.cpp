@@ -9,6 +9,9 @@
 #include <iostream>
 #include <ctime>
 #include <map>
+#include <iomanip>
+#include <sstream>
+#include <fstream>
 #ifdef _WIN32
     #include <windows.h>
 #else

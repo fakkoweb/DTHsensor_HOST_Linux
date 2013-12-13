@@ -1,6 +1,6 @@
 
 #include "functions.h"
-
+#include <iomanip>
 
 
 
@@ -86,7 +86,13 @@ int register_device( const string mac_addr )
       	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), check_new_registration);
        	//cout<<check_new_registration;
        	
-       	//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
+		if (strcmp(check_new_registration.c_str(),"NICE")==0)
+	
+		esito=NICE;
+		
+        else esito=ERROR;
+	      	
+
      }
      else					//YES
      {
@@ -100,9 +106,75 @@ int register_device( const string mac_addr )
 
 int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 {
-        int esito=ERROR;
+    int esito=ERROR;
 	string check_new_registration_p;
-	//geoloc
+    ofstream myfile; 
+ 	stringstream stringStream;
+	string post; //line of the file
+	
+	Json::Value sensor_v;
+	sensor_v= Json::Value(Json::arrayValue);
+	Json::Value misure;
+
+    //Open file:
+    myfile.open ("ns_posts.txt",ios::out | ios::app | ios::binary);
+    
+    std::map<int, Sensor*>::const_iterator row;
+
+    while(myfile.is_open())
+	{
+		for(row=sa.begin(); row!=sa.end(); row++)
+		{   
+			
+			stringStream<<row->first;
+			string local_feed_id=stringStream.str();
+			stringStream.str("");
+
+			//Conversion of FloatingType into String:
+            stringStream<<std::setprecision(numeric_limits<float>::digits10+10);
+			stringStream <<row->second->get_average();
+ 			string average_value=stringStream.str();
+			stringStream.str("");
+			stringStream<<row->second->get_variance();
+			string variance=stringStream.str();
+			stringStream.str("");
+
+            post="value_timestamp="+getTimeStamp()+"##average_value="+average_value+"##local_feed_id="+local_feed_id+"##variance="+variance+"##units_of_measurement="+row->second->sunits();
+
+			myfile<<(post+"\n");
+		 }
+			myfile.close();
+	}
+
+	//Read File 
+	ifstream myfileread;
+	myfileread.open ("ns_posts.txt");
+	
+
+	while(getline(myfileread,post))
+	{
+	 	//Parsing lines and creating elements of JsonArray Sensor_values:
+		string fields[]={"value_timestamp","average_value","local_feed_id","variance","units_of_measurement"};
+		string delimiter = "##";
+		string token;	
+        int i=0;
+		size_t pos = 0;
+
+		while ((pos = post.find(delimiter)) != std::string::npos) 
+		{
+			token = post.substr(0, pos);
+			int pos1= token.find_first_of("=");
+			misure[fields[i]]=token.substr(pos1+1,token.size());
+     		i++;
+    		post.erase(0, pos + delimiter.length());
+		}
+		
+		sensor_v.append(misure);
+	}
+	
+	myfileread.close();
+	
+	//Geoloc
 	Json::Value position;
 	position["kind"]="latitude#location";
 	position["timestampMs"]="1274057512199";
@@ -110,34 +182,33 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 	position["longitude"]=-122.0838511;
 	position["accuracy"]=5000.0;
 	position["height_meters"]=0.0;
-    
-	Json::Value sensorpost;
-	sensorpost["raspb_wifi_mac"]=mac_addr;
-	sensorpost["send_timestamp"]=getTimeStamp();
-	
-	Json::Value sensor_v;
-	sensor_v= Json::Value(Json::arrayValue);
-	
-	Json::Value misure;
-    	std::map<int, Sensor*>::const_iterator row;
-	for(row=sa.begin(); row!=sa.end(); row++)
-	{ 
-	 	misure["value_timestamp"]=row->second->getTimeStamp();
-		misure["average_value"]=row->second->get_average();
-		misure["local_feed_id"]=row->first;
-		misure["variance"]=row->second->get_variance();
-		misure["units_of_measurement"]=row->second->sunits();
-		sensor_v.append(misure);
-	}
 
-
-    	Json::Value reg_post= sensorpost;
+  	Json::Value reg_post;
+	
 	reg_post["position"]=position;
 	reg_post["sensor_values"]=sensor_v;
+	reg_post["send_timestamp"]=getTimeStamp();
+    reg_post["raspb_wifi_mac"]=mac_addr;
 
+    //Just one HTTP call to the Server:
 	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+mac_addr+"/posts", reg_post.toStyledString(), check_new_registration_p);
 
-	//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
+	//If http_post is ok-->delete content of file:
+	
+	std::ofstream ofs;
+
+    if (strcmp(check_new_registration_p.c_str(),"NICE")==0)
+	{
+		esito=NICE;
+		ofs.open("ns_posts.txt", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
+	}
+    else
+	{
+		esito=ERROR;
+	}
+
+	//cout<<check_new_registration_p;
 	
 	return esito;
 
@@ -202,7 +273,12 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
 			http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
     			//cout<<check_new_registration_s;
     			
-    			//GESTIONE ERRORE HTTP POST? Se fallisce per qualche motivo esito = ERROR, altrimenti esito = NICE
+    	if (strcmp(check_new_registration_s.c_str(),"NICE")==0)
+	
+		esito=NICE;
+		
+        else esito=ERROR;
+	      	
 		}
 		else									//YES
 		{
@@ -241,7 +317,7 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
 }
 
 
-int check_status()
+/*int check_status()
 {
 	string check_authentication;
 	Json::Value authentication;
@@ -250,12 +326,9 @@ int check_status()
 	cout<<check_authentication;
 	reader.parse(check_authentication,authentication,false);
 	cout<< authentication.toStyledString();
-	//if(authentication.get("authenticated",0).asString()=="false")
-	//Error Handling
-	//return 1;
-	//else return 0;
+	
 }
-
+*/
 
 
 
