@@ -83,14 +83,8 @@ int register_device( const string mac_addr )
       	reg_device["username"]="gruppo19";
       	reg_device["raspb_wifi_mac"]=mac_addr;
        	cout<<reg_device;
-      	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), check_new_registration);
+      	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), check_new_registration);
        	//cout<<check_new_registration;
-       	
-		if (strcmp(check_new_registration.c_str(),"NICE")==0)
-	
-		esito=NICE;
-		
-        else esito=ERROR;
 	      	
 
      }
@@ -190,24 +184,20 @@ int post_report( const string mac_addr, const map<int, Sensor*>& sa )
 	reg_post["send_timestamp"]=getTimeStamp();
     reg_post["raspb_wifi_mac"]=mac_addr;
 
-    //Just one HTTP call to the Server:
-	http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+mac_addr+"/posts", reg_post.toStyledString(), check_new_registration_p);
+    //Just one HTTP call to the Server 
+	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+mac_addr+"/posts", reg_post.toStyledString(), check_new_registration_p);
 
-	//If http_post is ok-->delete content of file:
+	//.. and If http_post is ok-->delete content of file:
+
+    if (esito==NICE)
 	
-	std::ofstream ofs;
-
-    if (strcmp(check_new_registration_p.c_str(),"NICE")==0)
 	{
-		esito=NICE;
+	
+		ofstream ofs;
 		ofs.open("ns_posts.txt", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
 	}
-    else
-	{
-		esito=ERROR;
-	}
-
+    
 	//cout<<check_new_registration_p;
 	
 	return esito;
@@ -270,14 +260,9 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
       			reg_sensor["tags"]=node.get("tags",0).asString();
       			reg_sensor["local_feed_id"]=node.get("lfid",0).asInt();
 			reg_sensor["raspb_wifi_mac"]=mac_addr;
-			http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
+			esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+mac_addr+"/feeds", reg_sensor.toStyledString(), check_new_registration_s);
     			//cout<<check_new_registration_s;
     			
-    	if (strcmp(check_new_registration_s.c_str(),"NICE")==0)
-	
-		esito=NICE;
-		
-        else esito=ERROR;
 	      	
 		}
 		else									//YES
@@ -317,6 +302,7 @@ int register_sensor( const string mac_addr, const Json::Value& node, const strin
 }
 
 
+//SERVE SOLO PER TESTARE AUTENTICAZIONE
 /*int check_status()
 {
 	string check_authentication;

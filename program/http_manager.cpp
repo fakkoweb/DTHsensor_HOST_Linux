@@ -1,7 +1,9 @@
 
 #include "http_manager.h"
 
-
+#define ERROR	1
+#define NICE	0
+#define ABORTED	-1
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -83,7 +85,7 @@ int http_post(const string url, const string json_in, string &json_out)
 
     struct MemoryStruct chunk;
 	
-	string STATUS;
+	int STATUS;
 
     chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
     chunk.size = 0;    /* no data at this point */
@@ -133,10 +135,10 @@ int http_post(const string url, const string json_in, string &json_out)
 
 		    // Check for errors
 		    if(res != CURLE_OK)
-		    STATUS="ERROR";
-			else STATUS="NICE";
+		    STATUS=ERROR;
+			else STATUS=NICE;
 
-		 json_out.assign(STATUS);
+		 //json_out.assign(STATUS);
 
 		 curl_slist_free_all(headers); // free the header list
 		
@@ -145,7 +147,7 @@ int http_post(const string url, const string json_in, string &json_out)
 
 	 }
 
-	 return 0;
+	 return STATUS;
 
 }
 
@@ -154,7 +156,7 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 
     struct MemoryStruct chunk;
 	
-	string STATUS;	
+	int STATUS;	
 
     //le credenziali di accesso verranno spostate da qui
     const string username("gruppo19");
@@ -213,10 +215,10 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 
         	// Check for errors
 		    if(res != CURLE_OK)
-		    STATUS="ERROR";
-			else STATUS="NICE";
+		    STATUS=ERROR;
+			else STATUS=NICE;
 
-		 json_out.assign(STATUS);
+		 //json_out.assign(STATUS);
 		      
 
 		 curl_slist_free_all(headers); // free the header list
@@ -225,7 +227,7 @@ int http_post_auth(const string url, const string json_in, string &json_out)
        		 free(chunk.memory);
 	 }
 
-	 return 0;
+	 return STATUS;
 
 }
 
