@@ -1,7 +1,9 @@
 
 #include "http_manager.h"
 
-
+#define ERROR	1
+#define NICE	0
+#define ABORTED	-1
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -82,6 +84,8 @@ int http_post(const string url, const string json_in, string &json_out)
 {
 
     struct MemoryStruct chunk;
+	
+	int STATUS;
 
     chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
     chunk.size = 0;    /* no data at this point */
@@ -113,6 +117,8 @@ int http_post(const string url, const string json_in, string &json_out)
 
 		 // pass our list of custom made headers
 		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
+		
+		 // curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
 
         /* send all data to this function  */
         curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
@@ -122,21 +128,26 @@ int http_post(const string url, const string json_in, string &json_out)
 
 		 res=curl_easy_perform(easyhandle); // post away!
 
-         json_out.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+         //json_out.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 
-        if(chunk.memory)
-        free(chunk.memory);
+       
 
 
 		    // Check for errors
 		    if(res != CURLE_OK)
-		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+		    STATUS=ERROR;
+			else STATUS=NICE;
+
+		 //json_out.assign(STATUS);
 
 		 curl_slist_free_all(headers); // free the header list
+		
+		 	if(chunk.memory)
+      		free(chunk.memory);
 
 	 }
 
-	 return 0;
+	 return STATUS;
 
 }
 
@@ -144,6 +155,9 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 {
 
     struct MemoryStruct chunk;
+	
+	int STATUS;	
+
     //le credenziali di accesso verranno spostate da qui
     const string username("gruppo19");
     const string password("8s6GTYlm7Y");
@@ -187,6 +201,8 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 		 // pass our list of custom made headers
 		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
 
+		 // curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+
         /* send all data to this function  */
         curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
@@ -195,21 +211,23 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 
 		 res=curl_easy_perform(easyhandle); // post away!
 
-         json_out.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+         //json_out.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 
-        if(chunk.memory)
-        free(chunk.memory);
-
-
-		    // Check for errors
+        	// Check for errors
 		    if(res != CURLE_OK)
-		      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+		    STATUS=ERROR;
+			else STATUS=NICE;
+
+		 //json_out.assign(STATUS);
+		      
 
 		 curl_slist_free_all(headers); // free the header list
-
+		
+			if(chunk.memory)
+       		 free(chunk.memory);
 	 }
 
-	 return 0;
+	 return STATUS;
 
 }
 
