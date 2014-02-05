@@ -74,14 +74,14 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         
         //SENSOR CONTROL
         Driver<measure_struct,uint16_t>* board;	//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
+        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! Inizializzato da costruttore a "sample_rate" ma è UTILE SOLO SE autorefresh E' TRUE -- in millisecondi
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
-                                                //Se autorefresh è TRUE: ogni quanto viene fatta richiesta di una nuova misura al driver (sample)
-                                                //Se autorefresh è FALSE, è il tempo minimo tra una richiesta manuale e un'altra.
-        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! UTILE SOLO SE autorefresh E' TRUE -- in millisecondi
-        void refresh();                         //Questa funzione chiama sample() e convert() e inserisce nuove misure nei buffer
-                                                //Se autorefresh è TRUE viene chiamata da un thread ogni min_sample_rate oppure manualmente da get_measure
-                                                //Se autorefresh è FALSE solo get_measure può chiamarla
-        void reset();
+                                                //Se autorefresh è TRUE: ogni "refresh_rate" ms viene richiesta una nuova misura al driver (sample)
+                                                //Se autorefresh è FALSE, "refresh_rate" è ignorato.
+        void refresh();                         //Questa funzione chiama sample() e convert() e aggiorna il buffer raw_measure (e statistic solo se avg_interval è trascorso)
+                                                //Se autorefresh è TRUE viene chiamata da un thread ogni "refresh_rate" ms oppure manualmente da get_raw()
+                                                //Se autorefresh è FALSE solo get_raw() può chiamarla
+        void reset();				//Resetta i valori del sensore a default (chiamata quando ad es. si vuole scollegare il sensore senza deallocarlo!)
                   
                                                 
         //THREADING STRUCTURES

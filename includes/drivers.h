@@ -140,7 +140,7 @@ class Usb : public Driver<measure_struct,uint16_t>
         ~Usb()
         {
             if(d!=NULL) hid_close(d);
-            cout<<"  D| Device chiusa."<<endl;
+            cerr<<"  D| Device chiusa."<<endl;
             hid_exit();		//free hidapi data
         };
         
@@ -186,7 +186,7 @@ class Raspberry : public Driver<measure_struct,uint16_t>
             m.humid=0;
         };
         ~Raspberry(){
-            cout<<"  D| Handle seriale chiusa."<<endl;
+            cerr<<"  D| Handle seriale chiusa."<<endl;
             if(i2cHandle!=0) close(i2cHandle);
         }
 

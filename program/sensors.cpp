@@ -42,9 +42,9 @@ Sensor::~Sensor()
         access.lock();
         close_thread=true;
         access.unlock();
-        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;
+        cerr<<"  S| Chiusura thread embedded richiesta..."<<endl;
         r->join();
-        cout<<"  S| Chiusura thread embedded completata."<<endl;
+        cerr<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
 }
@@ -63,9 +63,9 @@ void Sensor::reset()
         access.lock();
         close_thread=true;
         access.unlock();
-        cout<<"  S| Chiusura thread embedded richiesta..."<<endl;
+        cerr<<"  S| Chiusura thread embedded richiesta..."<<endl;
         r->join();
-        cout<<"  S| Chiusura thread embedded completata."<<endl;
+        cerr<<"  S| Chiusura thread embedded completata."<<endl;
     }
     
     board=NULL;
@@ -82,9 +82,9 @@ void Sensor::reset()
     r=NULL;
     
     
-    cout<<"  S| Buffer e variabili resettate."<<endl;
+    cerr<<"  S| Buffer e variabili resettate."<<endl;
     
-    cout<<"  S| Buffer rigenerati."<<endl;
+    cerr<<"  S| Buffer rigenerati."<<endl;
     
     cout<<" | Reset del sensore completato."<<endl;
 }
@@ -138,7 +138,9 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			statistic.average=MeanGuy.getMean();	//asdfg
 			statistic.variance=MeanGuy.getVariance();	//asdfg
 			statistic.tot_sample=MeanGuy.getGlobalSampleNumber();
-			statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
+			if (statistic.tot_sample>0) statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
+			else statistic.percentage_validity = 0;
+			
 			if(statistic.percentage_validity>THRESHOLD)
 			{
 				statistic.valid=true;

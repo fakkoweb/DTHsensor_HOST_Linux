@@ -99,18 +99,18 @@ bool Usb::ready()
 			cerr<<"  D| Nessuna periferica. Avvio scansione..."<<endl;
 			if ( Usb::scan(vid,pid) == NICE )		            //Chiama scan()
 			{
-				cout<<"  D| Periferica individuata. Avvio connessione..."<<endl;
+				cerr<<"  D| Periferica individuata. Avvio connessione..."<<endl;
 				d = hid_open(vid, pid, NULL);		            //Se device trovata, connettila.
 				if(d!=NULL)
 				{
-					cout<<"  D| Periferica connessa!"<<endl;		//Se connessa, DEVICE READY
+					cerr<<"  D| Periferica connessa!"<<endl;		//Se connessa, DEVICE READY
 					device_ready=true;
 				}
-				else cout<<"  D| ERRORE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi."<<endl;
+				else cerr<<"  D| ERRORE: hid_open ha restituito NULL con periferica collegata.\n  | Controllare i permessi."<<endl;
 			}
-			else cout<<"  D| ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
+			else cerr<<"  D| ERRORE: Periferica non trovata! Assicurarsi che il cavo sia inserito."<<endl;
 
-			//if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
+			//if(!device_ready) cerr<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
 			last_request = std::chrono::steady_clock::now();	//Resetto il timer, così che ci sia un tempo minimo
 										//anche tra una scansione e un'altra.
 		}
@@ -130,7 +130,7 @@ int Usb::scan(const int vid, const int pid)
 	//Scansione della nostra device
 	int i, esito_funzione=ERROR;		
 	bool trovata=false;
-	cout<<"   D! Scansione devices in corso..."<<endl;
+	cerr<<"   D! Scansione devices in corso..."<<endl;
 	//while (!trovata)
 	//{
 	//Scansiona tutte periferiche e le alloca in devices
@@ -143,22 +143,22 @@ int Usb::scan(const int vid, const int pid)
 		{
 
 
-			//cout<<"Device "<<++i<<" trovata!"<<endl;
-			//cout<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
+			//cerr<<"Device "<<++i<<" trovata!"<<endl;
+			//cerr<<"  Manufacturer: "<<curr_dev->manufacturer_string<<"\nProduct: "<<curr_dev->product_string<<endl;
 
-			cout<<"   x Device "<<++i<<" trovata:"<<endl;
-			cout<<"     |  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
-			cout<<"     |  Path: "<<curr_dev->path<<"\n     |  serial_number: "<<curr_dev->serial_number<<endl;
-			cout<<"     |  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
-			cout<<"     |  Product:      "<<curr_dev->product_string<<endl;
-			cout<<"     |  Release:      "<<curr_dev->release_number<<endl;
-			cout<<"     |  Interface:    "<<curr_dev->interface_number<<endl;
+			cerr<<"   x Device "<<++i<<" trovata:"<<endl;
+			cerr<<"     |  VID: "<<hex<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<dec<<endl;
+			cerr<<"     |  Path: "<<curr_dev->path<<"\n     |  serial_number: "<<curr_dev->serial_number<<endl;
+			cerr<<"     |  Manufacturer: "<<curr_dev->manufacturer_string<<endl;
+			cerr<<"     |  Product:      "<<curr_dev->product_string<<endl;
+			cerr<<"     |  Release:      "<<curr_dev->release_number<<endl;
+			cerr<<"     |  Interface:    "<<curr_dev->interface_number<<endl;
 			trovata=true;
 			esito_funzione=NICE;
 		}
 		else
 		{
-			cout<<"   o Device "<<++i<<"-> VID: "<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<"  --  NO MATCH"<<endl;
+			cerr<<"   o Device "<<++i<<"-> VID: "<<curr_dev->vendor_id<<" PID: "<<curr_dev->product_id<<"  --  NO MATCH"<<endl;
 		}
 		curr_dev=curr_dev->next;
 	}
@@ -182,7 +182,7 @@ int Usb::scan(const int vid, const int pid)
 	//Se STOP è falso e trovata è falso aspetta 3 secondi prima di effettuare una nuova scansione
 	if(!trovata)
 	{
-		cout<<"   D! Nessuna corrispondenza con VID e PID cercati."<<endl;
+		cerr<<"   D! Nessuna corrispondenza con VID e PID cercati."<<endl;
 		//p_sleep(5000);
 	}
 
@@ -344,7 +344,7 @@ uint16_t Usb::request(const int type)
     if(ready())
     {
     	state=recv_measure();
-    	if( state == ERROR ) cout<<"  D| WARNING: riconnettere la periferica, misure non aggiornate!"<<endl;
+    	if( state == ERROR ) cerr<<"  D| WARNING: riconnettere la periferica, misure non aggiornate!"<<endl;
     }
     
     
@@ -390,16 +390,16 @@ bool Raspberry::ready()
 		//(2) Check if handle is already open
 		if(i2cHandle==0)                                                //Se la handle attuale non è valida...
 		{
-			cout<<"  D| Nessuna handle aperta. Avvio connessione..."<<endl;
+			cerr<<"  D| Nessuna handle aperta. Avvio connessione..."<<endl;
 			i2cHandle = open("/dev/i2c-1",O_RDWR);				//Create a file descriptor for i2c bus
 			if ( ioctl( i2cHandle , I2C_SLAVE , 0x27) == 0 )		//Tell the I2C peripheral the device address
 			{
-				cout<<"  D| Connessione riuscita. Handle pronta."<<endl;
+				cerr<<"  D| Connessione riuscita. Handle pronta."<<endl;
 				device_ready=true;
 			}
-			else cout<<"  D| ERRORE: Connessione non riuscita. (?)"<<endl;
+			else cerr<<"  D| ERRORE: Connessione non riuscita. (?)"<<endl;
 
-			if(!device_ready) cout<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
+			if(!device_ready) cerr<<"  D| WARNING: le misure non saranno aggiornate."<<endl;
 		}
 		else device_ready=true;						//Se la handle è valida, DEVICE READY
 
@@ -459,7 +459,7 @@ uint16_t Raspberry::request(const int type)
 	if(ready())
 	{
 		if( recv_measure() == ERROR )	//IF ready condition is satisfied, call recv_measure();
-		cout<<"  D| WARNING: problemi su seriale, misure non aggiornate!"<<endl;
+		cerr<<"  D| WARNING: problemi su seriale, misure non aggiornate!"<<endl;
 	}
 
 	uint16_t measure=0;
@@ -473,7 +473,7 @@ uint16_t Raspberry::request(const int type)
 		break;
 	default:
 		measure=ERROR;
-		cout<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
+		cerr<<"  D| ERRORE: TIPO di misura richiesta non supportata dal driver."<<endl;
 		break;
 	}
 
