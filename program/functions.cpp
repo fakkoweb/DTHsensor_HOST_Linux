@@ -324,14 +324,16 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 
 				//Conversion of FloatingType into String:
 				textbuffer<<std::setprecision(numeric_limits<float>::digits10+10);
-				textbuffer <<row->second->get_statistic().average;
+				textbuffer<<3.5;
+				//textbuffer <<row->second->get_statistic().average;
 		 		string average_value=textbuffer.str();
 				textbuffer.str("");
-				textbuffer<<row->second->get_statistic().variance;
+				textbuffer<<0.5;
+				//textbuffer<<row->second->get_statistic().variance;
 				string variance=textbuffer.str();
 				textbuffer.str("");
 
-				report_line="value_timestamp="+getTimeStamp()+"##average_value="+average_value+"##local_feed_id="+local_feed_id+"##variance="+variance+"##units_of_measurement="+row->second->sunits();
+				report_line="value_timestamp="+getTimeStamp()+"##average_value="+average_value+"##local_feed_id="+local_feed_id+"##variance="+variance+"##units_of_measurement="+row->second->sunits()+"##";
 
 				report_file<<(report_line+"\n");
 				cout<<"||/ REPORT SALVATO!"<<endl;
@@ -359,6 +361,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 {
     	int esito=ERROR;
 	string server_response_s;
+	server_response_s.assign("nulla");
 	
 	ifstream report_file;	//file containing past reports (not yet dispatched to server)
 	string report_line; 	//line extracted from file
@@ -400,10 +403,12 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	
 	//Geoloc
 	Json::Value position;
+	float a = 37.74647;
+	
 	position["kind"]="latitude#location";
 	position["timestampMs"]="1274057512199";
-	position["latitude"]=37.3860517;
-	position["longitude"]=-122.0838511;
+	position["latitude"]=a;
+	position["longitude"]=122;
 	position["accuracy"]=5000.0;
 	position["height_meters"]=0.0;
 	
@@ -416,6 +421,10 @@ int post_report(const string from_filename, const string device_mac, const map<i
 
 	//Just one HTTP call to the Server 
 	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", reg_post.toStyledString(), server_response_s);
+
+	cout<<"RISPOSTA SERVER: "<<server_response_s<<endl;
+	cout<<reg_post.toStyledString()<<endl
+	;
 
 	//.. and If http_post is ok-->delete content of file:
 

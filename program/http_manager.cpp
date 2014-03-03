@@ -155,13 +155,14 @@ int http_post(const string url, const string json_in, string &json_out)
     }
     else
     {
+	json_out.assign(chunk.memory);
     	STATUS=NICE;
     	cerr<<" success."<<endl;    	
     }
 
 		 curl_slist_free_all(headers); // free the header list
 		
-		 	if(chunk.memory)
+		 if(chunk.memory)
       		free(chunk.memory);
 
 	 }
