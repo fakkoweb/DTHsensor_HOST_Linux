@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
 	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
     }
 
-    cout<<"Driver e sensori virtuali istanziati e pronti. Allacciamento tra 3.."<<endl;
+    cout<<"Driver e sensori virtuali istanziati e pronti. Allacciamento tra\n3.."<<endl;
     p_sleep(1000);
     cout<<"2.."<<endl;
     p_sleep(1000);
@@ -345,7 +345,7 @@ int main(int argc, char* argv[])
 			cout<<"MAIN: Il thread di rete ha concluso l'esecuzione.. ";
 			ready_to_post=server_sync_status.get();
 			if(ready_to_post) cout<<"e non ha riportato problemi."<<endl;
-			else cout<<"e ha riscontrato problemi di rete."<<endl;
+			else cout<<"e ha riscontrato problemi."<<endl;
 		}
 		
 		

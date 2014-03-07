@@ -99,8 +99,9 @@ int http_post(const string url, const string json_in, string &json_out)
 {
 
     struct MemoryStruct chunk;
-	
-    int STATUS;
+	int STATUS;
+
+    //FILE*LocalFile=fopen("myHTTP_log.txt","w");
 
     chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
     chunk.size = 0;    /* no data at this point */
@@ -133,7 +134,11 @@ int http_post(const string url, const string json_in, string &json_out)
 		 // pass our list of custom made headers
 		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
 		
-		 // curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+		 //to manage HTTP ERRORS
+         curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+         curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
+
+         //curl_easy_setopt(easyhandle, CURLOPT_STDERR, LocalFile );
 
         /* send all data to this function  */
         curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
@@ -155,10 +160,12 @@ int http_post(const string url, const string json_in, string &json_out)
     }
     else
     {
-	json_out.assign(chunk.memory);
+	 json_out.assign(chunk.memory);
     	STATUS=NICE;
     	cerr<<" success."<<endl;    	
     }
+         
+       // json.out.assign(STATUS);
 
 		 curl_slist_free_all(headers); // free the header list
 		
@@ -168,11 +175,11 @@ int http_post(const string url, const string json_in, string &json_out)
 	 }
 
 	 return STATUS;
-
 }
 
 int http_post_auth(const string url, const string json_in, string &json_out)
 {
+
 
     struct MemoryStruct chunk;
 	
@@ -220,8 +227,10 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 
 		 // pass our list of custom made headers
 		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
-
-		 // curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+        
+         //to manage HTTP ERRORS
+         curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+         curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
 
         /* send all data to this function  */
         curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
@@ -324,6 +333,6 @@ int http_get_auth(const string url, string& json)
     curl_easy_cleanup(curl_handle);
 
 
-    return 0;
+    return STATUS;
 
 }
