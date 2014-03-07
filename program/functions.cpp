@@ -1,9 +1,15 @@
 
 #include "functions.h"
 #include <iomanip>
+#include <algorithm>
 
 
 
+/// UTILITY FUNCTIONS
+
+
+///////////////////
+// NOT ZERO CHECK
 //When check_not_zero finds <0, makes true the static variable:
 static bool zero_found=false;
 //Utility function: checks if at least one of a few values is 0 or less
@@ -15,6 +21,8 @@ int check_not_zero(int value)
 }
 
 
+///////////////////
+// GET TIMESTAMP OF NOW
 string getTimeStamp(){
 
 	time_t now;
@@ -27,6 +35,20 @@ string getTimeStamp(){
  	ss>>s;
  	return s;
 }
+
+
+///////////////////
+// SWAP commas (,) WITH dots (.)
+string dotnot(string input)
+{
+	replace( input.begin(), input.end(), ',', '.');
+	return input;
+}
+
+
+
+
+/// PROGRAM FUNCTIONS
 
 
 Json::Value load_params(const string jsonfile)
@@ -61,7 +83,9 @@ Json::Value load_params(const string jsonfile)
 	    cout<<"Humidity sample rate (sec): "<< check_not_zero( loaded_params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() ) <<endl;
 	    cout<<"Dust sample rate (sec): "<< check_not_zero( loaded_params["sensors"]["dust"].get("REFRESH_RATE",0).asInt() ) <<endl;
 	    cout<<"Server report interval (min): "<< check_not_zero( loaded_params["report"].get("INTERVAL",0).asInt() ) <<endl;
-	    cout<<"...therefore will work on N°samples = ("<< loaded_params["report"].get("INTERVAL",0).asInt() <<"*60)/sample_rate"<<endl;
+	    cout<<"\tEach sensor will work on N°samples = ("<< loaded_params["report"].get("INTERVAL",0).asInt() <<"*60s)/sample_rate"<<endl;
+    	    cout<<"Acceptable report validity (%): "<< check_not_zero( loaded_params["report"].get("VALIDITY_PERCENTAGE_THRESHOLD",0).asInt() ) <<"%"<<endl;
+
 	    if(zero_found)
 	    {
 	    	cout<<"WARNING: Some values from configuration are not valid (0 or less). Params cleared!"<<endl;
@@ -87,23 +111,23 @@ bool registering(const string device_mac, const Json::Value& sensors)
 	//Registrazione device - ritorna NICE o ABORTED se ha successo, altrimenti riproverà al prossimo giro
 	if(dev_reg_status==ERROR)
 	{
-		cout<<"Avvio routine di annuncio device al server..."<<endl;
+		cout<<"NET: Avvio routine di annuncio device al server..."<<endl;
 		dev_reg_status = register_device(device_mac);
-		if(dev_reg_status==NICE) cout<<"NICE: Device registrata."<<endl;
-		else if(dev_reg_status==ABORTED) cout<<"ABORT: Device già registrata."<<endl;
-		else cout<<"ERROR: Problemi di comunicazione con il server!";
+		if(dev_reg_status==NICE) cout<<"NET NICE: Device registrata."<<endl;
+		else if(dev_reg_status==ABORTED) cout<<"NET ABORT: Device già registrata."<<endl;
+		else cout<<"NET ERROR: Problemi di comunicazione con il server! Operazione rimandata."<<endl;
 	}
 	//Registrazione sensori (solo se la device è registrata)
 	if(dev_reg_status!=ERROR && sens_reg_status==ERROR)
 	{
-		cout<<"Avvio routine di annuncio sensori al server..."<<endl;
+		cout<<"NET: Avvio routine di annuncio sensori al server..."<<endl;
 		//Registrazione sensori - NON ritorna gli unique_feed_id registrati sul server
 		//(1) ATTENZIONE se si cambiano i valori lfid dei sensori (ma non la loro posizione) da parameters.json il sistema sarà diverso!!
 		//(2) ATTENZIONE scambiare gli lfid tra loro mischierebbe le misure al server!
 		sens_reg_status = register_sensors(device_mac, sensors);
-		if(sens_reg_status==NICE) cout<<"NICE: Uno/più nuovi sensori registrati."<<endl;
-		else if(sens_reg_status==ABORTED) cout<<"ABORT: Tutti i sensori sono già registrati."<<endl;
-		else cout<<"ERROR: Problemi di comunicazione con il server!";
+		if(sens_reg_status==NICE) cout<<"NET NICE: Uno/più nuovi sensori registrati."<<endl;
+		else if(sens_reg_status==ABORTED) cout<<"NET ABORT: Tutti i sensori sono già registrati."<<endl;
+		else cout<<"NET ERROR: Problemi di comunicazione con il server! Operazione rimandata."<<endl;
 	}
 	
 	//Pronti a mandare misure sul server? Solo se device e sensori sono tutti registrati!
@@ -129,7 +153,7 @@ int register_device( const string device_mac )
     {
 	    if (found!=std::string::npos)		//NO -- server returned a mac=x:x:x:x:x:x string because it is missing
 	    {
-	    	cout<<"Device con MAC cercato non trovato sul server. Il device sarà registrato."<<endl; 
+	    	cerr<<"Device con MAC cercato non trovato sul server. Il device sarà registrato."<<endl; 
 	    	Json::Value reg_device;
 	       	reg_device["id"]=0;
 	      	reg_device["username"]="gruppo19";
@@ -140,7 +164,7 @@ int register_device( const string device_mac )
 	     }
 	     else					//YES -- server returned a full json describing our device
 	     {
-	     	cout<<"Il device è già registrato!";
+	     	cerr<<"Il device è già registrato!"<<endl;
 	     	esito = ABORTED;
 	     	cout<<server_response_s;
 	     }
@@ -199,9 +223,9 @@ int register_sensor( const string device_mac, const Json::Value& node, const str
 			esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac+"/feeds", new_sensor.toStyledString(), server_response_s);
     			//cout<<server_response_s;
 		}
-		else									//YES
+		else							//YES
 		{
-			cout<<"This sensor was already registered...";
+			cerr<<"This sensor was already registered... ";
 			esito=ABORTED;
 		}
     	}
@@ -298,14 +322,22 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 {
     	int esito=ERROR;
     	
-    	ofstream report_file;	//file in which append new report
-    	stringstream textbuffer;
-	string report_line; 	//line to append to file
+    	//Output management variables
+    	Json::FastWriter writer;
+    	Json::Value report;	//Only "sensor_values" field will be saved locally
+    	fstream report_file;		//file in which append new json report
     	
-		
+    	
+    	/* OLD CONVERSION
+	stringstream textconverter;	//BUFFER to convert any variable to STRING
+    					//JSON ONLY WORKS ON TEXT!! TYPES are then distinguished automatically!
+	string report_line; 		//json line to append to file
+    	*/
+    	
+
 	//Open file
     	cout<<"||/ Apro file di buffer..."<<endl;
-    	report_file.open (to_filename,ios::out | ios::app | ios::binary);
+    	report_file.open (to_filename, ios::out | ios::app | ios::binary);
 
 	//Check file opening
     	std::map<int, Sensor*>::const_iterator row;
@@ -316,33 +348,57 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 		    	
 		    	//Write line to file
 			for(row=sa.begin(); row!=sa.end(); row++)
-			{   
-		
-				textbuffer<<row->first;
-				string local_feed_id=textbuffer.str();
-				textbuffer.str("");
+			{
+				/* OLD CONVERSION
+				textconverter<<row->first;
+				string local_feed_id=textconverter.str();
+				textconverter.str("");
 
 				//Conversion of FloatingType into String:
-				textbuffer<<std::setprecision(numeric_limits<float>::digits10+10);
-				textbuffer<<3.5;
-				//textbuffer <<row->second->get_statistic().average;
-		 		string average_value=textbuffer.str();
-				textbuffer.str("");
-				textbuffer<<0.5;
-				//textbuffer<<row->second->get_statistic().variance;
-				string variance=textbuffer.str();
-				textbuffer.str("");
-
-				report_line="value_timestamp="+getTimeStamp()+"##average_value="+average_value+"##local_feed_id="+local_feed_id+"##variance="+variance+"##units_of_measurement="+row->second->sunits()+"##";
+				textconverter<<std::setprecision(numeric_limits<double>::digits10+10);
+				textconverter <<row->second->get_statistic().average;
+		 		string average_value=textconverter.str();
+				textconverter.str("");
+				textconverter<<row->second->get_statistic().variance;
+				string variance=textconverter.str();
+				textconverter.str("");
+				
+				report_line=
+					"value_timestamp="+getTimeStamp()+
+					"##average_value="+to_string(row->second->get_statistic().average)+
+					"##local_feed_id="+to_string(row->first)+
+					"##variance="+to_string(row->second->get_statistic().variance)+
+					"##units_of_measurement="+row->second->sunits()+"##";
 
 				report_file<<(report_line+"\n");
-				cout<<"||/ REPORT SALVATO!"<<endl;
-			}
+				*/
 			
+				if( row->second->get_statistic().valid )
+				{
+					//Assembling the "sensor_values" part of Json
+					report["value_timestamp"]=getTimeStamp();
+					report["average_value"]=dotnot( to_string(row->second->get_statistic().average) );
+					report["local_feed_id"]=to_string(row->first);
+					report["variance"]=dotnot( to_string(row->second->get_statistic().variance) );
+					report["units_of_measurement"]=row->second->sunits();
+			
+					//Save it to file
+					report_file << writer.write(report);
+					cout<<"||/ REPORT DI lfid="<< row->first <<" SCRITTO SU FILE!"<<endl;
+				}
+				else
+				{
+					cout<<"||/ REPORT DI lfid="<< row->first <<" NON VALIDO E NON SCRITTO!"<<endl;
+				}
+				
+			}
+
 			//Close file
 			report_file.close();
 			cout<<"||/ File chiuso!"<<endl;
 			esito=NICE;
+			
+			
 		}
 		else
 		{
@@ -361,25 +417,30 @@ int post_report(const string from_filename, const string device_mac, const map<i
 {
     	int esito=ERROR;
 	string server_response_s;
-	server_response_s.assign("nulla");
+	server_response_s.assign("null");
 	
-	ifstream report_file;	//file containing past reports (not yet dispatched to server)
-	string report_line; 	//line extracted from file
-	Json::Value report_array = Json::Value(Json::arrayValue);
-	Json::Value report;
+	Json::Reader reader;
+	ifstream in_report_file;	//input file containing past reports (not yet dispatched to server)
+	ofstream out_report_file;	//output file containing the remaining reports after this post (max 50 are sent)
+	int num_extracted_lines=0;
+	string report_line; 		//line extracted from file (it will contain one unparsed report)
+	Json::Value report;						//a single report extracted from file	
+	Json::Value report_array = Json::Value(Json::arrayValue);	//saved reports array (parsed from file)
 
-    
-    
+
 	//Open File 
-	report_file.open (from_filename);
-	if(!report_file.is_open())
+	in_report_file.open(from_filename, ios::in );
+	out_report_file.open("new_"+from_filename, ios::out);
+	if(!in_report_file.is_open() && !out_report_file.is_open())
 	{
 		cout<<"||/ CRITICAL ERROR: Could not find buffer file!!"<<endl;
 		return esito;
 	}
 
-	while(getline(report_file,report_line))
+	//Parsing saved reports from input report file
+	while( getline(in_report_file,report_line) )
 	{
+		/*
 		//Parsing lines and creating elements of JsonArray Sensor_values:
 		string fields[]={"value_timestamp","average_value","local_feed_id","variance","units_of_measurement"};
 		string delimiter = "##";
@@ -395,49 +456,73 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	     		i++;
 	    		report_line.erase(0, pos + delimiter.length());
 		}
+		*/
+		
+		if( num_extracted_lines < 50 )
+		{
+			if( reader.parse(report_line,report) )
+			{
+				report_array.append(report);
+			}
+			else
+			{
+				out_report_file<<report_line<<"\n";
+			}
+		}
+		else
+		{
+			out_report_file<<report_line<<"\n";
+		}
+		
+		num_extracted_lines++;
+
+	}	
+	in_report_file.close();
+	out_report_file.close();
 	
-		report_array.append(report);
-	}
 	
-	report_file.close();
+	//Declaring COMPLETE Json
+	Json::Value json_post;
 	
-	//Geoloc
+	//Assembling the "position" part: geolocalization data
 	Json::Value position;
-	float a = 37.74647;
-	
 	position["kind"]="latitude#location";
 	position["timestampMs"]="1274057512199";
-	position["latitude"]=a;
-	position["longitude"]=122;
-	position["accuracy"]=5000.0;
-	position["height_meters"]=0.0;
+	position["latitude"]="37.74647";
+	position["longitude"]="122";
+	position["accuracy"]="5000";
+	position["height_meters"]="0";
 	
-	Json::Value reg_post;
-	
-	reg_post["position"]=position;
-	reg_post["sensor_values"]=report_array;
-	reg_post["send_timestamp"]=getTimeStamp();
-	reg_post["raspb_wifi_mac"]=device_mac;
+	//Assembling COMPLETE Json
+	json_post["position"]=position;
+	json_post["sensor_values"]=report_array;
+	json_post["send_timestamp"]=getTimeStamp();
+	json_post["raspb_wifi_mac"]=device_mac;
 
-	//Just one HTTP call to the Server 
-	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", reg_post.toStyledString(), server_response_s);
-
+	//Just one HTTP POST call to the Server for all report selected
+	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
 	cout<<"RISPOSTA SERVER: "<<server_response_s<<endl;
-	cout<<reg_post.toStyledString()<<endl
-	;
+	cout<<json_post<<endl;
 
-	//.. and If http_post is ok-->delete content of file:
-
+	//.. and If http_post is ok --> delete the old file and rename the new as old
 	if (esito==NICE)
 	{
-	
+	        remove(from_filename.c_str());
+	        rename( ("new_"+from_filename).c_str() , from_filename.c_str());
+
+		/* OLD DELETE
+		//Open New file as output
 		ofstream ofs;
 		ofs.open(from_filename, std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
+		*/
+	}
+	else	//just delete the new file: the old file will be kept for next trial
+	{
+		remove( ("new_"+from_filename).c_str() );
 	}
     
-	//cout<<server_response_s;
-	
+
 	return esito;
 
 }

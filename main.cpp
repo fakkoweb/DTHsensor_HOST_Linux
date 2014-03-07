@@ -92,12 +92,39 @@ int main(int argc, char* argv[])
 	    //cout.rdbuf(main_window);
     //}
 
-    
-
-    p_sleep(3000);
 
    
     
+    /////////////////////////////////////////////////////////
+    //CREAZIONE STRUTTURE DI INDICIZZAZIONE E THREADING
+    /////////////////////////////////////////////////////////    
+    //Creazione delle strutture di indicizzazione locale
+    map <int, Sensor*> AllSensors;		//Indice di tutti i sensori associati al proprio lfid
+    map <int, Sensor*> ExtSensors;		//Indice dei soli sensori esterni
+    map <int, Sensor*> IntSensors; 		//Indice dei soli sensori interni
+    map<int, Sensor*>::iterator row;		//Iteratore generico per accedere alle map   
+    typedef pair <int, Sensor*> new_row;	//Tipo riga per inserimento nelle map
+
+    //Creazione delle strutture di threading per l'ottimizzazione
+    list<thread*> Waiters;			//Lista di thread per attendere (in parallelo) le statistiche prodotte dal sensore per "apparecchiarle"
+    future<bool> server_sync_status;		//Risultato ritornato dalla async() per le operazioni di rete.
+    						//LA async() VIENE AVVIATA PRIMA DELL'ATTESA DELLE STATISTICHE, ALLA FINE DELLA QUALE SARA' VALUTATO IL RISULTATO!
+    						//Ritorna false se c'è stato un fallimento di rete qualsiasi.
+    bool ready_to_post=false;			//Mantiene in memoria L'ULTIMO VALORE ritornato da server_sync: indica se si può cominciare a postare le statistiche
+//  thread* Registering_thread=NULL;		//Thread "joinable" per la registrazione della device/sensori al server
+    						//In questo modo, mentre avviene la comunicazione col server, posso cominciare ad attendere le statistiche.
+    						//DEVE essere avviato prima di Reporting_thread (ho bisogno di sapere se posso postare o meno le misure)
+
+//  thread* Reporter=NULL;			//Thread separato (che sarà "detached") per postare le statistiche attese dai sensori
+    						//IL thread VIENE AVVIATO SUBITO DOPO L'ATTESA DELLE STATISTICHE, MA NON VERRA' ATTESA LA SUA TERMINAZIONE!
+    //PSEUDO-SCHEMA DI ESECUZIONE:
+    /*	thread principale	
+    	server_sync=async()	->	thread di rete			+1 thread
+    	Waiters(sensori)	->	thread(s) di attesa		+n thread (uno per sensore)
+	Waiters.join()		<-					-n thread (uno per sensore)
+    	server_sync.get()	<-					-1 thread
+    */
+  				    
     
     
     
@@ -110,7 +137,6 @@ int main(int argc, char* argv[])
     Usb ext_device(1240,19);
     cout<<"Driver pronti"<<endl;
     
-    
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
     //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
@@ -119,59 +145,26 @@ int main(int argc, char* argv[])
     //HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
+		
+    //Indicizzazione locale dei sensori (local_feed_id <-> sensor)
+/*  AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+    ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
     
-    
-    //Creazione delle strutture di indicizzazione locale
-    map <int, Sensor*> AllSensors;		//Indice di tutti i sensori associati al proprio lfid
-    map <int, Sensor*> ExtSensors;		//Indice dei soli sensori esterni
-    map <int, Sensor*> IntSensors; 		//Indice dei soli sensori interni
-    map<int, Sensor*>::iterator row;		//Iteratore generico per accedere alle map   
-    
-    
-    //Creazione delle strutture di threading per l'ottimizzazione
-    //PSEUDO-SCHEMA DI ESECUZIONE:
-    /*	thread principale	
-    	server_sync=async()	->	thread di rete			+1 thread
-    	Waiters(sensori)	->	thread(s) di attesa		+n thread (uno per sensore)
-	Waiters.join()		<-					-n thread (uno per sensore)
-    	server_sync.get()	<-					-1 thread
-    */
-    list<thread*> Waiters;			//Lista di thread per attendere (in parallelo) le statistiche prodotte dal sensore per "apparecchiarle"
-    future<bool> server_sync_status;		//Risultato ritornato dalla async() per le operazioni di rete.
-    						//LA async() VIENE AVVIATA PRIMA DELL'ATTESA DELLE STATISTICHE, ALLA FINE DELLA QUALE SARA' VALUTATO IL RISULTATO!
-    						//Ritorna false se c'è stato un fallimento di rete qualsiasi.
-    bool ready_to_post=false;			//Mantiene in memoria L'ULTIMO VALORE ritornato da server_sync: indica se si può cominciare a postare le statistiche
-//  thread* Registering_thread=NULL;		//Thread "joinable" per la registrazione della device/sensori al server
-    						//In questo modo, mentre avviene la comunicazione col server, posso cominciare ad attendere le statistiche.
-    						//DEVE essere avviato prima di Reporting_thread (ho bisogno di sapere se posso postare o meno le misure)
-
-//  thread* Reporter=NULL;			//Thread separato (che sarà "detached") per postare le statistiche attese dai sensori
-    						//IL thread VIENE AVVIATO SUBITO DOPO L'ATTESA DELLE STATISTICHE, MA NON VERRA' ATTESA LA SUA TERMINAZIONE!
-
-  						
-    
-
-    //Associazione dei local_feed_id ai giusti sensori tramite indice
-    typedef pair <int, Sensor*> new_row;	//Populating...
-/*	AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
-	ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
-
-	AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
-	ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+    AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
+    ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
 */
-	AllSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
-	ExtSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
+    AllSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
+    ExtSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
 /*
-	AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
-	IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+    AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
+    IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
 	
-	AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
-	IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	*/
-    //In questo modo non è importante come sono posizionati i sensori nell'array
-    //Ogni sensore è localmente indicizzato tramite il proprio local_feed_id!
+    AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
+    IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	*/
+    //N.B. non è importante come sono posizionati i sensori nell'array:
+    //ogni sensore è localmente identificato e accessibile dal proprio local_feed_id!
 
-
-    //Display indice di tutti i sensori
+    //Display indice dei sensori allocati
     cout<<"-- Sensori disponibili --"<<endl;
     cout<<"| ID\t| SENSOR\t| TYPE"<<endl;
     for (row=AllSensors.begin(); row!=AllSensors.end(); row++)
@@ -179,18 +172,20 @@ int main(int argc, char* argv[])
 	cout<<"| "<< row->first <<"\t| "<< (size_t)row->second <<"\t| "<< row->second->stype() <<endl;	
     }
 
-    p_sleep(3000);
+    cout<<"Driver e sensori virtuali istanziati e pronti. Allacciamento tra 3.."<<endl;
+    p_sleep(1000);
+    cout<<"2.."<<endl;
+    p_sleep(1000);
+    cout<<"1.."<<endl;
+    p_sleep(1000);
     
-        
-    //Allacciamento dei sensori ai driver (alias board)
-
-
+    //Allacciamento dei sensori ai driver virtuali (alias board)
     //exttemp.plug_to(ext_device);
     //exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
     //inttemp.plug_to(int_device);
     //inthumid.plug_to(int_device);
-    cout<<"Sensori allacciati e pronti alla lettura"<<endl;
+    cout<<"Sensori allacciati ai driver. Letture iniziate."<<endl;
      
     
 
@@ -205,7 +200,6 @@ int main(int argc, char* argv[])
 				
 
 		
-		
 		///////////////////////////////////////////////////////
 		//SINCRONIZZAZIONE CON IL SERVER (Avvio Thread)
 		///////////////////////////////////////////////////////
@@ -218,12 +212,12 @@ int main(int argc, char* argv[])
 		//Il fallimento della rete non pregiudica il corretto salvataggio delle statistiche in locale!!
 		if(!ready_to_post)
 		{
-			cout<<"MAIN: Avvio thread di controllo di registrazione..."<<endl;
+			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
 			server_sync_status = async(std::launch::async, registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);
 		}
 		else
 		{
-			cout<<"MAIN: Avvio thread di sincronizzazione con server..."<<endl;
+			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
 			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
 		
@@ -288,10 +282,10 @@ int main(int argc, char* argv[])
 				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
 				cout<<"| Statistic has to be considered as ";
 				if (row->second->get_statistic().valid){
-					cout << "valid";
+					cout << "VALID";
 				}
 				else{
-					cout << "invalid";
+					cout << "INVALID";
 				}
 
 				cout << endl;
