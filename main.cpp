@@ -139,29 +139,29 @@ int main(int argc, char* argv[])
     
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
-    //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    //HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
+    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );    //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );     	//uguale all'intervallo in cui dobbiamo mandare i report al server.
+    HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt() );  	//In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
 		
     //Indicizzazione locale dei sensori (local_feed_id <-> sensor)
-/*  AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
+    AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
     ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
     
     AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
     ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
-*/
+
     AllSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
     ExtSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
-/*
+
     AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
     IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
 	
     AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
-    IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );	*/
-    //N.B. non è importante come sono posizionati i sensori nell'array:
+    IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
+    //N.B. non è importante come sono posizionati i sensori nella map:
     //ogni sensore è localmente identificato e accessibile dal proprio local_feed_id!
 
     //Display indice dei sensori allocati
@@ -180,11 +180,11 @@ int main(int argc, char* argv[])
     p_sleep(1000);
     
     //Allacciamento dei sensori ai driver virtuali (alias board)
-    //exttemp.plug_to(ext_device);
-    //exthumid.plug_to(ext_device);
+    exttemp.plug_to(ext_device);
+    exthumid.plug_to(ext_device);
     extdust.plug_to(ext_device);
-    //inttemp.plug_to(int_device);
-    //inthumid.plug_to(int_device);
+    inttemp.plug_to(int_device);
+    inthumid.plug_to(int_device);
     cout<<"Sensori allacciati ai driver. Letture iniziate."<<endl;
      
     
