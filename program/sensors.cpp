@@ -93,7 +93,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 {
     unique_lock<mutex> access(rw,std::defer_lock);
     bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
-
+    set_offset();
     do
     {
     
@@ -152,6 +152,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			
 			//Reset MeanGuy
 			MeanGuy.reset();		//asdfg
+            set_offset();
 			
 			//Notify that new statistics are now available
 			new_statistic.notify_all();

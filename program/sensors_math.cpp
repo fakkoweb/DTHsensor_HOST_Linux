@@ -52,7 +52,7 @@ double DustSensor::convert(uint16_t raw)
 
 void DustSensor::set_offset()
 {
-	MeanGuy.setmin
+	MeanGuy.setMin(6000);
 
 }
 
