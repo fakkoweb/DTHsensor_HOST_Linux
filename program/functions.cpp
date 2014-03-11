@@ -375,16 +375,17 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 			
 				if( row->second->get_statistic().valid )
 				{
-
+					textconverter.str("");
 					textconverter<<std::setprecision(numeric_limits<double>::digits10+10);
 
 					//Assembling the "sensor_values" part of Json
 					report["value_timestamp"]=getTimeStamp();
 					textconverter << row->second->get_statistic().average;
-					report["average_value"]=dotnot( textconverter.str() );
+					report["average_value"]=textconverter.str();
+					textconverter.str("");
 					report["local_feed_id"]=to_string(row->first);
 					textconverter << row->second->get_statistic().variance;
-					report["variance"]=dotnot( textconverter.str() );
+					report["variance"]=textconverter.str();
 					report["units_of_measurement"]=row->second->sunits();
 			
 					//Save it to file
