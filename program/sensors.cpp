@@ -7,7 +7,7 @@
 ////////////////////////////
 //GENERIC SENSOR PROCEDURES
 
-Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh) : MeanGuy(false)
+Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh)
 {
 
     //Convert avg_interval in a valid chrono type

@@ -36,9 +36,9 @@ private:
 	bool minCalc;
 	int global_samples;
 public:
-	OMV(bool aMin=false);
+	OMV();
 	virtual ~OMV();
-	void reset(double min=0);
+	void reset();
 	void add(double x);
 	double getMean();
 	double getVariance();
