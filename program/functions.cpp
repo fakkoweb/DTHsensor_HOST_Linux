@@ -301,11 +301,11 @@ bool reporting(const string filename, const string device_mac, const map<int, Se
 	post_rep_status=post_report(filename, device_mac, sa);
 	if(post_rep_status==ERROR)
 	{
-		cout<<"Invio statistiche fallito. Problema di rete. Riprovero' a connettermi più tardi."<<endl;
+		cout<<"NET ERROR: Invio statistiche fallito. Problema di rete. Riprovero' a connettermi più tardi."<<endl;
 	}
 	else
 	{
-		cout<<"Le statistiche sono ora sincronizzate con il server."<<endl;
+		cout<<"NET NICE: Le statistiche sono ora sincronizzate con il server."<<endl;
 		cerr<<getTimeStamp()<<" - Le statistiche sono ora sincronizzate con il server."<<endl;
 	}
 	
@@ -326,7 +326,7 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
     	Json::FastWriter writer;
     	Json::Value report;	//Only "sensor_values" field will be saved locally
     	fstream report_file;		//file in which append new json report
-    	
+    	stringstream textconverter;	//BUFFER to convert any variable to STRING
     	
     	/* OLD CONVERSION
 	stringstream textconverter;	//BUFFER to convert any variable to STRING
@@ -375,11 +375,16 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 			
 				if( row->second->get_statistic().valid )
 				{
+
+					textconverter<<std::setprecision(numeric_limits<double>::digits10+10);
+
 					//Assembling the "sensor_values" part of Json
 					report["value_timestamp"]=getTimeStamp();
-					report["average_value"]=dotnot( to_string(row->second->get_statistic().average) );
+					textconverter << row->second->get_statistic().average;
+					report["average_value"]=dotnot( textconverter.str() );
 					report["local_feed_id"]=to_string(row->first);
-					report["variance"]=dotnot( to_string(row->second->get_statistic().variance) );
+					textconverter << row->second->get_statistic().variance;
+					report["variance"]=dotnot( textconverter.str() );
 					report["units_of_measurement"]=row->second->sunits();
 			
 					//Save it to file
