@@ -83,7 +83,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
                                                 //Se autorefresh è FALSE solo get_raw() può chiamarla
         void reset();				//Resetta i valori del sensore a default (chiamata quando ad es. si vuole scollegare il sensore senza deallocarlo!)
                   
-                                                
+        virtual void set_offset(){};		//Abilita la correzione dell'offset per il sensore                                        
         //THREADING STRUCTURES
         mutex rw;				//Guarantees mutual access between autorefresh thread and external requesting threads
         condition_variable new_sample;
@@ -174,7 +174,8 @@ class DustSensor : public Sensor
 {
     protected:
         virtual int mtype(){ return DUST; };  
-        virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!     
+        virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!    
+	virtual void set_offset(); 
     public:
         DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
         virtual string stype(){ string st="Polveri"; return st; };

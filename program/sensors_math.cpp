@@ -43,11 +43,17 @@ double HumidSensor::convert(uint16_t raw)
 
 double DustSensor::convert(uint16_t raw)
 {
-	const double minDust = -0.08;
+//	const double minDust = -0.08;
 	double voltDust = raw*3.3/1000;
-	double realDust = voltDust*0.17-0.08-minDust;
+	double realDust = voltDust*0.17-0.08;//-minDust;
 	
 	return realDust;  
+}
+
+void DustSensor::set_offset()
+{
+	MeanGuy.setmin
+
 }
 
 
