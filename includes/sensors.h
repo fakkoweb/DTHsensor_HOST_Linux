@@ -82,8 +82,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
                                                 //Se autorefresh è TRUE viene chiamata da un thread ogni "refresh_rate" ms oppure manualmente da get_raw()
                                                 //Se autorefresh è FALSE solo get_raw() può chiamarla
         void reset();				//Resetta i valori del sensore a default (chiamata quando ad es. si vuole scollegare il sensore senza deallocarlo!)
-                  
-        virtual void set_offset(){};		//Abilita la correzione dell'offset per il sensore                                        
+                                                       
         //THREADING STRUCTURES
         mutex rw;				//Guarantees mutual access between autorefresh thread and external requesting threads
         condition_variable new_sample;
@@ -97,11 +96,17 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
     	
     	
     	//COSTRUTTORE & DISTRUTTORE
-        Sensor() = delete;                          //disabling zero-argument constructor completely
-        explicit Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true);	//sample_rate = millisecondi per l'autocampionamento (se attivato)
-                                                                                            			//avg_interval = minuti ogni quanto viene resettata la media (è calcolata on-line)
-														//inizializzato: MeanGuy() = sceglie se considerare o meno un MinOffset per il calcolo della media
-        ~Sensor();	//safe
+        Sensor() = delete;                         		//disabling zero-argument constructor completely
+        explicit Sensor(const int sample_rate,			//sample_rate = millisecondi per l'autocampionamento (se attivato)
+        		const int avg_interval,			//avg_interval = minuti ogni quanto viene resettata la media (che è calcolata on-line)
+        		const bool enable_autorefresh = true,	//indica se rendere ATTIVO (autopolling) o PASSIVO (misure su richiesta) il sensore
+        		const bool enable_mean_offset = false);	//indica a MeanGuy di considerare, per ogni media, un offset pari al minimo tra i campioni dell'intervallo su cui è calcolata
+								//N.B.	Questa funzione è UTILE SOLO PER MISURE che:
+								//	- lavorano su "spike" ovvero danno misure significative solo su alcuni campioni
+								//	- necessitano di una frequenza di campionamento elevata
+								//	- soffrono di deviazioni FISICHE nel tempo dovute ad usura od ostrusioni.                                                                                            			
+								//La più alta misura in un intervallo non viene riportata in maniera assoluta, ma relativa alla più bassa misura di quell'intervallo!
+        ~Sensor();	//safe														
         
         
         //METODI DI ACCESSO PRIMARI (gestiscono i lock)
@@ -151,9 +156,9 @@ class TempSensor : public Sensor
         virtual int mtype(){ return TEMPERATURE; };
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!
     public:
-        TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh, false) {};
         virtual string stype(){ string st="Temperatura"; return st; };
-        virtual string sunits(){ string st="°C"; return st; };
+        virtual string sunits(){ string st="C"; return st; };
 
 };
 
@@ -163,7 +168,7 @@ class HumidSensor : public Sensor
         virtual int mtype(){ return HUMIDITY; };      
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!        
     public:
-        HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh, false) {};
         virtual string stype(){ string st="Umidita'"; return st; };
         virtual string sunits(){ string st="%"; return st; };        
 
@@ -175,11 +180,10 @@ class DustSensor : public Sensor
     protected:
         virtual int mtype(){ return DUST; };  
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!    
-	virtual void set_offset(); 
     public:
-        DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh) {};
+        DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh,true) {};
         virtual string stype(){ string st="Polveri"; return st; };
-        virtual string sunits(){ string st="mg/m^3"; return st; };      
+        virtual string sunits(){ string st="mg/mc"; return st; };      
 
 };
 

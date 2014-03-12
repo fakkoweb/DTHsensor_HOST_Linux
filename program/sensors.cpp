@@ -7,7 +7,7 @@
 ////////////////////////////
 //GENERIC SENSOR PROCEDURES
 
-Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh)
+Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh, const bool enable_mean_offset) : MeanGuy(enable_mean_offset)
 {
 
     //Convert avg_interval in a valid chrono type
@@ -17,7 +17,6 @@ Sensor::Sensor(const int sample_rate, const int avg_interval, const bool enable_
     board=NULL;
     raw_measure=0;
     
-    //MeanGuy.setMin(?);
     statistic.average=0;
     statistic.variance=0;
     statistic.valid=false;		//to be sure it will be set to true!
@@ -93,7 +92,8 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 {
     unique_lock<mutex> access(rw,std::defer_lock);
     bool thread_must_exit=false;    	//JUST A COPY of close_thread (for evaluating it outside the lock)
-    set_offset();
+    int num_total_samples=0;		//Number of total samples (both VALID and INVALID) got from driver
+
     do
     {
     
@@ -109,38 +109,43 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
         
         if(!thread_must_exit)
         {
-		//New sample
+        	//Notice about Raw measure Conversion
+        	//	Sensor does not store the converted measure since a specific "convert()" pure virtual
+        	//	method is used on-the-go, whenever real measure is needed:
+		//	- when user asks for a converted measure (see "get_measure()")
+		//	- when measure is passed to MeanGuy for mean and variance calculation (see below)
+        	//	EACH SUBCLASS EXTENDING SENSOR MUST IMPLEMENT ITS VERSION OF "convert()"!!
+        
+        
+		//NEW SAMPLE & validity check
 		cerr<<" S| Nuova misura di "<<stype()<<" richiesta al driver ("<<(size_t)board<<")"<<endl;
-		MeanGuy.addSample();
-		raw_measure=sample();
-		
-		//Conversion
-		//OLD:	Sensor does not store the converted measure since it is not needed anymore.
-		//	When user asks for a converted measure, it will be converted on-the-go from raw_measure;
-		
-		//Mean and Variance
-
-		if(raw_measure!=INVALID)
+		raw_measure=sample();	//request new sample from driver
+		if(raw_measure!=INVALID)	//ONLY IF MEASURE IS VALID..
 		{
-			MeanGuy.add(convert(raw_measure));	//asdfg
+			MeanGuy.add(convert(raw_measure));	//..give MeanGuy next converted measure for on-line calculation
 			cerr<<" S| Richiesta misura di "<<stype()<<" soddisfatta."<<endl;
 		}
+		num_total_samples++;	//then increment COUNT of TOTAL samples
 		
-
+		
 		//Notify that a new sample is now available
 		new_sample.notify_all();
 
+
+		//MEAN AND VARIANCE
 		//Check if avg_interval minutes (alias "chrono::seconds avg_delay") have passed since last Mean&Variance request
 		if ( std::chrono::steady_clock::now() > (last_avg_request + avg_delay) )
 		{
-			//Ask MeanGuy for latest Mean and Variance
+			//Assign to statistic latest Mean and Variance calculated by MeanGuy
 			cerr<<" S| Media pronta e richiesta!"<<endl;
-			statistic.average=MeanGuy.getMean();	//asdfg
-			statistic.variance=MeanGuy.getVariance();	//asdfg
-			statistic.tot_sample=MeanGuy.getGlobalSampleNumber();
+			statistic.average=MeanGuy.getMean();
+			statistic.variance=MeanGuy.getVariance();
+			//Assign to statistic also number of total samples, valid and invalid, taken
+			statistic.tot_sample=num_total_samples;
+			//Estimate STATISTIC VALIDIY, comparing number of TOTAL samples with number of VALID samples used by MeanGuy
 			if (statistic.tot_sample>0) statistic.percentage_validity = (MeanGuy.getSampleNumber()*100)/statistic.tot_sample;
 			else statistic.percentage_validity = 0;
-			
+			//Finally declare how to consider this statistic, in respect to a tolerance threshol
 			if(statistic.percentage_validity>THRESHOLD)
 			{
 				statistic.valid=true;
@@ -150,9 +155,9 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 				statistic.valid=false;
 			}
 			
-			//Reset MeanGuy
-			MeanGuy.reset();		//asdfg
-            set_offset();
+			//Reset MeanGuy and number of total samples
+			MeanGuy.reset();
+			num_total_samples=0;
 			
 			//Notify that new statistics are now available
 			new_statistic.notify_all();

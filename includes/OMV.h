@@ -34,19 +34,15 @@ private:
 	double M2;
 	double min;
 	bool minCalc;
-	int global_samples;
 public:
-	OMV();
+	OMV(const bool use_min_offset = false);
 	virtual ~OMV();
 	void reset();
 	void add(double x);
 	double getMean();
 	double getVariance();
 	double getMin();
-	void setMin(double aMin);
 	double getSampleNumber();
-	void addSample();
-	int getGlobalSampleNumber();
 };
 
 #endif /* OMV_H_ */

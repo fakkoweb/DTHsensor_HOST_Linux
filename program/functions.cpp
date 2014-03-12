@@ -302,6 +302,12 @@ bool reporting(const string filename, const string device_mac, const map<int, Se
 	if(post_rep_status==ERROR)
 	{
 		cout<<"NET ERROR: Invio statistiche fallito. Problema di rete. Riprovero' a connettermi più tardi."<<endl;
+		cerr<<getTimeStamp()<<" - Invio statistiche fallito. Problema di rete. Riprovero' a connettermi più tardi."<<endl;
+	}
+	else if(post_rep_status==ABORTED)
+	{
+		cout<<"NET ABORT: Invio annullato: nessuna statistica valida da inviare."<<endl;
+		cerr<<getTimeStamp()<<" - Invio annullato: nessuna statistica valida da inviare."<<endl;
 	}
 	else
 	{
@@ -428,7 +434,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	Json::Reader reader;
 	ifstream in_report_file;	//input file containing past reports (not yet dispatched to server)
 	ofstream out_report_file;	//output file containing the remaining reports after this post (max 50 are sent)
-	int num_extracted_lines=0;
+	int num_extracted_lines=0;	//num of lines extracted from file: if it is 0 then no full report must be sent!
 	string report_line; 		//line extracted from file (it will contain one unparsed report)
 	Json::Value report;						//a single report extracted from file	
 	Json::Value report_array = Json::Value(Json::arrayValue);	//saved reports array (parsed from file)
@@ -487,45 +493,52 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	out_report_file.close();
 	
 	
-	//Declaring COMPLETE Json
-	Json::Value json_post;
-	
-	//Assembling the "position" part: geolocalization data
-	Json::Value position;
-	position["kind"]="latitude#location";
-	position["timestampMs"]="1274057512199";
-	position["latitude"]="37.74647";
-	position["longitude"]="122";
-	position["accuracy"]="5000";
-	position["height_meters"]="0";
-	
-	//Assembling COMPLETE Json
-	json_post["position"]=position;
-	json_post["sensor_values"]=report_array;
-	json_post["send_timestamp"]=getTimeStamp();
-	json_post["raspb_wifi_mac"]=device_mac;
-
-	//Just one HTTP POST call to the Server for all report selected
-	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
-	cout<<"RISPOSTA SERVER: "<<server_response_s<<endl;
-	cout<<json_post<<endl;
-
-	//.. and If http_post is ok --> delete the old file and rename the new as old
-	if (esito==NICE)
+	if(num_extracted_lines > 0)
 	{
-	        remove(from_filename.c_str());
-	        rename( ("new_"+from_filename).c_str() , from_filename.c_str());
+		//Declaring COMPLETE Json
+		Json::Value json_post;
+	
+		//Assembling the "position" part: geolocalization data
+		Json::Value position;
+		position["kind"]="latitude#location";
+		position["timestampMs"]="1274057512199";
+		position["latitude"]="37.74647";
+		position["longitude"]="122";
+		position["accuracy"]="5000";
+		position["height_meters"]="0";
+	
+		//Assembling COMPLETE Json
+		json_post["position"]=position;
+		json_post["sensor_values"]=report_array;
+		json_post["send_timestamp"]=getTimeStamp();
+		json_post["raspb_wifi_mac"]=device_mac;
 
-		/* OLD DELETE
-		//Open New file as output
-		ofstream ofs;
-		ofs.open(from_filename, std::ofstream::out | std::ofstream::trunc);
-		ofs.close();
-		*/
+		//Just one HTTP POST call to the Server for all report selected
+		esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
+		cout<<"RISPOSTA SERVER: "<<server_response_s<<endl;
+		cout<<json_post<<endl;
+
+		//.. and If http_post is ok --> delete the old file and rename the new as old
+		if (esito==NICE)
+		{
+			remove(from_filename.c_str());
+			rename( ("new_"+from_filename).c_str() , from_filename.c_str());
+
+			/* OLD DELETE
+			//Open New file as output
+			ofstream ofs;
+			ofs.open(from_filename, std::ofstream::out | std::ofstream::trunc);
+			ofs.close();
+			*/
+		}
+		else	//just delete the new file: the old file will be kept for next trial
+		{
+			remove( ("new_"+from_filename).c_str() );
+		}
 	}
-	else	//just delete the new file: the old file will be kept for next trial
+	else
 	{
-		remove( ("new_"+from_filename).c_str() );
+		esito=ABORTED;	
 	}
     
 

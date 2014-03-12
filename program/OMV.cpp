@@ -21,6 +21,7 @@ public:
 	double setMin();
 };*/
 #include "OMV.h"
+#include <limits>
 
 /*
  *  OMV::OMV(bool aMin=false)
@@ -29,7 +30,8 @@ public:
  *	fino al prossimo reset;
  *
  */
-OMV::OMV() {
+OMV::OMV(const bool use_min_offset) {
+	minCalc = use_min_offset;
 	reset();
 }
 
@@ -47,8 +49,7 @@ void OMV::reset() {
 	n=0;
 	mean=0;
 	M2=0;
-	minCalc = false;
-	global_samples=0;
+	min=std::numeric_limits<double>::max(); //the highest possible number, so first value will be always stored as min
 }
 
 /*
@@ -62,7 +63,7 @@ void OMV::add(double x) {
     mean = mean + delta/n;
     M2 = M2 + delta*(x - mean);
 
-    if(minCalc && this->min>x) this->min=x;
+    if(this->min>x) this->min=x;
 }
 
 /*
@@ -72,11 +73,14 @@ void OMV::add(double x) {
  */
 
 double OMV::getMean() {
-	if (minCalc)
+	if (minCalc && mean!=0)
 	{
 		return mean-min;
 	}
-	return mean;
+	else
+	{
+		return mean;
+	}
 }
 
 /*
@@ -98,24 +102,11 @@ double OMV::getVariance() {
 double OMV::getMin(){
 	return min;
 }
-/*
- * 		void OMV::setMin(double aMin)
- * 	setta il minimo e attiva il calcolo del min
- *
- */
-void OMV::setMin(double aMin){
-	min=aMin;
-	minCalc=true;
-}
+
 /*
  * double OMV::getSampleNumber()
  */
 double OMV::getSampleNumber(){
 	return n;
 }
-void OMV::addSample(){
-	global_samples++;
-}
-int OMV::getGlobalSampleNumber(){
-	return global_samples;
-}
+
