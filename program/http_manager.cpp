@@ -177,6 +177,77 @@ int http_post(const string url, const string json_in, string &json_out)
 	 return STATUS;
 }
 
+
+int http_get_auth(const string url, string& json)
+{
+
+    int STATUS;
+
+    CURL *curl_handle;
+    CURLcode res;
+    //le credenziali di accesso verranno spostate da qui
+    const string username("gruppo19");
+    const string password("8s6GTYlm7Y");
+
+    struct MemoryStruct chunk;
+
+    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+    chunk.size = 0;    /* no data at this point */
+
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    /* init the curl session */
+    curl_handle = curl_easy_init();
+
+    /* set URL to get */
+    curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
+
+    /* set HTTP DIGEST AUTHENTICATION property */
+
+    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, (username+":"+password).c_str());
+
+    curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
+
+    /* no progress meter please */
+    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+
+    /* send all data to this function  */
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+
+    /* write on memory storage variable  */
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+
+    cerr<<"GET-AUTH operation...";
+    /* get it! */
+    res=curl_easy_perform(curl_handle);
+    cerr<<" Done! Result was";
+
+    // Check for errors
+    if(res != CURLE_OK)
+    {
+    	STATUS=ERROR;
+    	cerr<<" error."<<endl;
+    }
+    else
+    {
+	json.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+    	STATUS=NICE;
+    	cerr<<" success."<<endl;    	
+    }
+
+
+    /* cleanup curl stuff */
+    if(chunk.memory)
+    free(chunk.memory);
+    curl_easy_cleanup(curl_handle);
+
+
+    return STATUS;
+
+}
+
+
 int http_post_auth(const string url, const string json_in, string &json_out)
 {
 
@@ -265,74 +336,5 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 	 }
 
 	 return STATUS;
-
-}
-
-int http_get_auth(const string url, string& json)
-{
-
-    int STATUS;
-
-    CURL *curl_handle;
-    CURLcode res;
-    //le credenziali di accesso verranno spostate da qui
-    const string username("gruppo19");
-    const string password("8s6GTYlm7Y");
-
-    struct MemoryStruct chunk;
-
-    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
-
-
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    /* init the curl session */
-    curl_handle = curl_easy_init();
-
-    /* set URL to get */
-    curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
-
-    /* set HTTP DIGEST AUTHENTICATION property */
-
-    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, (username+":"+password).c_str());
-
-    curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
-
-    /* no progress meter please */
-    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-
-    /* send all data to this function  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-    /* write on memory storage variable  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-
-    cerr<<"GET-AUTH operation...";
-    /* get it! */
-    res=curl_easy_perform(curl_handle);
-    cerr<<" Done! Result was";
-
-    // Check for errors
-    if(res != CURLE_OK)
-    {
-    	STATUS=ERROR;
-    	cerr<<" error."<<endl;
-    }
-    else
-    {
-	json.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
-    	STATUS=NICE;
-    	cerr<<" success."<<endl;    	
-    }
-
-
-    /* cleanup curl stuff */
-    if(chunk.memory)
-    free(chunk.memory);
-    curl_easy_cleanup(curl_handle);
-
-
-    return STATUS;
 
 }
