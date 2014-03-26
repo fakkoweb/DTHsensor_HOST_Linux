@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     
     
     
-    /* LOG FILE MANUAL REDIRECTION
+    // LOG FILE MANUAL REDIRECTION
     ofstream log_out("log"+getTimeStamp()+".txt",ios::out | ios::app);			//Nuovo oggetto stream in uscita (associato al file di log)
     //if(argc<2 || strcmp("-v",argv[1])!=0)
     //{
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 	    cerr<<"\n\n ----- LOG "<<getTimeStamp()<<" -----"<<endl;
 	    //cout.rdbuf(main_window);
     //}
-    */
+    
     
     /* PUT THIS HERE FOR LOG DELAY FILE CREATION
     std::chrono::duration< int, std::milli > new_log_delay;

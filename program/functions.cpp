@@ -144,7 +144,7 @@ int register_device( const string device_mac )
     string server_response_s;
 
     //Check if the device already exists:
-    esito=http_get_auth("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac, server_response_s);
+    esito=http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac, server_response_s);
     
     //check_registration= check_registration.substr(0,16);
     size_t found = server_response_s.find("mac="+device_mac);
@@ -159,7 +159,7 @@ int register_device( const string device_mac )
 	      	reg_device["username"]="gruppo19";
 	      	reg_device["raspb_wifi_mac"]=device_mac;
 	       	cout<<reg_device<<endl;
-	      	esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), server_response_s);
+	      	esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/", reg_device.toStyledString(), server_response_s);
 	       	cerr<<"\nRISPOSTA SERVER SU REGISTER DEVICE:\n"<<server_response_s<<endl;
 	     }
 	     else					//YES -- server returned a full json describing our device
@@ -188,7 +188,7 @@ int register_sensors( const string device_mac, const Json::Value& sd)
 	string registered_sensors_s;
 
 	// check the list of registered sensors:
-   	http_get_auth("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac+"/feeds", registered_sensors_s);
+   	http_get("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac+"/feeds", registered_sensors_s);
    	//cout<<registered_sensors_s<<endl;
 	
 	esito = register_sensor(device_mac,sd,registered_sensors_s);
@@ -219,7 +219,7 @@ int register_sensor( const string device_mac, const Json::Value& node, const str
       			new_sensor["tags"]=node.get("tags",0).asString();
       			new_sensor["local_feed_id"]=node.get("lfid",0).asInt();
 			new_sensor["raspb_wifi_mac"]=device_mac;
-			esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac+"/feeds", new_sensor.toStyledString(), server_response_s);
+			esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/devices/"+device_mac+"/feeds", new_sensor.toStyledString(), server_response_s);
     			cerr<<"\nRISPOSTA SERVER SU REGISTER SENSOR "<<node.get("lfid",0).asString()<<":\n"<<server_response_s<<endl;
 		}
 		else							//YES
@@ -469,40 +469,47 @@ int post_report(const string from_filename, const string device_mac, const map<i
 		}
 		*/
 		
-		if( num_extracted_lines < 50 )
+		
+		//Extract only a maximum number of measure lines per report sent!
+		if( num_extracted_lines < 1000 )//IF current number of lines extracted is less than N
 		{
-			if( reader.parse(report_line,report) )
+			if( reader.parse(report_line,report) )	//PARSE current line from input_file and CHECK for error
 			{
-				report_array.append(report);
+				report_array.append(report);		//NO ERROR: append the parsed line (json format) to report ready to be sent
 			}
 			else
 			{
-				out_report_file<<report_line<<"\n";
+				out_report_file<<report_line<<"\n";	//ERROR: store the line AS IS to output_file (next report I will try again)
 			}
 		}
-		else
+		else				//ELSE (we have already parsed at least N lines)
 		{
-			out_report_file<<report_line<<"\n";
+			out_report_file<<report_line<<"\n";	//ALWAYS store the extracted line to output_file (next report I will fetch other N lines)
 		}
 		
-		num_extracted_lines++;
+		num_extracted_lines++;		//Increment number of lines computed
 
 	}	
 	in_report_file.close();
 	out_report_file.close();
 	
 	
-	if(num_extracted_lines > 0)
+	if(num_extracted_lines > 0)	//check if input_file was not empty..
 	{
 		//Declaring COMPLETE Json
 		Json::Value json_post;
 	
 		//Assembling the "position" part: geolocalization data
 		Json::Value position;
+			//Getting milliseconds since Epoch and converting it to string...
+			stringstream textconverter;
+			std::chrono::time_point<std::chrono::system_clock> this_time;
+			this_time = std::chrono::system_clock::now();
+			textconverter << std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
 		position["kind"]="latitude#location";
-		position["timestampMs"]="1274057512199";
-		position["latitude"]="37.74647";
-		position["longitude"]="122";
+		position["timestampMs"]= textconverter.str();
+		position["latitude"]="45.067616";
+		position["longitude"]="7.622660";
 		position["accuracy"]="5000";
 		position["height_meters"]="0";
 	
@@ -513,8 +520,8 @@ int post_report(const string from_filename, const string device_mac, const map<i
 		json_post["raspb_wifi_mac"]=device_mac;
 
 		//Just one HTTP POST call to the Server for all report selected
-		esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
-		cerr<<"\nRISPOSTA SERVER SU POST REPORT DI "<<getTimeStamp()<<":\n"<<server_response_s<<endl;
+		esito=http_post("http://crowdsensing.ismb.it/SC/rest/test-apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
+		cout<<"\nRISPOSTA SERVER SU POST REPORT DI "<<getTimeStamp()<<":\n"<<server_response_s<<endl;
 		//cout<<json_post<<endl;
 
 		//.. and If http_post is ok --> delete the old file and rename the new as old
