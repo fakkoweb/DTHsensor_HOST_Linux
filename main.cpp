@@ -6,11 +6,13 @@
 //Include standard functions
 #include <cstdlib>
 #include <cstdio>
+//#include <fstream>
 #include <iostream>
 #include <ctime>
 #include <map>
 #include <list>
 #include <future>
+//#include <chrono>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -82,7 +84,9 @@ int main(int argc, char* argv[])
     cout<<"Librerie inizializzate"<<endl;
     
     
-    ofstream log_out("log.txt",ios::out | ios::app);					//Nuovo oggetto stream in uscita (associato al file di log)
+    
+    /* LOG FILE MANUAL REDIRECTION
+    ofstream log_out("log"+getTimeStamp()+".txt",ios::out | ios::app);			//Nuovo oggetto stream in uscita (associato al file di log)
     //if(argc<2 || strcmp("-v",argv[1])!=0)
     //{
     	    cout<<"Log di cerr redirezionato su log.txt"<<endl;
@@ -91,7 +95,27 @@ int main(int argc, char* argv[])
 	    cerr<<"\n\n ----- LOG "<<getTimeStamp()<<" -----"<<endl;
 	    //cout.rdbuf(main_window);
     //}
-
+    */
+    
+    /* PUT THIS HERE FOR LOG DELAY FILE CREATION
+    std::chrono::duration< int, std::milli > new_log_delay;
+    std::chrono::steady_clock::time_point new_log_created = std::chrono::steady_clock::now();
+    */
+    
+    		/* THEN PUT THIS IN LOOP
+		if (std::chrono::steady_clock::now() <= (new_log_created+new_log_delay) )
+		{
+			//delay_elapsed = false;
+		}
+		else
+		{
+			//delay_elapsed = true;
+			log_out.close();
+			//remove(from_filename.c_str());
+			log_out.open("log"+getTimeStamp()+".txt",ios::out | ios::app);
+			new_log_created = std::chrono::steady_clock::now();
+		}
+		*/
 
    
     
@@ -198,6 +222,8 @@ int main(int argc, char* argv[])
 	while(1)
 	{
 				
+
+
 
 		
 		///////////////////////////////////////////////////////
