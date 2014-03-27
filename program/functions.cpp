@@ -83,7 +83,7 @@ Json::Value load_params(const string jsonfile)
 	    cout<<"Humidity sample rate (sec): "<< check_not_zero( loaded_params["sensors"]["humid"].get("REFRESH_RATE",0).asInt() ) <<endl;
 	    cout<<"Dust sample rate (sec): "<< check_not_zero( loaded_params["sensors"]["dust"].get("REFRESH_RATE",0).asInt() ) <<endl;
 	    cout<<"Server report interval (min): "<< check_not_zero( loaded_params["report"].get("INTERVAL",0).asInt() ) <<endl;
-	    cout<<"\tEach sensor will work on N°samples = ("<< loaded_params["report"].get("INTERVAL",0).asInt() <<"*60s)/sample_rate"<<endl;
+	    cout<<"\tEach sensor will work on num.samples = ("<< loaded_params["report"].get("INTERVAL",0).asInt() <<"*60s)/sample_rate"<<endl;
     	    cout<<"Acceptable report validity (%): "<< check_not_zero( loaded_params["report"].get("VALIDITY_PERCENTAGE_THRESHOLD",0).asInt() ) <<"%"<<endl;
 
 	    if(zero_found)
@@ -114,7 +114,7 @@ bool registering(const string device_mac, const Json::Value& sensors)
 		cout<<"NET: Avvio routine di annuncio device al server..."<<endl;
 		dev_reg_status = register_device(device_mac);
 		if(dev_reg_status==NICE) cout<<"NET NICE: Device registrata."<<endl;
-		else if(dev_reg_status==ABORTED) cout<<"NET ABORT: Device già registrata."<<endl;
+		else if(dev_reg_status==ABORTED) cout<<"NET ABORT: Device gia' registrata."<<endl;
 		else cout<<"NET ERROR: Problemi di comunicazione con il server! Operazione rimandata."<<endl;
 	}
 	//Registrazione sensori (solo se la device è registrata)
@@ -126,7 +126,7 @@ bool registering(const string device_mac, const Json::Value& sensors)
 		//(2) ATTENZIONE scambiare gli lfid tra loro mischierebbe le misure al server!
 		sens_reg_status = register_sensors(device_mac, sensors);
 		if(sens_reg_status==NICE) cout<<"NET NICE: Uno/più nuovi sensori registrati."<<endl;
-		else if(sens_reg_status==ABORTED) cout<<"NET ABORT: Tutti i sensori sono già registrati."<<endl;
+		else if(sens_reg_status==ABORTED) cout<<"NET ABORT: Tutti i sensori sono gia' registrati."<<endl;
 		else cout<<"NET ERROR: Problemi di comunicazione con il server! Operazione rimandata."<<endl;
 	}
 	
@@ -153,7 +153,7 @@ int register_device( const string device_mac )
     {
 	    if (found!=std::string::npos)		//NO -- server returned a mac=x:x:x:x:x:x string because it is missing
 	    {
-	    	cerr<<"Device con MAC cercato non trovato sul server. Il device sarà registrato."<<endl; 
+	    	cerr<<"Device con MAC cercato non trovato sul server. Il device sara' registrato."<<endl; 
 	    	Json::Value reg_device;
 	       	reg_device["id"]=0;
 	      	reg_device["username"]="gruppo19";
@@ -164,7 +164,7 @@ int register_device( const string device_mac )
 	     }
 	     else					//YES -- server returned a full json describing our device
 	     {
-	     	cerr<<"Il device è già registrato!"<<endl;
+	     	cerr<<"Il device e' già registrato!"<<endl;
 	     	esito = ABORTED;
 	     }
      }
@@ -511,7 +511,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 		position["latitude"]="45.067616";
 		position["longitude"]="7.622660";
 		position["accuracy"]="5000";
-		position["height_meters"]="0";
+		position["height_meters"]="240";
 	
 		//Assembling COMPLETE Json
 		json_post["position"]=position;
