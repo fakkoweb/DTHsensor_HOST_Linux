@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
     
     
     // LOG FILE MANUAL REDIRECTION
+    /*
     ofstream log_out("log"+getTimeStamp()+".txt",ios::out | ios::app);			//Nuovo oggetto stream in uscita (associato al file di log)
     //if(argc<2 || strcmp("-v",argv[1])!=0)
     //{
@@ -95,7 +96,7 @@ int main(int argc, char* argv[])
 	    cerr<<"\n\n ----- LOG "<<getTimeStamp()<<" -----"<<endl;
 	    //cout.rdbuf(main_window);
     //}
-    
+    */
     
     /* PUT THIS HERE FOR LOG DELAY FILE CREATION
     std::chrono::duration< int, std::milli > new_log_delay;
@@ -306,14 +307,15 @@ int main(int argc, char* argv[])
 			cout<<"Misure interne:"<<endl;
 			for (row=IntSensors.begin(); row!=IntSensors.end(); row++)
 			{	
-				cout<<"| Average:"<< row->second->get_statistic().average << " Variance:" << row->second->get_statistic().variance << endl;
+				cout<<"| Sensor Local Id: "<< row->first <<endl;
+				cout<<"| Average: "<< row->second->get_statistic().average << " Variance: " << row->second->get_statistic().variance << endl;
 				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
 				cout<<"| Statistic has to be considered as ";
 				if (row->second->get_statistic().valid){
-					cout << "VALID";
+					cout << "VALID.";
 				}
 				else{
-					cout << "INVALID";
+					cout << "INVALID.";
 				}
 
 				cout << endl;
@@ -324,14 +326,15 @@ int main(int argc, char* argv[])
 			cout<<"Misure esterne:"<<endl;
 			for (row=ExtSensors.begin(); row!=ExtSensors.end(); row++)
 			{
-				cout<<"| Average:"<< row->second->get_statistic().average << " Variance:" << row->second->get_statistic().variance << endl;
+				cout<<"| Sensor Local Id: "<< row->first <<endl;
+				cout<<"| Average: "<< row->second->get_statistic().average << " Variance: " << row->second->get_statistic().variance << endl;
 				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
 				cout<<"| Statistic has to be considered as ";
 				if (row->second->get_statistic().valid){
-					cout << "valid";
+					cout << "VALID.";
 				}
 				else{
-					cout << "invalid";
+					cout << "INVALID.";
 				}
 
 				cout << endl;
