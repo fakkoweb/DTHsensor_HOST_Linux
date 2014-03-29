@@ -162,8 +162,16 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			//Notify that new statistics are now available
 			new_statistic.notify_all();
 			
-			//State that new last request was NOW
-			last_avg_request = std::chrono::steady_clock::now();
+			//FORCE LOGIC TIME SYNC:
+			//Since real parallelism is not always possible and therefore not guaranteed, it is bad to set time on our own
+			//THIS:
+			//
+			//	last_avg_request = std::chrono::steady_clock::now();
+			//
+			//IS WRONG since it would set a new time in this instant: now() WON'T BE PRECISELY last_avg_request + avg_delay (what user wants), BUT MORE (SO overhead)!!
+			//Since small delays sum on time, it is better to state that new last request happened at time last_avg_request + avg_delay:
+			last_avg_request = last_avg_request + avg_delay;
+			//this way, the sensor is FORCED to be ALWAYS ON TIME in respect to start_time set in PLUGGING PHASE, MINIMIZING DELAY!!
 
 		}
 
@@ -215,7 +223,7 @@ uint16_t Sensor::get_raw()
 	return measure;
 }
 
-void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board)
+void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::steady_clock::time_point& start_time)
 {
 
 	//Reset board and also the thread if present
@@ -227,9 +235,9 @@ void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board)
         
         //---------------------------------------------------------------
         //Set new last_avg_request initialization: is done only when driver is first attached!! So that:
-        // - if autorefresh is true, thread will start calculating on-line average and will reset it when avg_delay has passed since NOW
-        // - if autorefresh is false, the average can still make sense if get_measure() and get_raw_measure() are called periodically bu user
-       	last_avg_request = std::chrono::steady_clock::now();
+        // - if autorefresh is true, thread will start calculating on-line average and WILL RESET IT as soon as "avg_delay" minutes have passed since start_time
+        // - if autorefresh is false, average is still calculated but it makes sense only if get_measure() or get_raw_measure() are called periodically by user
+       	last_avg_request = start_time;
         
         
         //Start a new autosampling thread

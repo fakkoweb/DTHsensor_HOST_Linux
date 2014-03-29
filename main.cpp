@@ -204,12 +204,14 @@ int main(int argc, char* argv[])
     cout<<"1.."<<endl;
     p_sleep(1000);
     
-    //Allacciamento dei sensori ai driver virtuali (alias board)
-    exttemp.plug_to(ext_device);
-    exthumid.plug_to(ext_device);
-    extdust.plug_to(ext_device);
-    inttemp.plug_to(int_device);
-    inthumid.plug_to(int_device);
+    //Allacciamento dei sensori ai driver virtuali (alias board) con un time_point comune
+    std::chrono::steady_clock::time_point now;
+    exttemp.plug_to(ext_device,now);
+    exthumid.plug_to(ext_device,now);
+    extdust.plug_to(ext_device,now);
+    inttemp.plug_to(int_device,now);
+    inthumid.plug_to(int_device,now);
+    //Il parametro "now" serve a dare un riferimento temporale unico tra i sensori, eliminando così il jitter tra di essi
     cout<<"Sensori allacciati ai driver. Letture iniziate."<<endl;
      
     

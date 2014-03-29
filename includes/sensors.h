@@ -106,7 +106,9 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
 								//	- necessitano di una frequenza di campionamento elevata
 								//	- soffrono di deviazioni FISICHE nel tempo dovute ad usura od ostrusioni.                                                                                            			
 								//La più alta misura in un intervallo non viene riportata in maniera assoluta, ma relativa alla più bassa misura di quell'intervallo!
-        ~Sensor();	//safe														
+        
+        ~Sensor();	//safe
+        												
         
         
         //METODI DI ACCESSO PRIMARI (gestiscono i lock)
@@ -134,19 +136,28 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         	lock_guard<mutex> access(rw);
         	cout<<stype()<<":"<<endl<<"Media: "<<statistic.average<<" "<<sunits()<<endl<<"Varianza: "<<statistic.variance<<" "<<sunits()<<endl;
         };
-        void plug_to(const Driver<measure_struct,uint16_t>& new_board);//Associa un driver (e la sua request()) al sensore virtuale da chiamare a ogni sample() --> //safe
-	virtual string getTimeStamp()	//IN REALTA' INUTILE..
-		{
-			time_t now;
-   			time(&now);
-   			char buf[sizeof "2011-10-08T07:07:09Z"];
-    			strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
- 			stringstream ss;
- 			string s;
- 			ss<<buf;
- 			ss>>s;
- 			return s;
-		}
+        
+        
+        // PLUGGING / ATTACHING PHASE: lega il Sensor ad un Driver e ne abilita il processo di lettura. VA CHIAMATO PER AVVIARE IL SENSORE!
+        
+        // -- WEAK TIME SYNC version --
+       	//This allows to the sample() of the Sensor to call request() of the attached Driver
+        void plug_to(const Driver<measure_struct,uint16_t>& new_board)
+        {
+        	plug_to( new_board, std::chrono::steady_clock::now() );	//The logic time instant where sampling begins is set HERE as now()
+        };
+        // -- STRONG TIME SYNC version --
+	//This constructor allows you to set a "start_time" manually: it can be before or after the PLUG_TO() PHASE!
+	//Extremely useful if you want MORE Sensors TO BE IN SYNC with each other, and to AVOID JITTER!!
+	//EXPLANATION:
+	//It is impossible to start execution of a Sensor at a precise time (due to SO Scheduling, non-parallelism, etc.)
+	//BUT we can fix a COMMON REFERENCE TIME POINT BETWEEN MORE Sensors.
+	//Knowing also the INTERVAL, Sensors won't wake up all at the same instant or at the specified time...
+	//but they will all keep up with themselves in the specified time window(s)!!
+	//ALERT:
+	//It is also possible to set up a manual "start_time" at plug_to() call. If you do, doing it here is useless.
+	//By default, if no "start_time" is ever set, a now() will be called ALWAYS at plug_to phase!
+        void plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::steady_clock::time_point& start_time); //As above, but you set the start_point manually
 
 };
 
