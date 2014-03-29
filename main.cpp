@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
 		//	- fase di post report fallita: ready_to_post è resettato a FALSE -> riavvio fase di registrazione
 		//L'algoritmo è ottimizzato per effettuare le operazioni di rete DURANTE LE ATTESE delle statistiche successive.
 		//Il fallimento della rete non pregiudica il corretto salvataggio delle statistiche in locale!!
-		
+		/*
 		if(!ready_to_post)
 		{
 			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
 			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
 			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
-		
+		*/
 		//Registering_thread = new thread (registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);	// post_report() bufferizza SEMPRE le misure ma le manda al server solo se ready_to_post è TRUE
 		
 
@@ -351,13 +351,13 @@ int main(int argc, char* argv[])
 		/////////////////////////////////////////////////////////////
 		//SALVATAGGIO STATISTICHE IN LOCALE
 		/////////////////////////////////////////////////////////////
-		/*
+		
 		cout<<"MAIN: Avvio prelievo e salvataggio locale delle statistiche..."<<endl;
 		if( save_report("awaiting_reports.txt", AllSensors) != NICE )
 			cout<<"MAIN: Salvataggio fallito. Statistiche perdute."<<endl;
 		else
 			cout<<"MAIN: Salvataggio completato."<<endl;
-		*/
+		
 		
 				
 		
@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
 		//	   quindi in ogni caso andrebbe almeno riverificata la validità del server stesso;
 		//	2) rifare la verifica evita inutili chiamate alla post_report, la quale effettua SEMPRE un accesso
 		//	   e caricamento in memoria di TUTTE le righe salvate e solo POI tenta di mandarle.
-		
+		/*
 		if( is_ready(server_sync_status) )
 		{
 			cout<<"MAIN: Il thread di rete ha concluso l'esecuzione.. ";
@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
 			if(ready_to_post) cout<<"e non ha riportato problemi."<<endl;
 			else cout<<"e ha riscontrato problemi."<<endl;
 		}
-		
+		*/
 		
 		/* OLD METHOD
 		if( ready_to_post )

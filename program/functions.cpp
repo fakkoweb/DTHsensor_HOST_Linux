@@ -342,7 +342,7 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 
 	//Open file
     	cout<<"||/ Apro file di buffer..."<<endl;
-    	report_file.open (to_filename, ios::out | ios::app | ios::binary);
+    	report_file.open (to_filename, ios::out | ios::app);
 
 	//Check file opening
     	std::map<int, Sensor*>::const_iterator row;
@@ -441,16 +441,20 @@ int post_report(const string from_filename, const string device_mac, const map<i
 
 	//Open File 
 	in_report_file.open(from_filename, ios::in );
-	out_report_file.open("new_"+from_filename, ios::out);
 	if(!in_report_file.is_open())
 	{
 		cout<<"||/ CRITICAL ERROR: Could not find source buffer file!!"<<endl;
 		return esito;
 	}
-	if(!out_report_file.is_open())
+	else
 	{
-		cout<<"||/ CRITICAL ERROR: Could not create destination buffer file!!"<<endl;
-		return esito;	
+		//Open destination file for reports not being sent now (if there are too many or with problems)
+		out_report_file.open("new_"+from_filename, ios::out);
+		if(!out_report_file.is_open())
+		{
+			cout<<"||/ CRITICAL ERROR: Could not create destination buffer file!!"<<endl;
+			return esito;
+		}
 	}
 
 	//Parsing saved reports from input report file
@@ -501,7 +505,6 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	
 	if(num_extracted_lines > 0)	//check if input_file was not empty..
 	{
-		cout<<"NUM EXTRACTED LINES > 0 ??"<<endl;
 		//Declaring COMPLETE Json
 		Json::Value json_post;
 	
