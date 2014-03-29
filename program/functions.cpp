@@ -442,10 +442,15 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	//Open File 
 	in_report_file.open(from_filename, ios::in );
 	out_report_file.open("new_"+from_filename, ios::out);
-	if(!in_report_file.is_open() && !out_report_file.is_open())
+	if(!in_report_file.is_open())
 	{
-		cout<<"||/ CRITICAL ERROR: Could not find buffer file!!"<<endl;
+		cout<<"||/ CRITICAL ERROR: Could not find source buffer file!!"<<endl;
 		return esito;
+	}
+	if(!out_report_file.is_open())
+	{
+		cout<<"||/ CRITICAL ERROR: Could not create destination buffer file!!"<<endl;
+		return esito;	
 	}
 
 	//Parsing saved reports from input report file
@@ -496,6 +501,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	
 	if(num_extracted_lines > 0)	//check if input_file was not empty..
 	{
+		cout<<"NUM EXTRACTED LINES > 0 ??"<<endl;
 		//Declaring COMPLETE Json
 		Json::Value json_post;
 	
