@@ -524,7 +524,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 	
 		//Assembling COMPLETE Json
 		json_post["position"]=position;
-		json_post["sensor_values"]=report_array;
+		json_post["sensor_values"]=report_array;	//attaching the array of reports fetched from file
 		json_post["send_timestamp"]=getTimeStamp();
 		json_post["raspb_wifi_mac"]=device_mac;
 

@@ -1,9 +1,8 @@
 
 #include "http_manager.h"
 
-#define ERROR	1
-#define NICE	0
-#define ABORTED	-1
+
+
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -36,214 +35,218 @@ size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
   return realsize;
 }
 
-int http_get(const string url, string& json)
+
+
+int http_get(const string url, string& json_out)
 {
 
-    CURL *curl_handle;
-    CURLcode res;
-    int STATUS=ERROR;
+	// Return status variable
+	int STATUS=ERROR;
+	    
+	// Set the data struct to send
+	struct MemoryStruct chunk;
+	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+	chunk.size = 0;    /* no data at this point */
 
-    struct MemoryStruct chunk;
+	// Set Curl handle and result
+	CURL* easyhandle;
+	CURLcode res;
 
-    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
+	// init the curl session
+	easyhandle = curl_easy_init();
 
+	if(easyhandle)
+	{
 
-    curl_global_init(CURL_GLOBAL_ALL);
+		/* set URL to get */
+		curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 
-    /* init the curl session */
-    curl_handle = curl_easy_init();
+		/* no progress meter please */
+		curl_easy_setopt(easyhandle, CURLOPT_NOPROGRESS, 1L);
 
-    /* set URL to get */
-    curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
+		/* send all data to this function  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
-    /* no progress meter please */
-    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-
-    /* send all data to this function  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-    /* write on memory storage variable  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-
-    cerr<<"GET operation...";
-    /* get it! */
-    res=curl_easy_perform(curl_handle);
-    cerr<<" Done! Result was";
-
-    // Check for errors
-    if(res != CURLE_OK)
-    {
-    	STATUS=ERROR;
-    	cerr<<" error."<<endl;
-    }
-    else
-    {
-	json.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
-    	STATUS=NICE;
-    	cerr<<" success."<<endl;    	
-    }
+		/* write on memory storage variable  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
 
 
-    /* cleanup curl stuff */
-    if(chunk.memory)
-    free(chunk.memory);
-    curl_easy_cleanup(curl_handle);
+		cerr<<"POST operation...";
+		/* get it! */
+		res=curl_easy_perform(easyhandle);
+		cerr<<" Done! Result was";
 
+		// Check for errors
+		if(res != CURLE_OK)
+		{
+			STATUS=ERROR;
+			cerr<<" error."<<endl;
+		}
+		else
+		{
+			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			STATUS=NICE;
+			cerr<<" success."<<endl;
+		}
 
-    return STATUS;
+	}
+
+	// Deallocation and clean up!
+	if(chunk.memory!=NULL) free(chunk.memory);	// free buffer memory
+	curl_easy_cleanup(easyhandle);			// free libcurl resources
+	
+	return STATUS;
 
 }
+
 
 int http_post(const string url, const string json_in, string &json_out)
 {
+	// Return status variable
+	int STATUS=ERROR;
+	    
+	// Set the data struct to send
+	struct MemoryStruct chunk;
+	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+	chunk.size = 0;    /* no data at this point */
 
-    struct MemoryStruct chunk;
-	int STATUS;
-
-    //FILE*LocalFile=fopen("myHTTP_log.txt","w");
-
-    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
-
-    CURL* easyhandle;
-	//FILE* json;
+	// Set Curl handle and result
+	CURL* easyhandle;
 	CURLcode res;
-    //void* dataptr=NULL;
 
-    // Set a list of custom headers
+	// Set a list of custom headers
 	struct curl_slist* headers=NULL;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
+	
+	// init the curl session
+	easyhandle = curl_easy_init();
 
-	 // init the curl session
-	 easyhandle = curl_easy_init();
+	if(easyhandle)
+	{
 
-	 if(easyhandle)
-	 {
+		//c_str() converts a string type to a const char*
+		// set URL to post
+		curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 
-        	 //c_str() converts a string type to a const char*
-		 // set URL to post
-		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
+		// set binary data to post
+		curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json_in.data() );
 
-		 // set binary data to post
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json_in.data() );
+		// set the size of the postfields data (-1 means "use strlen() to calculate it)
+		curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, json_in.size());
 
-		 // set the size of the postfields data (-1 means "use strlen() to calculate it)
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, json_in.size());
-
-		 // pass our list of custom made headers
-		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
+		// pass our list of custom made headers
+		curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
 		
-		 //to manage HTTP ERRORS
-         curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
-         curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
+		//to manage HTTP ERRORS
+		curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+		curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
 
-         //curl_easy_setopt(easyhandle, CURLOPT_STDERR, LocalFile );
+		//curl_easy_setopt(easyhandle, CURLOPT_STDERR, LocalFile );
 
-        /* send all data to this function  */
-        curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+		/* send all data to this function  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
-        /* write on memory storage variable  */
-        curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
+		/* write on memory storage variable  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
 
 
-	    cerr<<"POST operation...";
-	    /* get it! */
-	    res=curl_easy_perform(easyhandle);
-	    cerr<<" Done! Result was";
+		cerr<<"POST operation...";
+		/* get it! */
+		res=curl_easy_perform(easyhandle);
+		cerr<<" Done! Result was";
 
-    // Check for errors
-    if(res != CURLE_OK)
-    {
-    	STATUS=ERROR;
-    	cerr<<" error."<<endl;
-    }
-    else
-    {
-	 json_out.assign(chunk.memory);
-    	STATUS=NICE;
-    	cerr<<" success."<<endl;    	
-    }
-         
-       // json.out.assign(STATUS);
+		// Check for errors
+		if(res != CURLE_OK)
+		{
+			STATUS=ERROR;
+			cerr<<" error."<<endl;
+		}
+		else
+		{
+			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			STATUS=NICE;
+			cerr<<" success."<<endl;
+		}
 
-		 curl_slist_free_all(headers); // free the header list
-		
-		 if(chunk.memory)
-      		free(chunk.memory);
+	}
 
-	 }
+	// Deallocation and clean up!
+	if(chunk.memory!=NULL) free(chunk.memory);	// free buffer memory
+	curl_slist_free_all(headers); 			// free the custom headers list
+	curl_easy_cleanup(easyhandle);			// free libcurl resources
+	
+	return STATUS;
 
-	 return STATUS;
 }
 
 
-int http_get_auth(const string url, string& json)
+int http_get_auth(const string url, string& json_out)
 {
 
-    int STATUS;
+	// Return status variable
+	int STATUS=ERROR;
+	    
+	// Set the data struct to send
+	struct MemoryStruct chunk;
+	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+	chunk.size = 0;    /* no data at this point */
 
-    CURL *curl_handle;
-    CURLcode res;
-    //le credenziali di accesso verranno spostate da qui
-    const string username("gruppo19");
-    const string password("8s6GTYlm7Y");
+	// Set Curl handle and result
+	CURL* easyhandle;
+	CURLcode res;
+	
+	// Set Access Credentials
+	const string username("gruppo19");
+	const string password("8s6GTYlm7Y");
 
-    struct MemoryStruct chunk;
+	// init the curl session
+	easyhandle = curl_easy_init();
 
-    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
+	if(easyhandle)
+	{
 
+		/* set URL to get */
+		curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 
-    curl_global_init(CURL_GLOBAL_ALL);
+		/* set HTTP DIGEST AUTHENTICATION property */
+		curl_easy_setopt(easyhandle, CURLOPT_USERPWD, (username+":"+password).c_str());
+		curl_easy_setopt(easyhandle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
 
-    /* init the curl session */
-    curl_handle = curl_easy_init();
+		/* no progress meter please */
+		curl_easy_setopt(easyhandle, CURLOPT_NOPROGRESS, 1L);
 
-    /* set URL to get */
-    curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str() );
+		/* send all data to this function  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
-    /* set HTTP DIGEST AUTHENTICATION property */
-
-    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, (username+":"+password).c_str());
-
-    curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
-
-    /* no progress meter please */
-    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-
-    /* send all data to this function  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-    /* write on memory storage variable  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-
-    cerr<<"GET-AUTH operation...";
-    /* get it! */
-    res=curl_easy_perform(curl_handle);
-    cerr<<" Done! Result was";
-
-    // Check for errors
-    if(res != CURLE_OK)
-    {
-    	STATUS=ERROR;
-    	cerr<<" error."<<endl;
-    }
-    else
-    {
-	json.assign(chunk.memory);    //warning: it uses strlen() so it must be \0 terminated! (see write_callback)
-    	STATUS=NICE;
-    	cerr<<" success."<<endl;    	
-    }
+		/* write on memory storage variable  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
 
 
-    /* cleanup curl stuff */
-    if(chunk.memory)
-    free(chunk.memory);
-    curl_easy_cleanup(curl_handle);
+		cerr<<"POST operation...";
+		/* get it! */
+		res=curl_easy_perform(easyhandle);
+		cerr<<" Done! Result was";
 
+		// Check for errors
+		if(res != CURLE_OK)
+		{
+			STATUS=ERROR;
+			cerr<<" error."<<endl;
+		}
+		else
+		{
+			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			STATUS=NICE;
+			cerr<<" success."<<endl;
+		}
 
-    return STATUS;
+	}
+
+	// Deallocation and clean up!
+	if(chunk.memory!=NULL) free(chunk.memory);	// free buffer memory
+	curl_easy_cleanup(easyhandle);			// free libcurl resources
+	
+	return STATUS;
 
 }
 
@@ -251,90 +254,90 @@ int http_get_auth(const string url, string& json)
 int http_post_auth(const string url, const string json_in, string &json_out)
 {
 
+	// Return status variable
+	int STATUS=ERROR;
+	    
+	// Set the data struct to send
+	struct MemoryStruct chunk;
+	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+	chunk.size = 0;    /* no data at this point */
 
-    struct MemoryStruct chunk;
-	
-    int STATUS;	
-
-    //le credenziali di accesso verranno spostate da qui
-    const string username("gruppo19");
-    const string password("8s6GTYlm7Y");
-
-    chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
-
+	// Set Curl handle and result
 	CURL* easyhandle;
-	//FILE* json;
 	CURLcode res;
-    //void* dataptr=NULL;
 
-    // Set a list of custom headers
+	// Set a list of custom headers
 	struct curl_slist* headers=NULL;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 
-	 // init the curl session
-	 easyhandle = curl_easy_init();
+	// Set Access Credentials
+	const string username("gruppo19");
+	const string password("8s6GTYlm7Y");
+	
+	// init the curl session
+	easyhandle = curl_easy_init();
 
-	 if(easyhandle)
-	 {
+	if(easyhandle)
+	{
 
-        //c_str() converts a string type to a const char*
-		 // set URL to post
-		 curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
-
-		 /* set HTTP DIGEST AUTHENTICATION property */
-
-         curl_easy_setopt(easyhandle, CURLOPT_USERPWD, (username+":"+password).c_str());
-
-         curl_easy_setopt(easyhandle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
-
-         //curl_easy_setopt(easyhandle, CURLOPT_CUSTOMREQUEST, "POST");
-
-		 // set binary data to post
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json_in.data() );
-
-		 // set the size of the postfields data (-1 means "use strlen() to calculate it)
-		 curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, json_in.size());
-
-		 // pass our list of custom made headers
-		 curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
-        
-         //to manage HTTP ERRORS
-         curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
-         curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
-
-        /* send all data to this function  */
-        curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-        /* write on memory storage variable  */
-        curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
-
-
-    cerr<<"POST-AUTH operation...";
-    /* get it! */
-    res=curl_easy_perform(easyhandle);
-    cerr<<" Done! Result was";
-
-    // Check for errors
-    if(res != CURLE_OK)
-    {
-    	STATUS=ERROR;
-    	cerr<<" error."<<endl;
-    }
-    else
-    {
-    	STATUS=NICE;
-    	cerr<<" success."<<endl;    	
-    }
-
-
-
-		 curl_slist_free_all(headers); // free the header list
+		// c_str() converts a string type to a const char*
+		// set URL to post
+		curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str() );
 		
-			if(chunk.memory)
-       		 free(chunk.memory);
-	 }
+		/* set HTTP DIGEST AUTHENTICATION property */
+		curl_easy_setopt(easyhandle, CURLOPT_USERPWD, (username+":"+password).c_str());
+		curl_easy_setopt(easyhandle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC|CURLAUTH_DIGEST);
 
-	 return STATUS;
+		// set binary data to post
+		curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDS, json_in.data() );
+
+		// set the size of the postfields data (-1 means "use strlen() to calculate it)
+		curl_easy_setopt(easyhandle, CURLOPT_POSTFIELDSIZE, json_in.size());
+
+		// pass our list of custom made headers
+		curl_easy_setopt(easyhandle, CURLOPT_HTTPHEADER, headers);
+		
+		// to manage HTTP ERRORS
+		curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+		curl_easy_setopt(easyhandle,CURLOPT_FAILONERROR,true);
+
+		// curl_easy_setopt(easyhandle, CURLOPT_STDERR, LocalFile );
+
+		/* send all data to this function  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+
+		/* write on memory storage variable  */
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
+
+
+		cerr<<"POST-AUTH operation...";
+		/* get it! */
+		res=curl_easy_perform(easyhandle);
+		cerr<<" Done! Result was";
+
+		// Check for errors
+		if(res != CURLE_OK)
+		{
+			STATUS=ERROR;
+			cerr<<" error."<<endl;
+		}
+		else
+		{
+			json_out.assign(chunk.memory);
+			STATUS=NICE;
+			cerr<<" success."<<endl;
+		}
+
+	}
+
+	// Deallocation and clean up!
+	if(chunk.memory!=NULL) free(chunk.memory);	// free buffer memory
+	curl_slist_free_all(headers); 			// free the custom headers list
+	curl_easy_cleanup(easyhandle);			// free libcurl resources
+	
+	return STATUS;
 
 }
+
+
+
