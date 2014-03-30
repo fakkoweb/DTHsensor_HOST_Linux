@@ -164,32 +164,30 @@ int main(int argc, char* argv[])
     
     //Creazione dei sensori virtuali
     //Prototipo: Sensor s( sample_rate , interval_for_average , autosample ); -> (millisecondi, minuti, bool)
-    //TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );	 //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
-    //TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
-    //HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
-    //HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
+    TempSensor exttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );	 //Impostiamo il periodo su cui il sensore calcola la media (in minuti)
+    TempSensor inttemp( params["sensors"]["temp"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );     //uguale all'intervallo in cui dobbiamo mandare i report al server.
+    HumidSensor inthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );  //In questo modo, ogni REPORT_INTERVAL, avremo medie e varianze pronte.
+    HumidSensor exthumid( params["sensors"]["humid"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     DustSensor extdust( params["sensors"]["dust"].get("REFRESH_RATE",0).asInt(), params["report"].get("INTERVAL",0).asInt(), true );
     cout<<"Sensori virtuali pronti"<<endl;
 		
     //Indicizzazione locale dei sensori (local_feed_id <-> sensor)
-    /*
     AllSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
     ExtSensors.insert ( new_row ( params["sensors"]["temp"]["ext"].get("lfid",0).asInt(), &exttemp ) );
     
     AllSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
     ExtSensors.insert ( new_row ( params["sensors"]["humid"]["ext"].get("lfid",0).asInt(), &exthumid ) );
-*/
+
     AllSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
     ExtSensors.insert ( new_row ( params["sensors"]["dust"]["ext"].get("lfid",0).asInt(), &extdust ) );
-/*
+
     AllSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
     IntSensors.insert ( new_row ( params["sensors"]["temp"]["int"].get("lfid",0).asInt(), &inttemp ) );
 	
     AllSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
     IntSensors.insert ( new_row ( params["sensors"]["humid"]["int"].get("lfid",0).asInt(), &inthumid ) );
-    */
     //N.B. non è importante come sono posizionati i sensori nella map:
-    //ogni sensore è localmente identificato e accessibile dal proprio local_feed_id!
+    //ogni sensore è localmente identificato e accessibile tramite il proprio local_feed_id!
 
     //Display indice dei sensori allocati
     cout<<"-- Sensori disponibili --"<<endl;
@@ -208,11 +206,11 @@ int main(int argc, char* argv[])
     
     //Allacciamento dei sensori ai driver virtuali (alias board) con un time_point comune
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    //exttemp.plug_to(ext_device,now);
-    //exthumid.plug_to(ext_device,now);
+    exttemp.plug_to(ext_device,now);
+    exthumid.plug_to(ext_device,now);
     extdust.plug_to(ext_device,now);
-    //inttemp.plug_to(int_device,now);
-    //inthumid.plug_to(int_device,now);
+    inttemp.plug_to(int_device,now);
+    inthumid.plug_to(int_device,now);
     //Il parametro "now" serve a dare un riferimento temporale unico tra i sensori, eliminando così il jitter tra di essi
     cout<<"Sensori allacciati ai driver. Letture iniziate."<<endl;
      
@@ -241,7 +239,7 @@ int main(int argc, char* argv[])
 		//	- fase di post report fallita: ready_to_post è resettato a FALSE -> riavvio fase di registrazione
 		//L'algoritmo è ottimizzato per effettuare le operazioni di rete DURANTE LE ATTESE delle statistiche successive.
 		//Il fallimento della rete non pregiudica il corretto salvataggio delle statistiche in locale!!
-		/*
+		
 		if(!ready_to_post)
 		{
 			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
@@ -252,7 +250,7 @@ int main(int argc, char* argv[])
 			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
 			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
-		*/
+		
 		//Registering_thread = new thread (registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);	// post_report() bufferizza SEMPRE le misure ma le manda al server solo se ready_to_post è TRUE
 		
 
@@ -377,7 +375,7 @@ int main(int argc, char* argv[])
 		//	   quindi in ogni caso andrebbe almeno riverificata la validità del server stesso;
 		//	2) rifare la verifica evita inutili chiamate alla post_report, la quale effettua SEMPRE un accesso
 		//	   e caricamento in memoria di TUTTE le righe salvate e solo POI tenta di mandarle.
-		/*
+		
 		if( is_ready(server_sync_status) )
 		{
 			cout<<"MAIN: Il thread di rete ha concluso l'esecuzione.. ";
@@ -385,7 +383,7 @@ int main(int argc, char* argv[])
 			if(ready_to_post) cout<<"e non ha riportato problemi."<<endl;
 			else cout<<"e ha riscontrato problemi."<<endl;
 		}
-		*/		
+				
 		
 		/* OLD METHOD
 		if( ready_to_post )
