@@ -36,7 +36,7 @@
         }
     },
     "report": {
-        "INTERVAL": 1,
+        "INTERVAL": 5,
         "VALIDITY_PERCENTAGE_THRESHOLD": 80
     }
 }
