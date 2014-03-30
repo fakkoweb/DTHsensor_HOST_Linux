@@ -42,9 +42,11 @@ typedef struct _STATISTIC_STRUCT
 {
 	double average;
 	double variance;
-	bool valid;
+	bool is_valid;
 	double percentage_validity;
-	int tot_sample;
+	int expected_samples;
+	int total_samples;
+	int valid_samples;
 } statistic_struct;
 
 
@@ -60,10 +62,22 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         
         //AVERAGING AND VARIANCE CALCULATION	//asdfg
         OMV MeanGuy;							//Classe per il calcolo della media on-line (Knuth/Welford algorithm) --> vedi lista di inizializzazione del costruttore!
-        std::chrono::duration< int, std::milli > avg_delay;		//GESTIONE AVERAGE INTERVAL: Ogni sample() del sensore viene calcolata una nuova media e varianza,
-        std::chrono::system_clock::time_point last_avg_request;		//basate sul valore corrente e sulla storia precedente. Ad ogni avg_delay (scelto in base alle esigenze)
-        								//il sensore salva la media e resetta il calcolo di media e varianza, confrontando avg_delay con
-        								//il tempo trascorso da last_avg_request. Poi setta last_avg_request al tempo corrente.
+        
+        std::chrono::duration< int, std::milli > statistic_delay;	//GESTIONE STATISTIC INTERVAL: Ogni sample() del sensore viene calcolata una nuova media e varianza,
+									//basate sul valore corrente e sulla storia precedente. Ad ogni refresh(), il sensore confronta
+									//statistic_delay (ovvero "avg_interval" minuti) con il tempo trascorso da last_statistic_request
+        								//e quando occorre preleva le statistiche da MeanGuy e lo resetta prima di ulteriori sample().
+        std::chrono::system_clock::time_point last_statistic_request;   //last_statistic_request è l'UNICA ANCORA/RIFERIMENTO TEMPORALE che Sensor ha con l'esterno!!
+        								//Ad ogni statistic_delay, a last_statistic_request è sommato statistic_delay.
+									//HO UN RIFERIMENTO TEMPORALE ASSOULUTO, FISSATO IN PLUGGING PHASE (init. a "start_time")!
+									
+        std::chrono::duration< int, std::milli > sample_delay;		//GESTIONE REFRESH RATE: sample_delay (ovvero "sample_rate" ms) è solo il tempo ideale di sampling!
+								        //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! Inizializzato da costruttore a "sample_rate"
+								        //UTILE SOLO SE autorefresh E' TRUE!!
+									//La funzione refresh() terrà conto sia del ritardo di computazione che di wake-up dello scheduler, riducendo
+        								//il tempo di sleep del thread di autorefresh.
+        								//MINIMIZZO IL JITTER!
+
         
         
         //SAMPLING & CONVERSION
@@ -72,19 +86,19 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         virtual double convert(const uint16_t) = 0;       	//THIS FUNCTIONS MUST BE SPECIALIZED BY INHERITING CLASSES
 
         
-        //SENSOR CONTROL
-        Driver<measure_struct,uint16_t>* board;	//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione
-        int refresh_rate;                       //IMPOSTATO A SECONDA DEL TIPO DI SENSORE!! Inizializzato da costruttore a "sample_rate" ma è UTILE SOLO SE autorefresh E' TRUE -- in millisecondi
+        //SENSOR POLLING
+        Driver<measure_struct,uint16_t>* board;	//Puntatore all'oggetto Driver da cui chiamare la funzione request() per chiedere il campione                   
         bool autorefresh;                       //TRUE: pooling attivo, FALSE: campionamento solo su richiesta (get_measure)        
-                                                //Se autorefresh è TRUE: ogni "refresh_rate" ms viene richiesta una nuova misura al driver (sample)
-                                                //Se autorefresh è FALSE, "refresh_rate" è ignorato.
+                                                //Se autorefresh è TRUE: ogni "sample_rate" ms viene richiesta una nuova misura al driver (sample)
+                                                //Se autorefresh è FALSE, "sample_rate" è ignorato.
         void refresh();                         //Questa funzione chiama sample() e convert() e aggiorna il buffer raw_measure (e statistic solo se avg_interval è trascorso)
-                                                //Se autorefresh è TRUE viene chiamata da un thread ogni "refresh_rate" ms oppure manualmente da get_raw()
+                                                //Se autorefresh è TRUE viene chiamata da un thread ogni "sample_rate" ms oppure manualmente da get_raw()
                                                 //Se autorefresh è FALSE solo get_raw() può chiamarla
         void reset();				//Resetta i valori del sensore a default (chiamata quando ad es. si vuole scollegare il sensore senza deallocarlo!)
+
                                                        
         //THREADING STRUCTURES
-        mutex rw;				//Guarantees mutual access between autorefresh thread and external requesting threads
+        mutex rw;				//Guarantees ONLY mutual access between autorefresh thread and external requesting threads
         condition_variable new_sample;
         condition_variable new_statistic;
         thread* r;
@@ -167,7 +181,7 @@ class TempSensor : public Sensor
         virtual int mtype(){ return TEMPERATURE; };
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!
     public:
-        TempSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh, false) {};
+        TempSensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(sample_rate,avg_interval,enable_autorefresh, false) {};
         virtual string stype(){ string st="Temperatura"; return st; };
         virtual string sunits(){ string st="C"; return st; };
 
@@ -179,7 +193,7 @@ class HumidSensor : public Sensor
         virtual int mtype(){ return HUMIDITY; };      
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!        
     public:
-        HumidSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh, false) {};
+        HumidSensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(sample_rate,avg_interval,enable_autorefresh, false) {};
         virtual string stype(){ string st="Umidita'"; return st; };
         virtual string sunits(){ string st="%"; return st; };        
 
@@ -192,7 +206,7 @@ class DustSensor : public Sensor
         virtual int mtype(){ return DUST; };  
         virtual double convert(const uint16_t);                                       //TO IMPLEMENT!!    
     public:
-        DustSensor(const int refresh_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(refresh_rate,avg_interval,enable_autorefresh,true) {};
+        DustSensor(const int sample_rate, const int avg_interval, const bool enable_autorefresh = true) : Sensor(sample_rate,avg_interval,enable_autorefresh,true) {};
         virtual string stype(){ string st="Polveri"; return st; };
         virtual string sunits(){ string st="mg/mc"; return st; };      
 

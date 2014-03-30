@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
     extdust.plug_to(ext_device,now);
     inttemp.plug_to(int_device,now);
     inthumid.plug_to(int_device,now);
-    //Il parametro "now" serve a dare un riferimento temporale unico tra i sensori, eliminando così il jitter tra di essi
+    //Il parametro "now" serve a dare un riferimento temporale unico tra i sensori, eliminando così il jitter relativo tra di essi
     cout<<"Sensori allacciati ai driver. Letture iniziate."<<endl;
      
     
@@ -312,9 +312,10 @@ int main(int argc, char* argv[])
 			{	
 				cout<<"| Sensor Local Id: "<< row->first <<endl;
 				cout<<"| Average: "<< row->second->get_statistic().average << " Variance: " << row->second->get_statistic().variance << endl;
-				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
+				cout<<"| With "<< row->second->get_statistic().valid_samples <<"/"<< row->second->get_statistic().total_samples<<" valid/total samples taken."<<endl;
+				cout<<"| Expected "<< row->second->get_statistic().expected_samples <<" valid samples, therefore overall statistic is "<< row->second->get_statistic().percentage_validity <<"% valid"<<endl;
 				cout<<"| Statistic has to be considered as ";
-				if (row->second->get_statistic().valid){
+				if (row->second->get_statistic().is_valid){
 					cout << "VALID.";
 				}
 				else{
@@ -329,11 +330,13 @@ int main(int argc, char* argv[])
 			cout<<"Misure esterne:"<<endl;
 			for (row=ExtSensors.begin(); row!=ExtSensors.end(); row++)
 			{
+				
 				cout<<"| Sensor Local Id: "<< row->first <<endl;
 				cout<<"| Average: "<< row->second->get_statistic().average << " Variance: " << row->second->get_statistic().variance << endl;
-				cout<<"| With "<< row->second->get_statistic().tot_sample << " tot samples. " << row->second->get_statistic().percentage_validity << "% valid" <<endl;
+				cout<<"| With "<< row->second->get_statistic().valid_samples <<"/"<< row->second->get_statistic().total_samples<<" valid/total samples taken."<<endl;
+				cout<<"| Expected "<< row->second->get_statistic().expected_samples <<" valid samples, therefore overall statistic is "<< row->second->get_statistic().percentage_validity <<"% valid"<<endl;
 				cout<<"| Statistic has to be considered as ";
-				if (row->second->get_statistic().valid){
+				if (row->second->get_statistic().is_valid){
 					cout << "VALID.";
 				}
 				else{
@@ -383,7 +386,7 @@ int main(int argc, char* argv[])
 			if(ready_to_post) cout<<"e non ha riportato problemi."<<endl;
 			else cout<<"e ha riscontrato problemi."<<endl;
 		}
-				
+			
 		
 		/* OLD METHOD
 		if( ready_to_post )

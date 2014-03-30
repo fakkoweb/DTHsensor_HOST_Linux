@@ -378,7 +378,7 @@ int save_report(const string to_filename, const map<int, Sensor*>& sa)
 				report_file<<(report_line+"\n");
 				*/
 			
-				if( row->second->get_statistic().valid )
+				if( row->second->get_statistic().is_valid )
 				{
 					textconverter.str("");
 					textconverter<<std::setprecision(numeric_limits<double>::digits10+10);
@@ -512,8 +512,6 @@ int post_report(const string from_filename, const string device_mac, const map<i
 		Json::Value position;
 			//Getting milliseconds since Epoch and converting it to string...
 			stringstream textconverter;
-			std::chrono::time_point<std::chrono::system_clock> this_time;
-			this_time = std::chrono::system_clock::now();
 			textconverter << std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
 		position["kind"]="latitude#location";
 		position["timestampMs"]= textconverter.str();
