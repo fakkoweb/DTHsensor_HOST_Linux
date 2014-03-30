@@ -239,19 +239,23 @@ int usb::read_show(const unsigned int times, const unsigned int delay)		//uses r
 
 int Usb::recv_measure()	//copies device format data into the embedded measure_struct data type of the driver instance
 {	
-	int bytes_read=0,last_bytes_read=0,bytes_to_read=sizeof(measure_struct),i=0,status=ERROR;
+	int bytes_read=0, last_bytes_read=0, bytes_to_read=sizeof(measure_struct), status=ERROR;
+	int i, num_retry = 5;
 	unsigned char buf[6] = { 0 , 0 , 0 , 0 , 0 , 0 } ;
 	std::chrono::milliseconds retry_interval( 10 ) ;			//sleep amount in case of soft fail
+	
 
 
 	if(d!=NULL)
 	{
 		cerr<<"  D| Procedura di lettura iniziata."<<endl;
 		hid_set_nonblocking(d,1);					//Default - read bloccante (settare 1 per NON bloccante)
-		while( last_bytes_read != bytes_to_read && bytes_read!=-1 )	//Questo ciclo si ripete finché ho letture errate E SOLO SE NON ho un errore critico (-1) -- !get_stop() &&
+		while( last_bytes_read != bytes_to_read && bytes_read!=-1 && num_retry>0)	//Questo ciclo si ripete fino a 5 letture errate E SE NON ho un errore critico (-1) -- OLD: !get_stop() &&
 		{
+			num_retry--;
+		
 			//Re-init
-			for(i=0;i<6;i++) buf[i] = 0 ;
+			for(i=0;i<6;i++) buf[i] = 0;
 			i=0;
 			
 			cerr<<"   D! Tentativo "<<++i<<endl;

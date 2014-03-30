@@ -222,7 +222,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			//JITTER AND DELAY CALCULATION AND REMOVAL!
 			//-----------------------------------------
 			//END: save now() as the time loop ended
-			refresh_end = std::chrono::system_clock::now();
+			refresh_end = std::chrono::steady_clock::now();
 					//cout<< "computation time delay: "<<std::chrono::duration_cast<std::chrono::microseconds>(refresh_end - refresh_start).count()<<endl;			
 			//SLEEP for sample_delay, reduced by wakeup_jitter and computation time this loop took
 			computed_sleep_delay = sample_delay - wakeup_jitter - std::chrono::duration_cast<std::chrono::microseconds>(refresh_end - refresh_start);
@@ -230,7 +230,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 					//cout<<"------"<<endl;
 			std::this_thread::sleep_for( computed_sleep_delay );
 			//BEGIN: save now() as the time loop begins
-			refresh_start = std::chrono::system_clock::now();
+			refresh_start = std::chrono::steady_clock::now();
 			//compute the jitter as the time it took this thread to wake-up since the time it had to wake up (in ideal world, wake_jitter would be 0...)
 			wakeup_jitter = std::chrono::duration_cast<std::chrono::microseconds>(refresh_start - refresh_end) - computed_sleep_delay;
 					//cout<<"------"<<endl;

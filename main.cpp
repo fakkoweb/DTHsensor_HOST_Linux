@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     p_sleep(1000);
     
     //Allacciamento dei sensori ai driver virtuali (alias board) con un time_point comune
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     exttemp.plug_to(ext_device,now);
     exthumid.plug_to(ext_device,now);
     extdust.plug_to(ext_device,now);
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
 		//	- fase di post report fallita: ready_to_post è resettato a FALSE -> riavvio fase di registrazione
 		//L'algoritmo è ottimizzato per effettuare le operazioni di rete DURANTE LE ATTESE delle statistiche successive.
 		//Il fallimento della rete non pregiudica il corretto salvataggio delle statistiche in locale!!
-		
+		/*
 		if(!ready_to_post)
 		{
 			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
@@ -250,7 +250,7 @@ int main(int argc, char* argv[])
 			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
 			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
-		
+		*/
 		//Registering_thread = new thread (registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);	// post_report() bufferizza SEMPRE le misure ma le manda al server solo se ready_to_post è TRUE
 		
 
@@ -271,14 +271,14 @@ int main(int argc, char* argv[])
 			(
 				new thread
 					(
-						[](Sensor* s) -> void
+						[](int lfid, Sensor* s) -> void
 						{
-							cout<<"WAITER: Waiter creato e in attesa di nuova statistica..."<<endl;
+							cout<<"WAITER "<<lfid<<": Waiter creato e in attesa di nuova statistica..."<<endl;
 							s->wait_new_statistic();
-							cout<<"WAITER: Statistica pronta: termino."<<endl;
+							cout<<"WAITER "<<lfid<<": Statistica pronta: termino."<<endl;
 							return;
 						}
-					, row->second)
+					, row->first , row->second)
 			);
 		}
 
@@ -378,7 +378,7 @@ int main(int argc, char* argv[])
 		//	   quindi in ogni caso andrebbe almeno riverificata la validità del server stesso;
 		//	2) rifare la verifica evita inutili chiamate alla post_report, la quale effettua SEMPRE un accesso
 		//	   e caricamento in memoria di TUTTE le righe salvate e solo POI tenta di mandarle.
-		
+		/*
 		if( is_ready(server_sync_status) )
 		{
 			cout<<"MAIN: Il thread di rete ha concluso l'esecuzione.. ";
@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
 			if(ready_to_post) cout<<"e non ha riportato problemi."<<endl;
 			else cout<<"e ha riscontrato problemi."<<endl;
 		}
-			
+		*/	
 		
 		/* OLD METHOD
 		if( ready_to_post )

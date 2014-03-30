@@ -67,7 +67,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
 									//basate sul valore corrente e sulla storia precedente. Ad ogni refresh(), il sensore confronta
 									//statistic_delay (ovvero "avg_interval" minuti) con il tempo trascorso da last_statistic_request
         								//e quando occorre preleva le statistiche da MeanGuy e lo resetta prima di ulteriori sample().
-        std::chrono::system_clock::time_point last_statistic_request;   //last_statistic_request è l'UNICA ANCORA/RIFERIMENTO TEMPORALE che Sensor ha con l'esterno!!
+        std::chrono::steady_clock::time_point last_statistic_request;   //last_statistic_request è l'UNICA ANCORA/RIFERIMENTO TEMPORALE che Sensor ha con l'esterno!!
         								//Ad ogni statistic_delay, a last_statistic_request è sommato statistic_delay.
 									//HO UN RIFERIMENTO TEMPORALE ASSOULUTO, FISSATO IN PLUGGING PHASE (init. a "start_time")!
 									
