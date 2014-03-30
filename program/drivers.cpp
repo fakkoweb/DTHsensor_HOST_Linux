@@ -326,8 +326,8 @@ int Usb::recv_measure()	//copies device format data into the embedded measure_st
 
 
 	//Do a simple stat of recv_measure
-	if(status==NICE) num_succeded_reads++;
-	else num_failed_reads++;
+	//if(status==NICE) num_succeded_reads++;
+	//else num_failed_reads++;
 
 
 	return status;				//Qui ERROR è ritornato di default a meno che non vada tutto OK.
