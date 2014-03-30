@@ -134,7 +134,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 
 		//MEAN AND VARIANCE
 		//Check if avg_interval minutes (alias "chrono::seconds avg_delay") have passed since last Mean&Variance request
-		if ( std::chrono::steady_clock::now() > (last_avg_request + avg_delay) )
+		if ( std::chrono::system_clock::now() > (last_avg_request + avg_delay) )
 		{
 			//Assign to statistic latest Mean and Variance calculated by MeanGuy
 			cerr<<" S| Media pronta e richiesta!"<<endl;
@@ -166,7 +166,7 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 			//Since real parallelism is not always possible and therefore not guaranteed, it is bad to set time on our own
 			//THIS:
 			//
-			//	last_avg_request = std::chrono::steady_clock::now();
+			//	last_avg_request = std::chrono::system_clock::now();
 			//
 			//IS WRONG since it would set a new time in this instant: now() WON'T BE PRECISELY last_avg_request + avg_delay (what user wants), BUT MORE (SO overhead)!!
 			//Since small delays sum on time, it is better to state that new last request happened at time last_avg_request + avg_delay:
@@ -177,6 +177,8 @@ void Sensor::refresh()		//This function is called manually or automatically, in 
 
 	}
 
+	
+	
 	if(autorefresh)
 	{
 		access.unlock();
@@ -223,7 +225,7 @@ uint16_t Sensor::get_raw()
 	return measure;
 }
 
-void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::steady_clock::time_point& start_time)
+void Sensor::plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::system_clock::time_point& start_time)
 {
 
 	//Reset board and also the thread if present

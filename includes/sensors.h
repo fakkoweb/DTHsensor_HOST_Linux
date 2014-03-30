@@ -61,7 +61,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
         //AVERAGING AND VARIANCE CALCULATION	//asdfg
         OMV MeanGuy;							//Classe per il calcolo della media on-line (Knuth/Welford algorithm) --> vedi lista di inizializzazione del costruttore!
         std::chrono::duration< int, std::milli > avg_delay;		//GESTIONE AVERAGE INTERVAL: Ogni sample() del sensore viene calcolata una nuova media e varianza,
-        std::chrono::steady_clock::time_point last_avg_request;		//basate sul valore corrente e sulla storia precedente. Ad ogni avg_delay (scelto in base alle esigenze)
+        std::chrono::system_clock::time_point last_avg_request;		//basate sul valore corrente e sulla storia precedente. Ad ogni avg_delay (scelto in base alle esigenze)
         								//il sensore salva la media e resetta il calcolo di media e varianza, confrontando avg_delay con
         								//il tempo trascorso da last_avg_request. Poi setta last_avg_request al tempo corrente.
         
@@ -144,7 +144,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
        	//This allows to the sample() of the Sensor to call request() of the attached Driver
         void plug_to(const Driver<measure_struct,uint16_t>& new_board)
         {
-        	plug_to( new_board, std::chrono::steady_clock::now() );	//The logic time instant where sampling begins is set HERE as now()
+        	plug_to( new_board, std::chrono::system_clock::now() );	//The logic time instant where sampling begins is set HERE as now()
         };
         // -- STRONG TIME SYNC version --
 	//This constructor allows you to set a "start_time" manually: it can be before or after the PLUG_TO() PHASE!
@@ -157,7 +157,7 @@ class Sensor					//ABSTRACT CLASS: only sub-classes can be instantiated!
 	//ALERT:
 	//It is also possible to set up a manual "start_time" at plug_to() call. If you do, doing it here is useless.
 	//By default, if no "start_time" is ever set, a now() will be called ALWAYS at plug_to phase!
-        void plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::steady_clock::time_point& start_time); //As above, but you set the start_point manually
+        void plug_to(const Driver<measure_struct,uint16_t>& new_board, const std::chrono::system_clock::time_point& start_time); //As above, but you set the start_point manually
 
 };
 
