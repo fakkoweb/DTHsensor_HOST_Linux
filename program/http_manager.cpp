@@ -11,7 +11,7 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 
-void *myrealloc(void *ptr, size_t size)
+static void *myrealloc(void *ptr, size_t size)
 {
   /* There might be a realloc() out there that doesn't like reallocing
      NULL pointers, so we take care of it here */
@@ -21,7 +21,7 @@ void *myrealloc(void *ptr, size_t size)
     return malloc(size);
 }
 
-size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
+static size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
 {
   size_t realsize = size * nmemb;
   struct MemoryStruct *mem = (struct MemoryStruct *)data;
