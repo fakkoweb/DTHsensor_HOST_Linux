@@ -160,7 +160,7 @@ int register_device( const string device_mac )
 	      	reg_device["raspb_wifi_mac"]=device_mac;
 	       	cout<<reg_device<<endl;
 	      	esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/apis/devices/", reg_device.toStyledString(), server_response_s);
-	       	cerr<<"\nRISPOSTA SERVER SU REGISTER DEVICE:\n"<<server_response_s<<endl;
+	       	//cerr<<"\nRISPOSTA SERVER SU REGISTER DEVICE:\n"<<server_response_s<<endl;
 	     }
 	     else					//YES -- server returned a full json describing our device
 	     {
@@ -220,7 +220,7 @@ int register_sensor( const string device_mac, const Json::Value& node, const str
       			new_sensor["local_feed_id"]=node.get("lfid",0).asInt();
 			new_sensor["raspb_wifi_mac"]=device_mac;
 			esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/apis/devices/"+device_mac+"/feeds", new_sensor.toStyledString(), server_response_s);
-    			cerr<<"\nRISPOSTA SERVER SU REGISTER SENSOR "<<node.get("lfid",0).asString()<<":\n"<<server_response_s<<endl;
+    			//cerr<<"\nRISPOSTA SERVER SU REGISTER SENSOR "<<node.get("lfid",0).asString()<<":\n"<<server_response_s<<endl;
 		}
 		else							//YES
 		{
@@ -528,7 +528,7 @@ int post_report(const string from_filename, const string device_mac, const map<i
 
 		//Just one HTTP POST call to the Server for all report selected
 		esito=http_post_auth("http://crowdsensing.ismb.it/SC/rest/apis/device/"+device_mac+"/posts", json_post.toStyledString(), server_response_s);
-		cerr<<"\nRISPOSTA SERVER SU POST REPORT DI "<<getTimeStamp()<<":\n"<<server_response_s<<endl;
+		//cerr<<"\nRISPOSTA SERVER SU POST REPORT DI "<<getTimeStamp()<<":\n"<<server_response_s<<endl;
 		//cout<<json_post<<endl;
 
 		//.. and If http_post is ok --> delete the old file and rename the new as old

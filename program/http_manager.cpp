@@ -71,7 +71,7 @@ int http_get(const string url, string& json_out)
 		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
 
 
-		cerr<<"POST operation...";
+		cerr<<"GET operation...";
 		/* get it! */
 		res=curl_easy_perform(easyhandle);
 		cerr<<" Done! Result was";
@@ -163,7 +163,7 @@ int http_post(const string url, const string json_in, string &json_out)
 		}
 		else
 		{
-			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			//json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 			STATUS=NICE;
 			cerr<<" success."<<endl;
 		}
@@ -222,7 +222,7 @@ int http_get_auth(const string url, string& json_out)
 		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&chunk);
 
 
-		cerr<<"POST operation...";
+		cerr<<"GET-AUTH operation...";
 		/* get it! */
 		res=curl_easy_perform(easyhandle);
 		cerr<<" Done! Result was";
@@ -323,7 +323,7 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 		}
 		else
 		{
-			json_out.assign(chunk.memory);
+			//json_out.assign(chunk.memory);
 			STATUS=NICE;
 			cerr<<" success."<<endl;
 		}
