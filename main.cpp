@@ -242,8 +242,11 @@ int main(int argc, char* argv[])
 		
 		if(!ready_to_post)
 		{
-			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
-			server_sync_status = async(std::launch::async, registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);
+			// PATCH PARZIALE: problemi con la get? disattivo temporaneamente la registrazione..
+			//cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
+			//server_sync_status = async(std::launch::async, registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);
+			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
+			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
 		else
 		{
