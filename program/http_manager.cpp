@@ -1,5 +1,6 @@
 
 #include "http_manager.h"
+#include <sstream>
 
 
 
@@ -30,7 +31,7 @@ static size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
   if (mem->memory) {
     memcpy(&(mem->memory[mem->size]), ptr, realsize);
     mem->size += realsize;
-    mem->memory[mem->size] = 0;
+    mem->memory[mem->size] = '\0';
   }
   return realsize;
 }
@@ -77,6 +78,7 @@ int http_get(const string url, string& json_out)
 		cerr<<" Done! Result was";
 
 		// Check for errors
+		stringstream textconverter;
 		if(res != CURLE_OK)
 		{
 			STATUS=ERROR;
@@ -84,7 +86,8 @@ int http_get(const string url, string& json_out)
 		}
 		else
 		{
-			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			textconverter << chunk.memory;
+			json_out.assign(textconverter.str());	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 			STATUS=NICE;
 			cerr<<" success."<<endl;
 		}
