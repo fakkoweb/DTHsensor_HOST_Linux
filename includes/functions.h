@@ -58,7 +58,7 @@ string getTimeStamp();
 // PARAMETER LOADING FROM A json file
 // Input: file.json -- Output: Json Value
 Json::Value load_params(const string jsonfile);
-
+extern const Json::Value params;	// GLOBAL CONSTANT VARIABLE FOR SPEED PARAMETER ACCESS
 
 /////////////////////////////////////////////////////////
 // THREADS/PROCEDURES

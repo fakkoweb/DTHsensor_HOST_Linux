@@ -36,6 +36,7 @@
         }
     },
     "report": {
+    	"API_URL":"http://crowdsensing.ismb.it/SC/rest/apis/",
         "INTERVAL": 5,
         "VALIDITY_PERCENTAGE_THRESHOLD": 80
     }

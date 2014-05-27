@@ -47,7 +47,7 @@ using namespace std;
 //LETTURA DEI PARAMETRI UTENTE
 /////////////////////////////////////////////////////////
 
-const Json::Value params = load_params("parameters.json");   	// Albero di valori json estratti da "parameters.json" a runtime
+const Json::Value params = load_params("parameters.json");	// Albero di valori json estratti da "parameters.json" a runtime
 								// GLOBALE perchè deve essere accessibile a tutto il progetto!
 								// COSTANTE perchè nessuna parte di progetto deve comprometterla!
 
