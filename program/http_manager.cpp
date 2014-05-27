@@ -86,8 +86,7 @@ int http_get(const string url, string& json_out)
 		}
 		else
 		{
-			textconverter << chunk.memory;
-			json_out.assign(textconverter.str());	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
+			json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 			STATUS=NICE;
 			cerr<<" success."<<endl;
 		}
@@ -326,7 +325,7 @@ int http_post_auth(const string url, const string json_in, string &json_out)
 		}
 		else
 		{
-			//json_out.assign(chunk.memory);
+			//json_out.assign(chunk.memory);	//warning: it uses strlen() so it must be \0 terminated! (see write_callback)
 			STATUS=NICE;
 			cerr<<" success."<<endl;
 		}

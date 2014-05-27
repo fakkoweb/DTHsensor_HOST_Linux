@@ -240,11 +240,6 @@ int main(int argc, char* argv[])
 		//L'algoritmo è ottimizzato per effettuare le operazioni di rete DURANTE LE ATTESE delle statistiche successive.
 		//Il fallimento della rete non pregiudica il corretto salvataggio delle statistiche in locale!!
 		
-		// PATCH PARZIALE: problemi con la get? testo temporaneamente SOLO la registrazione..
-		cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
-		server_sync_status = async(std::launch::async, registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);			
-		
-		/*
 		if(!ready_to_post)
 		{
 			cout<<"MAIN: Avvio thread di routine annuncio al server..."<<endl;
@@ -255,7 +250,7 @@ int main(int argc, char* argv[])
 			cout<<"MAIN: Avvio thread di routine sincronizzazione con server..."<<endl;
 			server_sync_status = async(std::launch::async, reporting, "awaiting_reports.txt", params["device"].get("MY_MAC",0).asString(), AllSensors);
 		}
-		*/
+		
 		
 		
 		//Registering_thread = new thread (registering, params["device"].get("MY_MAC",0).asString(), params["sensors"]);	// post_report() bufferizza SEMPRE le misure ma le manda al server solo se ready_to_post è TRUE
